@@ -30,7 +30,7 @@ describe('short all-ins and re-opening the betting (TDA rule)', () => {
     play(g, script([
       [3, { type: 'raise', to: 100 }],
       [4, { type: 'raise', to: 150 }], // all-in: +50, less than a full raise
-      [0, { type: 'fold' }], [1, { type: 'fold' }], [2, { type: 'fold' }],
+      [0, { type: 'fold' }], [1, { type: 'call' }], [2, { type: 'fold' }],
     ], (p, gg, k) => { if (k === 5 && p.i === 3) canRaise = options(gg, p).canRaise; }));
     expect(canRaise).toBe(false);
   });
@@ -42,7 +42,7 @@ describe('short all-ins and re-opening the betting (TDA rule)', () => {
       [3, { type: 'raise', to: 100 }],
       [4, { type: 'raise', to: 150 }], // all-in: +50
       [0, { type: 'raise', to: 200 }], // all-in: +50 more; player 3 now faces +100 >= a full raise of 80
-      [1, { type: 'fold' }], [2, { type: 'fold' }],
+      [1, { type: 'call' }], [2, { type: 'fold' }], // the small blind stays in with chips behind
     ], (p, gg, k) => { if (k === 5 && p.i === 3) canRaise = options(gg, p).canRaise; }));
     expect(canRaise).toBe(true);
   });

@@ -40,6 +40,8 @@ export interface Player {
   cards: Card[]; all: Card[]; extra: Card[][] | null; parts: Card[][] | null; plan: Split | null;
   splitDone: boolean; vrank: number | null; _plan: Split | null; _planKey?: string;
   vis: number; folded: boolean; allIn: boolean; bet: number; total: number; acted: boolean; raiseLocked: boolean;
+  /** The bet level this player last acted at on this street (to judge short all-ins). */
+  actedAt: number;
   label: string; shown: boolean; justShown: boolean; mucked: boolean; revealed: boolean;
   score: number; handName: string; pscore: number[] | null; pname: string[] | null; partWin: boolean[] | null;
   won: number; winner: boolean; eq: number | null; eqAtReveal: number | null; _eq: number | null;

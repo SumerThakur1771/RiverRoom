@@ -54,7 +54,7 @@ export function makePlayer(rs: Streams, settings: Settings, seat: number, bot: {
   return {
     i: 0, seat, name: bot ? bot.name : settings.name || 'You', isHuman: !bot, type: tkey, persona, color: bot ? bot.color : '#b8902f', avatar: bot ? bot.avatar ?? null : null,
     stack, out: false, place: 0, buyins: 1, start: stack, cards: [], all: [], extra: null, parts: null, plan: null, splitDone: false, vrank: null, _plan: null,
-    vis: 0, folded: false, allIn: false, bet: 0, total: 0, acted: false, raiseLocked: false, label: '', shown: false, justShown: false, mucked: false, revealed: false,
+    vis: 0, folded: false, allIn: false, bet: 0, total: 0, acted: false, raiseLocked: false, actedAt: 0, label: '', shown: false, justShown: false, mucked: false, revealed: false,
     score: 0, handName: '', pscore: null, pname: null, partWin: null, won: 0, winner: false, eq: null, eqAtReveal: null, _eq: null,
     hud: newHud(), hf: {}, rg: { top: 1, low: 0, agg: 0, raised: false, calls: 0, big: 0 }, tilt: 0, read: false, mem: null,
   };
@@ -162,10 +162,10 @@ export function applyAction(g: Game, p: Player, a: Action): ActionResult {
   if (t === 'fold') {
     p.folded = true; p.label = 'Fold'; lg(g, `${p.name}: folds`); ev(g, { t: 'fold', p });
   } else if (t === 'check') {
-    p.acted = true; p.label = 'Check'; lg(g, `${p.name}: checks`); ev(g, { t: 'check', p });
+    p.acted = true; p.actedAt = g.currentBet; p.label = 'Check'; lg(g, `${p.name}: checks`); ev(g, { t: 'check', p });
   } else if (t === 'call') {
     const amt = Math.min(o.toCall, p.stack);
-    putIn(p, amt); p.acted = true; p.label = p.allIn ? 'All-in' : 'Call';
+    putIn(p, amt); p.acted = true; p.actedAt = g.currentBet; p.label = p.allIn ? 'All-in' : 'Call';
     lg(g, `${p.name}: calls ${fmt(g, amt)}${p.allIn ? ' and is all-in' : ''}`);
     ev(g, { t: 'call', p, amt, allIn: p.allIn });
     updateRange(g, p, 'call', preRaises);
@@ -181,9 +181,17 @@ export function applyAction(g: Game, p: Player, a: Action): ActionResult {
       g.minRaise = size;
       for (const x of g.players) if (x !== p && !x.folded && !x.out && !x.allIn) { x.acted = false; x.raiseLocked = false; }
     } else {
-      for (const x of g.players) if (x !== p && !x.folded && !x.out && !x.allIn && x.acted) { x.acted = false; x.raiseLocked = true; }
+      // A short all-in does not re-open the betting for a player who already acted, unless the
+      // short all-ins since their last action add up to a full raise (TDA rule). The original
+      // only looked at each short all-in on its own, so cumulative ones never re-opened it.
+      for (const x of g.players) {
+        if (x !== p && !x.folded && !x.out && !x.allIn && (x.acted || x.raiseLocked)) {
+          x.acted = false;
+          x.raiseLocked = to - x.actedAt < g.minRaise;
+        }
+      }
     }
-    g.currentBet = to; p.acted = true; p.raiseLocked = false; g.lastAggressor = p; g.streetRaises++;
+    g.currentBet = to; p.acted = true; p.actedAt = to; p.raiseLocked = false; g.lastAggressor = p; g.streetRaises++;
     if (g.street === 0) g.pfAggressor = p;
     if (g.street === 1 && p === g.pfAggressor && prev === 0) g.cbetMade = true;
     const kind = prev === 0 ? 'bet' : 'raise';
@@ -552,7 +560,7 @@ export function* playHand(g: Game): Generator<Step, HandSummary, unknown> {
     const lvl = g.money ? 0 : Math.min(LEVELS.length - 1, Math.floor((g.handNo - 1) / g.settings.perLevel));
     g.level = lvl;
     [g.sb, g.bb, g.ante] = g.money ? HOME_BLINDS : LEVELS[lvl]!;
-    for (const p of g.players) Object.assign(p, { cards: [], vis: 0, folded: p.out, allIn: false, bet: 0, total: 0, acted: false, raiseLocked: false, label: '', shown: false, justShown: false, mucked: false, score: 0, handName: '', won: 0, winner: false, eq: null, eqAtReveal: null, revealed: false, start: p.stack, hf: {}, rg: { top: 1, low: 0, agg: 0, raised: false, calls: 0, big: 0 }, _eq: null, all: [], extra: null, parts: null, splitDone: false, vrank: null, plan: null, _plan: null, pscore: null, pname: null, partWin: null });
+    for (const p of g.players) Object.assign(p, { cards: [], vis: 0, folded: p.out, allIn: false, bet: 0, total: 0, acted: false, raiseLocked: false, actedAt: 0, label: '', shown: false, justShown: false, mucked: false, score: 0, handName: '', won: 0, winner: false, eq: null, eqAtReveal: null, revealed: false, start: p.stack, hf: {}, rg: { top: 1, low: 0, agg: 0, raised: false, calls: 0, big: 0 }, _eq: null, all: [], extra: null, parts: null, splitDone: false, vrank: null, plan: null, _plan: null, pscore: null, pname: null, partWin: null });
     g.btab.clear();
     Object.assign(g, { variant: null, board2: [], boardVis2: 0, board: [], boardVis: 0, pot: 0, highlight: null, msg: '', explain: '', sideInfo: '', lastAggressor: null, pfAggressor: null, cbetMade: false, streetRaises: 0, revealed: false, vpip: false, pfr: false, hist: [], ev: [], street: 0, toAct: -1, currentBet: 0, minRaise: g.bb, handActive: true });
     g.button = g.button < 0 ? alive[Math.floor(rs.rand() * alive.length)]!.i : nextAlive(g, g.button);
@@ -603,7 +611,7 @@ export function* playHand(g: Game): Generator<Step, HandSummary, unknown> {
   for (let st = 0; st < 4; st++) {
     g.street = st;
     if (st > 0) {
-      for (const p of g.players) { p.bet = 0; p.acted = false; p.raiseLocked = false; if (!p.folded && !p.allIn) p.label = ''; }
+      for (const p of g.players) { p.bet = 0; p.acted = false; p.raiseLocked = false; p.actedAt = 0; if (!p.folded && !p.allIn) p.label = ''; }
       g.currentBet = 0; g.minRaise = g.bb; g.lastAggressor = null; g.streetRaises = 0;
       g.deck.pop(); // burn
       const n = st === 1 ? 3 : 1;
