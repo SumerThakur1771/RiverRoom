@@ -18,6 +18,13 @@ export default tseslint.config(
     rules: { 'no-unused-vars': 'off', 'no-empty': 'off', 'no-cond-assign': 'off', 'no-useless-escape': 'off' },
   },
   {
+    // the coach must not touch the DOM: it also runs in a Web Worker and in Node
+    files: ['src/coach/**/*.js', 'src/worker/**/*.js'],
+    extends: [js.configs.recommended],
+    languageOptions: { sourceType: 'module', globals: { ...globals.worker } },
+    rules: { 'no-unused-vars': 'off', 'no-empty': 'off', 'no-useless-escape': 'off' },
+  },
+  {
     files: ['tools/**/*.mjs', 'eslint.config.js'],
     extends: [js.configs.recommended],
     languageOptions: { globals: { ...globals.node, ...globals.browser } },
