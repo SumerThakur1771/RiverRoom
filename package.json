@@ -4,16 +4,30 @@
   "private": true,
   "description": "River Room: a poker trainer for a home game, with dealer's-choice split variants, bots and a coach.",
   "type": "module",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
     "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
     "test": "vitest run",
-    "golden:record": "node tools/golden/record.mjs"
+    "smoke": "node tools/ui/smoke.mjs",
+    "golden:record": "node tools/golden/record.mjs",
+    "parity": "tsx tools/sim/parity.ts"
   },
   "devDependencies": {
+    "@eslint/js": "10.0.1",
     "@types/node": "22.20.5",
+    "eslint": "10.14.0",
+    "globals": "17.13.0",
     "playwright": "1.56.1",
+    "tsx": "4.23.15",
     "typescript": "6.0.3",
+    "typescript-eslint": "8.72.1",
+    "vite": "8.3.5",
     "vitest": "5.0.5"
   }
 }

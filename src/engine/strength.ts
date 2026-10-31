@@ -6,7 +6,7 @@ import { tpScore } from './teenpatti';
 import { normSplit, splitsOf, VARIANTS, type PartKind, type Variant, type VariantKey } from './variants';
 
 /* ---- starting-hand strength: every 2-card hand gets a percentile (0 = best), from Chen scores ---- */
-const PCT = new Float32Array(15 * 15 * 2);
+export const PCT = new Float32Array(15 * 15 * 2);
 (function buildPct() {
   const val = (r: number): number => (r === 14 ? 10 : r === 13 ? 8 : r === 12 ? 7 : r === 11 ? 6 : r / 2);
   const chen = (h: number, l: number, s: number): number => {

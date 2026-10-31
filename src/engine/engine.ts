@@ -13,7 +13,7 @@ import { updateRange } from './reads';
 import { Streams } from './rng';
 import { newHud, type Game, type GameEvent, type Mode, type Persona, type Player, type Pot, type Settings } from './state';
 import { Tables } from './strength';
-import { ableList, ev, fmt, heroP, liveList, lg, needsAction, nextAlive, nm, potTotal, VAR } from './table';
+import { ableList, ev, fmt, heroP, liveList, lg, needsAction, nextAlive, nm, VAR } from './table';
 import { VARIANTS, type Split, type VariantKey } from './variants';
 
 export const LEVELS: Array<[number, number, number]> = [[10, 20, 0], [15, 30, 0], [25, 50, 0], [50, 100, 10], [75, 150, 15], [100, 200, 25], [150, 300, 40], [200, 400, 50], [300, 600, 75], [400, 800, 100], [600, 1200, 150], [800, 1600, 200], [1000, 2000, 250], [1500, 3000, 400], [2000, 4000, 500], [3000, 6000, 750], [5000, 10000, 1000], [8000, 16000, 1600]];
@@ -255,7 +255,9 @@ function* bettingRound(g: Game): Generator<Step, void, unknown> {
   g.toAct = -1;
 }
 
-function endStreet(g: Game): void {
+export interface StreetEnd { moved: Array<{ p: Player; amt: number }>; returned: { p: Player; amt: number } | null }
+function endStreet(g: Game): StreetEnd {
+  let returned: StreetEnd['returned'] = null;
   const bettors = g.players.filter(p => p.bet > 0).sort((a, b) => b.bet - a.bet);
   if (bettors.length) {
     const top = bettors[0]!, second = bettors[1] ? bettors[1].bet : 0;
@@ -265,16 +267,19 @@ function endStreet(g: Game): void {
       if (top.stack > 0) top.allIn = false;
       lg(g, `Uncalled bet (${fmt(g, d)}) returned to ${top.name}`);
       ev(g, { t: 'ret', p: top, amt: d });
+      returned = { p: top, amt: d };
     }
   }
   let sum = 0;
-  for (const p of g.players) if (p.bet > 0) { sum += p.bet; p.bet = 0; }
+  const moved: StreetEnd['moved'] = [];
+  for (const p of g.players) if (p.bet > 0) { sum += p.bet; moved.push({ p, amt: p.bet }); p.bet = 0; }
   g.pot += sum;
   g.sideInfo = '';
   if (liveList(g).some(p => p.allIn)) {
     const pots = buildPots(g);
     if (pots.length > 1) g.sideInfo = pots.map((pt, i) => `${i === 0 ? 'Main' : 'Side ' + i} ${fmt(g, pt.amount)}`).join(' · ');
   }
+  return { moved, returned };
 }
 
 /** Equity of face-up all-in hands (display, and how much a bad beat tilts a bot). */
@@ -382,7 +387,7 @@ function* showdown(g: Game): Generator<Step, void, unknown> {
       ev(g, { t: 'win', p: w, amt, label, name: w.handName });
     }
     g.pot = Math.max(0, g.pot - pot.amount);
-    yield { kind: 'pause', what: 'pay', ms: k > 0 ? 900 : 650, data: { winners, label } };
+    yield { kind: 'pause', what: 'pay', ms: k > 0 ? 900 : 650, data: { winners, label, amounts: winners.map(w => w.won) } };
     if (k === 0) { mainWinners = winners; mainName = winners[0]!.handName; }
   }
   if (mainWinners) {
@@ -479,7 +484,7 @@ function* showdownMulti(g: Game): Generator<Step, void, unknown> {
   }
   for (const [w, amt] of got) { w.stack += amt; w.won += amt; w.winner = true; w.hf.wsd = true; }
   g.pot = 0;
-  yield { kind: 'pause', what: 'pay', ms: 650, data: { winners: [...got.keys()] } };
+  yield { kind: 'pause', what: 'pay', ms: 650, data: { winners: [...got.keys()], amounts: [...got.values()] } };
   if (mainW[0] && mainW[0].length) g.highlight = new Set(bestFive(mainW[0][0]!.cards.concat(g.board)));
   const partsMsg = V.parts.map((pt, j) => (mainW[j] ? `${pt.label}: ${mainW[j]!.map(nm).join(' & ')} (${mainW[j]![0]!.pname![j]})` : '')).filter(Boolean);
   const mw = mainMaj && mainMaj.w;
@@ -632,8 +637,8 @@ export function* playHand(g: Game): Generator<Step, HandSummary, unknown> {
       if (g.revealed) { updateAllInEquity(g); yield { kind: 'pause', what: 'runout', ms: 1600 }; }
     }
     if (!g.revealed && liveList(g).length > 1) yield* bettingRound(g);
-    endStreet(g);
-    yield { kind: 'pause', what: 'streetEnd', ms: 400 };
+    const se = endStreet(g);
+    yield { kind: 'pause', what: 'streetEnd', ms: 400, data: se };
     if (liveList(g).length === 1) break;
     if (!g.revealed && ableList(g).length <= 1) {
       g.revealed = true;
@@ -642,7 +647,7 @@ export function* playHand(g: Game): Generator<Step, HandSummary, unknown> {
     }
   }
   const totalPot = g.players.reduce((a, p) => a + p.total, 0);
-  if (liveList(g).length === 1) { winWithoutShowdown(g); yield { kind: 'pause', what: 'pay', ms: 600 }; }
+  if (liveList(g).length === 1) { const w = liveList(g)[0]!, amt = g.pot; winWithoutShowdown(g); yield { kind: 'pause', what: 'pay', ms: 600, data: { winners: [w], amounts: [amt], noShow: true } }; }
   else if (V) { yield* finalSplits(g); yield* showdownMulti(g); }
   else yield* showdown(g);
   if (g.settings.revealAll) yield* revealEveryone(g);

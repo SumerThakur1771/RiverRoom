@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="River Room: a poker trainer for a home game, with dealer's-choice variants, computer opponents and a coach.">
+<title>River Room Hold'em</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Barlow+Condensed:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+<style>body{margin:0}[hidden]{display:none!important}</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <div class="brand"><span class="logo">River Room</span><span class="sub" id="tableName">Hold'em · Sit &amp; Go</span></div>
+    <div class="info" id="info"></div>
+    <div class="tools">
+      <button class="ibtn" id="pauseBtn" title="Pause after this hand" aria-label="Pause after this hand" aria-pressed="false"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
+      <button class="ibtn" id="learnBtn" title="How to play" aria-label="How to play"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/></svg></button>
+      <button class="ibtn" id="progBtn" title="My progress" aria-label="My progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></button>
+      <button class="ibtn" id="histBtn" title="Hand history" aria-label="Hand history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1" fill="currentColor"/><circle cx="4.5" cy="12" r="1" fill="currentColor"/><circle cx="4.5" cy="18" r="1" fill="currentColor"/></svg></button>
+      <button class="ibtn" id="soundBtn" title="Sound" aria-label="Sound on" aria-pressed="true"></button>
+      <button class="ibtn" id="setBtn" title="Table settings" aria-label="Table settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.2"/><circle cx="9" cy="17" r="2.2"/></svg></button>
+    </div>
+  </header>
+
+  <main class="stage" id="stage">
+    <div class="arena" id="arena">
+      <div class="rail" id="rail"><div class="felt"><div class="track"></div><div class="wm">River Room</div></div></div>
+      <div class="pot" id="pot" hidden></div>
+      <div class="board" id="board"><div class="slot"></div><div class="slot"></div><div class="slot"></div><div class="slot"></div><div class="slot"></div></div>
+      <div class="board2" id="board2" hidden><span class="blab">Board 2</span><div class="slot"></div><div class="slot"></div></div>
+      <div class="msg" id="msg" hidden></div>
+      <div class="street" id="streetLbl"></div>
+      <div class="dbtn" id="dbtn" hidden><span>D</span></div>
+    </div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </main>
+
+  <footer class="ctrl">
+    <div class="ctrl-in">
+      <div class="feed" id="feed" aria-live="polite"></div>
+      <div class="status" id="status">Pick your table settings to start.</div>
+      <div class="controw" id="contRow" hidden><button class="btn-main cont" id="contBtn" type="button">Next hand</button><button class="btn-ghost cont2" id="contSkip" type="button">Skip review</button></div>
+      <div class="pre" id="pre" hidden>
+        <button class="pbtn" data-pre="checkfold" aria-pressed="false">Check / Fold</button>
+        <button class="pbtn" data-pre="check" aria-pressed="false">Check</button>
+        <button class="pbtn" data-pre="callany" aria-pressed="false">Call any</button>
+      </div>
+      <div class="act" id="act" hidden>
+        <div class="tinfo"><div class="ti" id="tinfo"></div><button class="hintbtn" id="arrBtn" type="button" hidden>My cards</button><button class="hintbtn" id="hintBtn" type="button">Hint</button></div>
+        <div class="hint" id="hint" hidden></div>
+        <div class="sizer" id="sizer">
+          <div class="presets" id="presets"></div>
+          <div class="slide">
+            <button class="step" id="minus" aria-label="Smaller bet">−</button>
+            <input type="range" id="amt" aria-label="Bet size">
+            <button class="step" id="plus" aria-label="Bigger bet">+</button>
+            <input type="number" id="amtNum" inputmode="numeric" aria-label="Bet amount">
+          </div>
+        </div>
+        <div class="acts">
+          <button class="abtn fold" id="bFold"><span class="t">Fold</span><kbd>F</kbd></button>
+          <button class="abtn call" id="bCall"><span class="t">Check</span><span class="v"></span><kbd>C</kbd></button>
+          <button class="abtn raise" id="bRaise"><span class="t">Raise to</span><span class="v"></span><kbd>R</kbd></button>
+        </div>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<!-- start screen -->
+<div class="ov" id="startOv">
+  <div class="dlg">
+    <div class="eyebrow" id="startEyebrow">No-Limit Texas Hold'em · Sit &amp; Go</div>
+    <h1>River Room</h1>
+    <div class="field"><span>Game</span><div class="seg tall" id="modeSeg"></div></div>
+    <div id="homeInfo" hidden>
+      <p class="lede">Your home game with the boys: $10 buy-in, blinds 10¢/20¢ (the small blind adds 10¢ more to play), rebuys allowed. Chips: <b style="color:#6c9cf0">blue 10¢</b>, <b style="color:#e06a5e">red 20¢</b>, <b style="color:#5cc07f">green 50¢</b>, <b>black $1</b>. Like the real game, people just call before the flop (a raise is rare and small), and a $1 bet is a big deal.</p>
+      <div class="who" id="homeRoster" style="margin:0 0 16px"></div>
+      <div class="field"><span>Games</span><div class="seg tall" id="gamesSeg"></div></div>
+    </div>
+    <p class="lede" id="tourneyLede">Last player with chips wins. The players at this table each have their own style, and their styles change every tournament. Watch how they bet, figure out who they are, and use it against them.</p>
+    <div class="roster" id="roster"></div>
+    <label class="field"><span>Your table name</span><input type="text" id="nameIn" maxlength="12" autocomplete="off" spellcheck="false"></label>
+    <div id="tourneyFields">
+    <div class="field"><span>Opponents</span><div class="seg" id="oppSeg"></div></div>
+    <div class="field"><span>Starting stack</span><div class="seg" id="stackSeg"></div></div>
+    <div class="field"><span>Blind speed</span><div class="seg tall" id="lvlSeg"></div></div>
+    </div>
+    <button class="btn-main" id="startBtn">Take your seat</button>
+    <button class="btn-ghost" id="rulesBtn">New to poker? Learn the rules first</button>
+    <button class="btn-ghost" id="resumeBtn" hidden style="border-color:rgba(211,168,84,.55);color:var(--win)">Resume your table</button>
+    <p class="fine">No turn timer: take as long as you need. Tap Hint on your turn when you want the coach's advice.</p>
+  </div>
+</div>
+
+<!-- settings -->
+<div class="ov" id="setOv" hidden>
+  <div class="dlg">
+    <div class="eyebrow">Table settings</div>
+    <h2>Preferences</h2>
+    <div class="row" id="gamesRow" hidden><div class="lbl">Home games<small>Who picks the game each hand</small></div><div class="seg" id="gamesSeg2"></div></div>
+    <div class="row"><div class="lbl">Game pace<small>How long opponents take to act</small></div><div class="seg" id="paceSeg"></div></div>
+    <div class="row"><div class="lbl">Turn timer<small>Time you get to act</small></div><div class="seg" id="timerSeg"></div></div>
+    <div class="row"><div class="lbl">Hand reviews<small>Coach recap after each hand</small></div><div class="seg" id="reviewSeg"></div></div>
+    <div class="row"><div class="lbl">Show all cards after each hand<small>Practice view: see what everyone had and who won</small></div><label class="sw"><input type="checkbox" id="optReveal"><i></i></label></div>
+    <div class="row"><div class="lbl">Wait for me after each hand<small>Keep the result on the table until you tap Next</small></div><label class="sw"><input type="checkbox" id="optHold"><i></i></label></div>
+    <div class="row"><div class="lbl">Hint button<small>Coach advice before you act</small></div><label class="sw"><input type="checkbox" id="optHint"><i></i></label></div>
+    <div class="row"><div class="lbl">Player stats<small>How often each player plays and raises (VPIP / PFR)</small></div><label class="sw"><input type="checkbox" id="optHud"><i></i></label></div>
+    <div class="row"><div class="lbl">Show my win chance<small>Next to your hand, against likely hands</small></div><label class="sw"><input type="checkbox" id="optEq"><i></i></label></div>
+    <div class="row"><div class="lbl">Sound</div><label class="sw"><input type="checkbox" id="optSound"><i></i></label></div>
+    <div class="row"><div class="lbl">Four-color deck<small>Blue diamonds, green clubs</small></div><label class="sw"><input type="checkbox" id="optFour"><i></i></label></div>
+    <button class="btn-main" id="setClose">Back to the table</button>
+    <button class="btn-ghost btn-danger" id="quitBtn">Leave tournament</button>
+  </div>
+</div>
+
+<!-- hand review -->
+<div class="ov sheet" id="revOv" hidden>
+  <div class="dlg wide" role="dialog" aria-labelledby="rvTitle">
+    <div class="rv-top"><div><div class="eyebrow" id="rvEyebrow">Hand review</div><h2 id="rvTitle">What happened</h2></div><div class="rv-side"><div class="rv-net" id="rvNet"></div><button class="rv-back" id="rvBack" type="button">← Back to table</button></div></div>
+    <div class="rv-sec"><h4>What happened</h4><ol class="story" id="rvStory"></ol></div>
+    <div class="rv-sec" id="rvDecWrap"><h4>Your decisions</h4><div class="dec" id="rvDec"></div></div>
+    <div class="rv-sec"><h4>Lesson</h4><div class="lesson" id="rvLesson"></div></div>
+    <div class="rv-sec" id="rvReadWrap"><h4>Player read</h4><div class="lesson" id="rvRead"></div></div>
+    <div class="rv-sec" id="rvAiWrap" hidden><h4>Claude's review</h4><div class="ai" id="rvAi"></div></div>
+    <div class="rv-actions"><button class="btn-main" id="rvNext">Next hand</button><button class="btn-ghost" id="rvAsk">Ask Claude for a deeper review</button></div>
+    <div class="rv-pref"><span>Show reviews</span><div class="seg" id="rvSeg"></div></div>
+  </div>
+</div>
+
+<!-- learn -->
+<div class="ov" id="learnOv" hidden>
+  <div class="dlg wide">
+    <div class="dhead2"><div><div class="eyebrow">Poker school</div><h2>How to play</h2></div><button class="ibtn" id="learnClose" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="tabs" id="learnTabs" role="tablist"></div>
+    <div id="learnBody"></div>
+  </div>
+</div>
+
+<!-- progress -->
+<div class="ov" id="progOv" hidden>
+  <div class="dlg wide">
+    <div class="dhead2"><div><div class="eyebrow">Coach</div><h2>My progress</h2></div><button class="ibtn" id="progClose" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div id="progBody"></div>
+  </div>
+</div>
+
+<!-- dealer's choice -->
+<div class="ov" id="dealOv" hidden>
+  <div class="dlg">
+    <div class="eyebrow">You're the dealer</div>
+    <h2>Pick the game</h2>
+    <p class="lede" style="margin-bottom:8px">Dealer's choice: everyone plays the game you pick for this hand.</p>
+    <div class="dealopts" id="dealOpts"></div>
+  </div>
+</div>
+
+<!-- split your cards -->
+<div class="ov" id="splitOv" hidden>
+  <div class="dlg spdlg" role="dialog" aria-labelledby="spTitle">
+    <div class="sp-l">
+      <div class="eyebrow" id="spEyebrow"></div>
+      <h2 id="spTitle"></h2>
+      <p class="lede" id="spRule" style="margin-bottom:6px"></p>
+      <div id="spRows"></div>
+    </div>
+    <div class="sp-r">
+      <p class="fine sp-how">Tap a card, then tap a card in another row to swap them. Once you lock it in, your split stays for the whole hand.</p>
+      <div class="lesson" id="spCoach" hidden></div>
+      <div class="rv-actions"><button class="btn-main" id="spLock" type="button">Lock it in</button><button class="btn-ghost" id="spBest" type="button">Hint</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- rebuy -->
+<div class="ov" id="rebuyOv" hidden>
+  <div class="dlg" style="text-align:center">
+    <div class="eyebrow">Home game</div>
+    <h2>You're out of chips</h2>
+    <p class="lede" id="rebuyTxt"></p>
+    <button class="btn-main" id="rebuyYes">Rebuy for $10</button>
+    <button class="btn-ghost" id="rebuyNo">Cash out and see results</button>
+  </div>
+</div>
+
+<!-- end -->
+<div class="ov" id="endOv" hidden>
+  <div class="dlg" style="text-align:center">
+    <div class="eyebrow" id="endEyebrow">Tournament over</div>
+    <div class="place" id="endPlace">1st</div>
+    <h2 id="endTitle">You won the tournament</h2>
+    <div class="prize" id="endPrize"></div>
+    <div class="stats" id="endStats"></div>
+    <div class="who" id="endWho"></div>
+    <button class="btn-main" id="againBtn">Play again</button>
+    <button class="btn-ghost" id="endBack">Back to the table</button>
+    <button class="btn-ghost" id="endProg">See my progress</button>
+    <button class="btn-ghost" id="setupBtn">Change table setup</button>
+  </div>
+</div>
+
+<!-- history drawer -->
+<aside class="drawer" id="drawer" aria-label="Hand history">
+  <div class="dhead"><h3>Hand history</h3><button class="ibtn" id="histClose" aria-label="Close hand history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="hlist" id="hlist"></div>
+</aside>
+<script type="module" src="/src/ui/legacy.js"></script>
+</body>
+</html>
