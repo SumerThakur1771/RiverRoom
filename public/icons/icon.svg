@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#0a0e0c"/>
+  <ellipse cx="256" cy="256" rx="208" ry="160" fill="#11603f" stroke="#d3a854" stroke-width="14"/>
+  <g transform="translate(256 262)">
+    <rect x="-112" y="-86" width="104" height="146" rx="14" fill="#fbfaf4" transform="rotate(-10)"/>
+    <rect x="8" y="-86" width="104" height="146" rx="14" fill="#fbfaf4" transform="rotate(10)"/>
+    <text x="-66" y="10" font-family="Georgia,serif" font-size="78" font-weight="700" fill="#17191b" text-anchor="middle" transform="rotate(-10)">A</text>
+    <text x="64" y="10" font-family="Georgia,serif" font-size="78" font-weight="700" fill="#c8202f" text-anchor="middle" transform="rotate(10)">♥</text>
+  </g>
+</svg>

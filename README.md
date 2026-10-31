@@ -31,6 +31,10 @@ coach explains each decision.
   eight generic types). They estimate their chances by Monte Carlo simulation against
   what your actions suggest you hold.
 - **Coach:** a hint on demand during a hand, a grade for each decision, and a hand review.
+- **Installable, works offline:** add it to your home screen; single-player (engine, bots,
+  coach) runs with no network, cached by a hand-written service worker.
+- **Accessible:** Lighthouse accessibility 100 on both pages (local build), and no axe-core
+  WCAG 2.1 A/AA violations on the in-game screens. Both are checked in CI.
 - **AI hand review (optional):** after a hand, Claude (Haiku 5.5) writes a short review
   through a server route (`api/review.ts`). It needs `ANTHROPIC_API_KEY` set on the server.
   Without it, or when rate-limited, the built-in review is used.
@@ -51,6 +55,7 @@ src/ui/       screens and animations (carried over from the original version and
               by the engine; still plain JavaScript).
 server/       the multiplayer server (Node, Socket.IO), using the same engine, and its
               Postgres storage (server/src/store.ts).
+src/pwa/      service worker and page setup (offline cache, analytics).
 src/ledger/   end-of-night settlement: fewest payments, exact for up to 16 people.
 prisma/       database schema and migrations.
 api/          Vercel serverless routes (the AI hand review).
@@ -90,9 +95,16 @@ npm run smoke      # clicks through hands in Chromium (needs `npm run dev` runni
 npm run parity     # bot statistics vs the original game (about 2 minutes)
 ```
 
-CI runs typecheck, lint, the tests with coverage (including storage tests against a
-Postgres service container), the build, the browser smoke test and a two-browser
-multiplayer test on every push. After each production deploy, the smoke test also runs against the live site.
+CI runs on every push:
+- typecheck and lint;
+- the tests with coverage, including storage tests against a Postgres service container;
+- the build;
+- the browser smoke test and a two-browser multiplayer test;
+- an offline-play test;
+- axe-core on the in-game screens;
+- Lighthouse, which fails the build below 95 accessibility.
+
+After each production deploy, the smoke test and Lighthouse also run against the live site.
 
 ## Measurements
 

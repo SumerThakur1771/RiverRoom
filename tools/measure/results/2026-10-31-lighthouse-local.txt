@@ -1,0 +1,8 @@
+| Page | Run | Performance | Accessibility | Best practices | SEO | Lighthouse |
+|---|---|---|---|---|---|---|
+| http://localhost:4181/ | 1 | 90 | 100 | 100 | 100 | 13.5.0 |
+| http://localhost:4181/ | 2 | 90 | 100 | 100 | 100 | 13.5.0 |
+| http://localhost:4181/ | 3 | 90 | 100 | 100 | 100 | 13.5.0 |
+| http://localhost:4181/mp.html | 1 | 100 | 100 | 96 | 100 | 13.5.0 |
+| http://localhost:4181/mp.html | 2 | 100 | 100 | 96 | 100 | 13.5.0 |
+| http://localhost:4181/mp.html | 3 | 100 | 100 | 96 | 100 | 13.5.0 |

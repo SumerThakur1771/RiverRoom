@@ -35,9 +35,13 @@ jobs:
         run: |
           node tools/ui/smoke.mjs https://sumer-riverroom.vercel.app/ 40 home
           node tools/ui/smoke.mjs https://sumer-riverroom.vercel.app/ 25 tourney
+      - name: Lighthouse on the live site (3 runs per page; fails below 95 accessibility)
+        run: node tools/measure/lighthouse.mjs https://sumer-riverroom.vercel.app/ lighthouse 3 95
       - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: live-screenshots
-          path: screenshots/
+          path: |
+            screenshots/
+            lighthouse/
           retention-days: 14

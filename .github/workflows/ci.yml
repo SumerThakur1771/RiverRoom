@@ -56,6 +56,12 @@ jobs:
           node tools/ui/smoke.mjs http://localhost:4173/ 40 home
           node tools/ui/smoke.mjs http://localhost:4173/ 25 tourney
           node tools/ui/review-ui.mjs http://localhost:4173/
+      - name: Installable app works offline (service worker), accessibility of in-game screens (axe-core)
+        run: |
+          node tools/ui/offline.mjs http://localhost:4173/ 60
+          node tools/ui/axe-table.mjs http://localhost:4173/
+      - name: Lighthouse on the production build (fails below 95 accessibility)
+        run: node tools/measure/lighthouse.mjs http://localhost:4173/ lighthouse 1 95
       - name: Multiplayer in the browser (two players, real server with Postgres)
         run: |
           npm run server:build
@@ -73,4 +79,5 @@ jobs:
           path: |
             screenshots/
             coverage/
+            lighthouse/
           retention-days: 14

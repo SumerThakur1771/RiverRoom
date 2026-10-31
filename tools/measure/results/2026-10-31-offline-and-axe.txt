@@ -1,0 +1,10 @@
+manifest: River Room Poker Trainer, display standalone, 4 icons; service worker controls page: true; cached files: 16
+offline: page loaded true, played to hand #3 in 60s, multiplayer page loaded true; page errors: none
+RESULT: ok
+desktop / table, your turn: 21 rules passed, 0 violations
+desktop / hint open: 23 rules passed, 0 violations
+desktop / hand review: 22 rules passed, 0 violations
+phone / table, your turn: 21 rules passed, 0 violations
+phone / hint open: 24 rules passed, 0 violations
+phone / hand review: 22 rules passed, 0 violations
+screens audited: 6; violations: 0

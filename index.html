@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="River Room: a poker trainer for a home game, with dealer's-choice variants, computer opponents and a coach.">
+<meta name="theme-color" content="#0a0e0c">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <title>River Room Hold'em</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -50,7 +54,7 @@
       </div>
       <div class="act" id="act" hidden>
         <div class="tinfo"><div class="ti" id="tinfo"></div><button class="hintbtn" id="arrBtn" type="button" hidden>My cards</button><button class="hintbtn" id="hintBtn" type="button">Hint</button></div>
-        <div class="hint" id="hint" hidden></div>
+        <div class="hint" id="hint" hidden tabindex="0" role="region" aria-label="Coach hint"></div>
         <div class="sizer" id="sizer">
           <div class="presets" id="presets"></div>
           <div class="slide">

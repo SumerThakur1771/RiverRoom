@@ -50,6 +50,14 @@ proof. Nothing here is an estimate. Dates are when the measurement was taken.
 | Settlement uses the fewest possible payments: equal to a brute-force minimum on 400 random cases; exact for up to 16 people in 10.65 ms mean (20.7 ms worst) | [test/settle.test.ts](test/settle.test.ts), [METRICS.md](METRICS.md#settlement-fewest-payments) |
 | AI review scoring pipeline: a perfect mock scores 100%, an "always fine" mock 57.1%, on the 20-hand eval set | [METRICS.md](METRICS.md#ai-hand-review-eval) |
 
+## Installable and accessible (measured, 2026-10-31)
+
+| Fact | Proof |
+|---|---|
+| Lighthouse accessibility 100 on both pages (3 runs each, local production build, Lighthouse 13.5.0 mobile); CI fails below 95 | [METRICS.md](METRICS.md#lighthouse-local-production-build), [tools/measure/results/2026-10-31-lighthouse-local.txt](tools/measure/results/2026-10-31-lighthouse-local.txt) |
+| 0 axe-core WCAG 2.1 A/AA violations on 6 in-game screens (table, hint, review × desktop, phone); found and fixed 1 that Lighthouse's start-screen audit could not see | [METRICS.md](METRICS.md#accessibility-of-in-game-screens-axe-core), [tools/ui/axe-table.mjs](tools/ui/axe-table.mjs) |
+| Installable PWA with a hand-written service worker (no Workbox); single-player plays with the network cut (to hand #3 in 60 s in the test), checked in CI | [src/pwa/sw.js](src/pwa/sw.js), [METRICS.md](METRICS.md#offline-play-service-worker) |
+
 ## Performance (measured, Chromium 141, cloud VM, 2026-10-31)
 
 | Fact | Proof |
@@ -63,7 +71,7 @@ proof. Nothing here is an estimate. Dates are when the measurement was taken.
 ## Not claimed
 
 - No user numbers yet.
-- No Lighthouse score yet.
+- No Lighthouse score for the live site copied here yet (it runs after each deploy).
 - No real-model score for the AI review yet (waiting for the API key in Vercel).
 - Multiplayer and storage are built and tested, but not yet deployed (waiting for the Railway
   service).

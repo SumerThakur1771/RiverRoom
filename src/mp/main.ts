@@ -3,6 +3,9 @@
 import { io, type Socket } from 'socket.io-client';
 import type { Ack, LogLine, View } from '../../server/src/protocol';
 import { HOUSE, type Balance, type Transfer } from '../ledger/settle';
+import { initSite } from '../pwa/site';
+
+initSite();
 
 const SERVER = (import.meta.env.VITE_MP_SERVER_URL as string | undefined) || 'http://localhost:8080';
 const KEY = 'river-room-mp';

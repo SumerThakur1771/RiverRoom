@@ -316,9 +316,54 @@ How often exact beats greedy depends on how often balances cancel out within sub
 Round-number balances, as here, make that common. The property test in
 `test/settle.test.ts` checks the minimum against brute force (400 random cases).
 
+## Lighthouse (local production build)
+
+Command: `npm run build && npx vite preview --port 4181`, then
+`node tools/measure/lighthouse.mjs http://localhost:4181/ tools/measure/results/lighthouse 3 95`
+(Lighthouse 13.5.0, mobile preset with default throttling, Chromium 141). Output:
+[`results/2026-10-31-lighthouse-local.txt`](tools/measure/results/2026-10-31-lighthouse-local.txt);
+full reports for run 1: [`results/lighthouse/`](tools/measure/results/lighthouse/).
+
+| Page | Performance | Accessibility | Best practices | SEO |
+|---|---|---|---|---|
+| `/` (game, start screen) | 90, 90, 90 | 100, 100, 100 | 100, 100, 100 | 100, 100, 100 |
+| `/mp.html` (play with friends) | 100, 100, 100 | 100, 100, 100 | 96, 96, 96 | 100, 100, 100 |
+
+- Before two fixes, the first measurement was accessibility 95 on `/`, because of small
+  captions at a 4.32:1 contrast ratio, and SEO 91 on both pages, because there was no
+  `robots.txt`.
+- Best practices 96 on `/mp.html`: the page logs a console error when it cannot reach a
+  multiplayer server, and none runs in this local measurement.
+- These are local numbers on a cloud VM. The live site is measured by the "Live smoke test"
+  workflow after each deploy (3 runs per page, in its step summary); those numbers are not
+  copied here yet.
+
+## Accessibility of in-game screens (axe-core)
+
+Command: `node tools/ui/axe-table.mjs http://localhost:4181/` (axe-core 4.14.0, WCAG 2.1 A and
+AA rules). Output: [`results/2026-10-31-offline-and-axe.txt`](tools/measure/results/2026-10-31-offline-and-axe.txt).
+
+| Screen | Desktop | Phone |
+|---|---|---|
+| Table, your turn | 0 violations | 0 violations |
+| Hint panel open | 0 violations | 0 violations (was 1 before the fix: the scrollable hint panel was not keyboard-focusable) |
+| End-of-hand review | 0 violations | 0 violations |
+
+## Offline play (service worker)
+
+Command: `node tools/ui/offline.mjs http://localhost:4181/ 60`. Output:
+[`results/2026-10-31-offline-and-axe.txt`](tools/measure/results/2026-10-31-offline-and-axe.txt).
+
+On a phone-sized page:
+- The manifest loads, with display "standalone" and 4 icons.
+- The service worker controls the page and has 16 files cached.
+- With the network cut, the page reloads and plays to hand #3 in 60 s, with 0 page errors.
+- The multiplayer page also opens offline (it needs the network to play).
+
 ## Not measured yet
 
-- Lighthouse scores (performance, accessibility).
+- Lighthouse on the live site (runs in CI after each deploy; not yet copied here).
+- Vercel Web Analytics numbers (needs the toggle in Vercel, then real visitors).
 - Real-device phone performance.
 - Persona win rates against each other (head-to-head), as opposed to against the scripted hero.
 - Users and hands played by real people.

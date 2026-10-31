@@ -297,3 +297,40 @@ and the two-browser test against a Postgres 16 service container.
 - Hand logs are stored as text, not as structured actions. That is enough for history and
   disputes; replaying hands would need the action list.
 - A player's identity is per room (token hash). There are no accounts, by design.
+
+## 12. Installable, offline, accessible (`src/pwa`, `vite.config.ts`, `public/`)
+
+**Installable app.** `public/manifest.webmanifest` gives the name, colors and icons. The PNG
+icons, including a maskable one, are rendered from one SVG by `tools/pwa/make-icons.mjs`.
+
+**Offline single-player.** `src/pwa/sw.js` is a hand-written service worker, about 60 lines,
+with no Workbox.
+- A small Vite plugin in `vite.config.ts` writes it into the build. The plugin prepends the
+  list of files to cache (every built file plus `public/`) and a version: a hash of the
+  contents of all those files.
+- Any change to any file, even an HTML page whose name never changes, gives a new version. A
+  new version installs a fresh cache and deletes the old one.
+- Pages are fetched network-first (fresh when online, cached when offline).
+- Hashed assets are served cache-first, since their names change with their content.
+- Google Fonts are cached on first use.
+- `/api/` (the AI review), `/_vercel/` (analytics) and the multiplayer server are never
+  cached.
+
+Offline, the game runs entirely in the browser: engine, bots and the coach's worker. "Ask
+Claude" says it needs a connection, and the built-in review still works.
+`tools/ui/offline.mjs` checks all of this in CI: it loads once, cuts the network, reloads
+and plays hands.
+
+**Accessibility.** Lighthouse audits each page as first loaded, which for the game means
+the start screen. So `tools/ui/axe-table.mjs` also runs axe-core, the engine Lighthouse uses,
+on the table mid-hand, the hint panel and the end-of-hand review, on desktop and phone.
+
+That found one issue Lighthouse missed: on phones the hint panel scrolled but could not be
+reached by keyboard. It is now a focusable region. Lighthouse also flagged one contrast
+issue, small captions at 4.32:1, now above 4.5:1. CI fails if the Lighthouse accessibility
+score drops below 95 or axe finds any WCAG 2.1 A/AA violation.
+
+**Analytics.** Vercel Web Analytics is set up through `@vercel/analytics`, with no cookies.
+It is skipped on localhost. Query strings are removed before anything is sent, because the
+multiplayer page's `?code=` is a private invite code. Data appears once Web Analytics is
+turned on in the Vercel project.

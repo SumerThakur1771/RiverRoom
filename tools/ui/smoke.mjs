@@ -20,7 +20,9 @@ for (const [label, viewport] of [['desktop', { width: 1280, height: 800 }], ['ph
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', e => errors.push('pageerror: ' + e.message));
-  page.on('console', m => { if (m.type() === 'error' && !/fonts\.g/.test(m.text())) errors.push('console: ' + m.text().slice(0, 300)); });
+  // ignored: Google Fonts hiccups, and Vercel's analytics script, which returns 404 until
+  // Web Analytics is turned on for the project (the page works the same either way)
+  page.on('console', m => { if (m.type() === 'error' && !/fonts\.g/.test(m.text()) && !/\/_vercel\/insights\//.test(m.location()?.url ?? '')) errors.push('console: ' + m.text().slice(0, 300)); });
   await page.goto(URL_ + '?seed=smoke-' + label);
   await page.screenshot({ path: `${OUT}/${label}-start.png` });
   await page.click('#startBtn');

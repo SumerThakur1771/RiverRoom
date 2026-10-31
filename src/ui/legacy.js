@@ -17,6 +17,9 @@ import { bindGame,
   roundChips, splitHintLines, splitKey, splitValue, useSplit, vsOne,
 } from '../coach/coach';
 import './styles.css';
+import { initSite } from '../pwa/site';
+
+initSite();
 const SEED = new URLSearchParams(location.search).get('seed');
 // Measurement build only (`vite build --mode measure`, see tools/measure/longtasks.mjs): the same
 // shortcuts and timers the Phase 1 harness patched into the original. Production builds drop it.
@@ -1091,7 +1094,7 @@ async function serverReview(r){
   $('#rvAiWrap').hidden = false; out.textContent = 'Claude is reviewing this hand…'; btn.disabled = true;
   const note = (reason, retryAfter) => {
     if (reason === 'not_configured'){ serverReviewOff = true; btn.hidden = true; out.textContent = 'Claude reviews are not set up on this site yet. The review above is from the app\'s own coach.'; return; }
-    out.textContent = reason === 'rate_limited' ? `Too many reviews in a short time. Try again in ${retryAfter || 60} seconds. The review above is from the app's own coach.` : 'Claude could not finish this review. The review above is from the app\'s own coach.';
+    out.textContent = reason === 'rate_limited' ? `Too many reviews in a short time. Try again in ${retryAfter || 60} seconds. The review above is from the app's own coach.` : reason === 'network' && !navigator.onLine ? 'You are offline, so Claude cannot review this hand. The review above is from the app\'s own coach.' : 'Claude could not finish this review. The review above is from the app\'s own coach.';
   };
   revCtl = new AbortController();
   try {
