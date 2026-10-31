@@ -1,0 +1,86 @@
+// River Room multiplayer storage: tables (rooms), the people who sat at them, every hand's
+// history and result, and the buy-in / cash-out ledger that end-of-night settlements use.
+// Amounts are in cents.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../server/src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Room {
+  id        String        @id @default(cuid())
+  /// The invite code. Codes are reused only after a room is closed, so it is indexed, not unique.
+  code      String
+  createdAt DateTime      @default(now())
+  closedAt  DateTime?
+  players   Player[]
+  hands     Hand[]
+  ledger    LedgerEntry[]
+
+  @@index([code])
+}
+
+model Player {
+  id        String        @id @default(cuid())
+  roomId    String
+  room      Room          @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  name      String
+  /// SHA-256 of the player's session token. The token itself is never stored.
+  tokenHash String        @unique
+  joinedAt  DateTime      @default(now())
+  ledger    LedgerEntry[]
+  results   HandResult[]
+
+  @@index([roomId])
+}
+
+model Hand {
+  id       String       @id @default(cuid())
+  roomId   String
+  room     Room         @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  handNo   Int
+  playedAt DateTime     @default(now())
+  /// The hand history (no player's private "Dealt to" line).
+  log      String
+  results  HandResult[]
+
+  @@unique([roomId, handNo])
+}
+
+model HandResult {
+  id       String  @id @default(cuid())
+  handId   String
+  hand     Hand    @relation(fields: [handId], references: [id], onDelete: Cascade)
+  /// Null for computer players.
+  playerId String?
+  player   Player? @relation(fields: [playerId], references: [id], onDelete: SetNull)
+  name     String
+  /// Chips won (positive) or lost (negative) in this hand, in cents.
+  net      Int
+
+  @@index([handId])
+  @@index([playerId])
+}
+
+enum LedgerKind {
+  BUYIN
+  CASHOUT
+}
+
+model LedgerEntry {
+  id        String     @id @default(cuid())
+  roomId    String
+  room      Room       @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  playerId  String
+  player    Player     @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  kind      LedgerKind
+  /// Always positive, in cents.
+  amount    Int
+  createdAt DateTime   @default(now())
+
+  @@index([roomId])
+}

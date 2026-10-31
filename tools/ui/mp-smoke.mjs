@@ -56,7 +56,16 @@ const after = await a.evaluate(() => document.querySelector('.seat .nm')?.textCo
 const sameCode = (await a.textContent('#tcode')).trim() === code;
 const seatsSeen = await b.$$eval('.seat .nm', els => els.map(e => e.textContent));
 console.log(`table ${code}: ${played} hands played; Ana after reload: "${after}" (before "${before}"), same table: ${sameCode}; Ben sees seats: ${seatsSeen.join(' | ')}; Ben's own cards now: ${(await mine(b)).join(', ') || '(between hands)'}`);
-const ok = !errors.length && sameCode && after === before && seatsSeen.some(s => s.startsWith('Ana')) && seatsSeen.some(s => s.startsWith('Ben (you)'));
+// settle up: both players and a list of payments (or "nobody owes")
+await b.click('#settleBtn');
+await b.waitForSelector('#settle:not([hidden]) #balances tr', { timeout: 10_000 });
+const balances = await b.$$eval('#balances tr', rows => rows.map(r => r.textContent));
+const payments = await b.$$eval('#transfers li', lis => lis.map(l => l.textContent));
+const note = await b.textContent('#settleNote');
+await b.screenshot({ path: 'screenshots/mp-settle-phone.png' });
+console.log(`settle up: balances ${balances.join(' | ')}; payments ${payments.join(' | ')}; note: ${note}`);
+const settled = balances.some(r => r.startsWith('Ana')) && balances.some(r => r.startsWith('Ben')) && payments.length > 0;
+const ok = settled && !errors.length && sameCode && after === before && seatsSeen.some(s => s.startsWith('Ana')) && seatsSeen.some(s => s.startsWith('Ben (you)'));
 console.log(ok ? 'RESULT: ok' : 'RESULT: FAIL ' + errors.slice(0, 5).join(' | '));
 await browser.close();
 process.exit(ok ? 0 : 1);

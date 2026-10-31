@@ -22,7 +22,11 @@ coach explains each decision.
   with rising blinds.
 - **Play with friends** (`/mp.html`): invite-code tables on a Node + Socket.IO server that
   deals, runs the bots and sends each player only their own cards. Reconnects by session
-  token; a turn timer keeps the game moving.
+  token; a turn timer keeps the game moving. **Settle up** shows everyone's buy-ins, rebuys
+  and cash-outs and who pays whom, in the fewest possible payments.
+- **Saved games (optional):** with `DATABASE_URL` set, the server stores rooms, players,
+  hand histories and the buy-in ledger in Postgres (Prisma). Session tokens are stored only
+  as hashes.
 - **Bots** with distinct styles (tight folder, bluffer, strong all-rounder, wild card, and
   eight generic types). They estimate their chances by Monte Carlo simulation against
   what your actions suggest you hold.
@@ -45,7 +49,10 @@ src/worker/   the compute Web Worker: bots, coach analysis and opponent-model ta
               here so the page never freezes.
 src/ui/       screens and animations (carried over from the original version and driven
               by the engine; still plain JavaScript).
-server/       the multiplayer server (Node, Socket.IO), using the same engine.
+server/       the multiplayer server (Node, Socket.IO), using the same engine, and its
+              Postgres storage (server/src/store.ts).
+src/ledger/   end-of-night settlement: fewest payments, exact for up to 16 people.
+prisma/       database schema and migrations.
 api/          Vercel serverless routes (the AI hand review).
 legacy/       the original single-file version, kept as the reference until parity.
 tools/        recorders, measurement scripts and the browser smoke test.
@@ -65,18 +72,27 @@ npm run build      # production build in dist/
 npm run server:dev # multiplayer server on :8080 (open /mp.html from `npm run dev`)
 ```
 
+Storage is optional. To try it locally with Postgres:
+
+```bash
+export DATABASE_URL=postgresql://user:pass@localhost:5432/riverroom
+npm run db:migrate   # apply migrations (skipped when DATABASE_URL is unset)
+npm run server:dev
+```
+
 ## Test it
 
 ```bash
 npm run typecheck
 npm run lint
-npm test           # unit tests and the golden replay
+npm test           # unit tests, golden replay, server tests (storage test needs TEST_DATABASE_URL)
 npm run smoke      # clicks through hands in Chromium (needs `npm run dev` running)
 npm run parity     # bot statistics vs the original game (about 2 minutes)
 ```
 
-CI runs typecheck, lint, the tests with coverage, the build and the browser smoke test on
-every push. After each production deploy, the smoke test also runs against the live site.
+CI runs typecheck, lint, the tests with coverage (including storage tests against a
+Postgres service container), the build, the browser smoke test and a two-browser
+multiplayer test on every push. After each production deploy, the smoke test also runs against the live site.
 
 ## Measurements
 
@@ -87,4 +103,4 @@ Every number about this project (speed, freezes, test results, bot statistics) i
 
 - [ANALYSIS.md](ANALYSIS.md): audit of the original version.
 - [PLAN.md](PLAN.md): the roadmap and what changed along the way.
-- [DESIGN.md](DESIGN.md): how the engine, randomness, evaluator, equity, bots and the worker work, with tradeoffs.
+- [DESIGN.md](DESIGN.md): how the engine, randomness, evaluator, equity, bots, the worker, the AI review, the multiplayer server and storage work, with tradeoffs.

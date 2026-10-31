@@ -34,3 +34,4 @@ dist-measure-before/
 dist-measure-after/
 server/dist/
 dist-mp/
+server/src/generated/

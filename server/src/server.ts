@@ -4,6 +4,7 @@ import { createServer, type Server as HttpServer } from 'node:http';
 import { Server, type Socket } from 'socket.io';
 import { ActMsg, CreateMsg, JoinMsg, RebuyMsg, ResumeMsg, type Ack, type View } from './protocol.js';
 import { LIVE_TIMING, newCode, Room, type RoomRecord, type Timing } from './room.js';
+import type { Store } from './store.js';
 
 export interface ServerOptions {
   port?: number;
@@ -13,6 +14,8 @@ export interface ServerOptions {
   /** Fixed seed for tests (deterministic decks); null in production. */
   seed?: string | null;
   record?: (e: RoomRecord) => void;
+  /** Postgres storage (rooms, hands, ledger); without it settlements use the in-memory ledger. */
+  store?: Store;
   /** Tests only: see every view just before it is sent, with the room's real state. */
   inspect?: (room: Room, view: View) => void;
   /** Close a room after this long with nobody connected. */
@@ -38,7 +41,7 @@ export async function startServer(opts: ServerOptions): Promise<RunningServer> {
     const room = new Room(code, creator, {
       send: (token, view) => { opts.inspect?.(room, view); sockets.get(token)?.emit('state', view); },
       log: line => io.to(code).emit('log', line),
-      record: opts.record,
+      record: e => { opts.record?.(e); void opts.store?.record(e); },
     }, timing, opts.seed ? opts.seed + ':' + code : null);
     rooms.set(code, room);
     return room;
@@ -49,8 +52,7 @@ export async function startServer(opts: ServerOptions): Promise<RunningServer> {
     if (room.humansConnected() > 0) return;
     idle.set(room.code, setTimeout(() => {
       if (room.humansConnected() > 0) return;
-      for (const [i, s] of room.seats.entries()) if (s.kind === 'human' && s.token) opts.record?.({ t: 'cashout', code: room.code, name: s.name, token: s.token, amount: room.g.players[i]!.stack });
-      room.close();
+      room.finish();
       rooms.delete(room.code);
     }, opts.idleMs ?? 15 * 60_000));
   };
@@ -124,6 +126,18 @@ export async function startServer(opts: ServerOptions): Promise<RunningServer> {
       const err = rooms.get(session.code)?.answerRebuy(session.seat, m.data.yes) ?? 'room closed';
       reply(ack, err ? { ok: false, error: err } : { ok: true });
     });
+    socket.on('settle', async (_msg: unknown, ack: unknown) => {
+      if (!session) return bad(ack, 'not in a room');
+      const room = rooms.get(session.code);
+      if (!room) return bad(ack, 'room closed');
+      try {
+        const s = opts.store ? await opts.store.settlement(room.code, room.onTable()) : room.settlement();
+        if (typeof ack === 'function') (ack as (b: unknown) => void)({ ok: true, ...s, stored: !!opts.store });
+      } catch (err) {
+        bad(ack, 'could not compute the settlement');
+        console.error(err);
+      }
+    });
     socket.on('leave', (_msg: unknown, ack: unknown) => {
       if (!session) return bad(ack, 'not in a room');
       const room = rooms.get(session.code);
@@ -149,7 +163,8 @@ export async function startServer(opts: ServerOptions): Promise<RunningServer> {
   return {
     http, io, rooms, port,
     close: async () => {
-      for (const r of rooms.values()) r.close();
+      for (const r of rooms.values()) r.finish();
+      await opts.store?.flush();
       for (const t of idle.values()) clearTimeout(t);
       await new Promise<void>(resolve => io.close(() => resolve()));
     },

@@ -2,6 +2,7 @@
 // per-seat view; the client never holds other players' hidden cards.
 import { io, type Socket } from 'socket.io-client';
 import type { Ack, LogLine, View } from '../../server/src/protocol';
+import { HOUSE, type Balance, type Transfer } from '../ledger/settle';
 
 const SERVER = (import.meta.env.VITE_MP_SERVER_URL as string | undefined) || 'http://localhost:8080';
 const KEY = 'river-room-mp';
@@ -28,8 +29,8 @@ let view: View | null = null;
 let session = load();
 let countdown: number | undefined;
 
-function call<T extends Ack>(ev: string, msg: unknown): Promise<T> {
-  return new Promise(resolve => sock.timeout(8000).emit(ev, msg, (err: Error | null, ack: T) => resolve(err ? ({ ok: false, error: 'no answer from the server' } as T) : ack)));
+function call<T extends { ok: true } | { ok: false; error: string } = Ack>(ev: string, msg: unknown): Promise<T> {
+  return new Promise(resolve => sock.timeout(8000).emit(ev, msg, (err: Error | null, ack: T) => resolve(err ? ({ ok: false, error: 'no answer from the server' } as unknown as T) : ack)));
 }
 
 /* ---- lobby ---- */
@@ -123,4 +124,25 @@ $('raise').onclick = () => act({ type: 'raise', to: +$<HTMLInputElement>('amount
 $('rebuyYes').onclick = () => void call('rebuy', { yes: true });
 $('rebuyNo').onclick = () => void call('rebuy', { yes: false });
 $('copy').onclick = () => { if (view) void navigator.clipboard?.writeText(`${location.origin}${location.pathname}?code=${view.code}`); };
+
+/* ---- settle up ---- */
+type SettleAck = { ok: true; balances: Balance[]; transfers: Transfer[]; stored: boolean } | { ok: false; error: string };
+const signed = (cents: number): string => (cents > 0 ? '+' : cents < 0 ? '−' : '') + money(Math.abs(cents));
+$('settleBtn').onclick = async () => {
+  const r = await call<SettleAck>('settle', {});
+  const box = $('settle');
+  box.hidden = false;
+  if (!r.ok) { $('balances').innerHTML = ''; $('transfers').innerHTML = ''; $('settleNote').textContent = 'Could not load the settlement: ' + r.error; return; }
+  $('balances').innerHTML = r.balances.map(b => `<tr><td>${esc(b.name)}</td><td class="${b.net < 0 ? 'neg' : 'pos'}">${signed(b.net)}</td></tr>`).join('');
+  // chips won from or lost to the computer players are not real debts: list them, but nobody pays them
+  const people = r.transfers.filter(t => t.from !== HOUSE && t.to !== HOUSE);
+  const house = r.transfers.filter(t => t.from === HOUSE || t.to === HOUSE);
+  $('transfers').innerHTML = people.length ? people.map(t => `<li><b>${esc(t.from)}</b> pays <b>${esc(t.to)}</b> ${money(t.amount)}</li>`).join('') : '<li>Nobody owes anybody.</li>';
+  $('settleNote').textContent = [
+    ...house.map(t => t.to === HOUSE ? `${t.from} lost ${money(t.amount)} to the computer players (no payment).` : `${t.to} won ${money(t.amount)} from the computer players (nobody pays this).`),
+    r.stored ? 'Totals come from the saved buy-in ledger.' : 'Totals come from this table session (the server has no database configured).',
+  ].join(' ');
+  box.focus();
+};
+$('settleClose').onclick = () => { $('settle').hidden = true; };
 $('leave').onclick = async () => { await call('leave', {}); session = null; save(null); view = null; location.href = location.pathname; };

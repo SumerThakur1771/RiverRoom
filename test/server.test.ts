@@ -17,14 +17,16 @@ let viewsChecked = 0;
 /** Called with every view just before the server sends it: compare with the real game state. */
 function inspect(room: Room, v: View): void {
   viewsChecked++;
+  // someone waiting for a seat (still held by a bot this hand) owns no cards yet: for them
+  // every seat, including the one they will take, follows the public rule
+  const seated = room.seats[v.you]?.kind === 'human';
   for (const s of v.seats) {
     const p = room.g.players[s.seat]!;
-    if (s.seat === v.you && s.cards) {
+    if (s.seat === v.you && seated && s.cards) {
       if (JSON.stringify(s.cards) !== JSON.stringify(p.cards)) leaks.push(`seat ${v.you} got wrong own cards`);
-      if (room.seatOf !== undefined && v.seats[v.you] && room.seats[v.you]!.kind !== 'human') leaks.push(`seat ${v.you} is not a human seat but got cards`);
       continue;
     }
-    if (s.cards && !(p.shown && !p.folded && !p.mucked)) leaks.push(`hand ${v.handNo}: seat ${v.you} saw seat ${s.seat}'s hidden cards`);
+    if (s.cards && !(p.shown && !p.folded && !p.mucked)) leaks.push(`hand ${v.handNo}: ${seated ? 'seat ' + v.you : 'a player waiting for seat ' + v.you} saw seat ${s.seat}'s hidden cards`);
   }
 }
 

@@ -10,6 +10,7 @@ import { HOME_FRIENDS } from '../../src/engine/personas.js';
 import type { Game, Player } from '../../src/engine/state.js';
 import type { LogLine, View } from './protocol.js';
 import { buildView, type SeatMeta } from './view.js';
+import { balancesFrom, settle, type Balance, type LedgerRow, type Transfer } from '../../src/ledger/settle.js';
 
 export interface Timing {
   /** Time a human has to act before the server checks or folds for them. */
@@ -36,7 +37,8 @@ export interface RoomHooks {
 export type RoomRecord =
   | { t: 'buyin'; code: string; name: string; token: string; amount: number }
   | { t: 'cashout'; code: string; name: string; token: string; amount: number }
-  | { t: 'hand'; code: string; handNo: number; lines: string[]; results: Array<{ name: string; token: string | null; net: number }> };
+  | { t: 'hand'; code: string; handNo: number; lines: string[]; results: Array<{ name: string; token: string | null; net: number }> }
+  | { t: 'close'; code: string };
 
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 export const newCode = (): string => Array.from(randomBytes(6), b => CODE_CHARS[b % CODE_CHARS.length]).join('');
@@ -56,6 +58,35 @@ export class Room {
   private running = false;
   closed = false;
 
+  /** The ledger kept in memory (by session token), so settling up works with or without a database. */
+  readonly ledger = new Map<string, { name: string; buyins: number; cashouts: number }>();
+
+  private note(e: RoomRecord): void {
+    if (e.t === 'buyin' || e.t === 'cashout') {
+      const row = this.ledger.get(e.token) ?? { name: e.name, buyins: 0, cashouts: 0 };
+      if (e.t === 'buyin') row.buyins += e.amount; else row.cashouts += e.amount;
+      this.ledger.set(e.token, row);
+    }
+    this.hooks.record?.(e);
+  }
+  /** Chips each seated human has on the table now (during a hand, including what they put in the pot). */
+  onTable(): Map<string, number> {
+    const m = new Map<string, number>();
+    for (const [i, s] of this.seats.entries()) {
+      const p = this.g.players[i]!;
+      if (s.kind === 'human' && s.token) m.set(s.token, p.stack + (this.phase === 'playing' ? p.total : 0));
+    }
+    return m;
+  }
+  ledgerRows(): LedgerRow[] {
+    const table = this.onTable();
+    return [...this.ledger].map(([token, r]) => ({ name: r.name, buyins: r.buyins, cashouts: r.cashouts, onTable: table.get(token) ?? 0 }));
+  }
+  settlement(): { balances: Balance[]; transfers: Transfer[] } {
+    const balances = balancesFrom(this.ledgerRows());
+    return { balances, transfers: settle(balances) };
+  }
+
   constructor(readonly code: string, creator: string, readonly hooks: RoomHooks, readonly timing: Timing = LIVE_TIMING, seed: string | null = null) {
     this.g = newGame({ mode: 'home', seed, settings: { name: creator, opp: 4, stack: HOME_BUY, perLevel: 10, revealAll: false, games: 'holdem' } });
     this.g.players[0]!.name = creator;
@@ -68,14 +99,14 @@ export class Room {
     const token = newToken();
     if (creator) {
       Object.assign(this.seats[0]!, { kind: 'human', token, name, connected: true });
-      this.hooks.record?.({ t: 'buyin', code: this.code, name, token, amount: HOME_BUY });
+      this.note({ t: 'buyin', code: this.code, name, token, amount: HOME_BUY });
       return { seat: 0, token };
     }
     const free = this.seats.findIndex((s, i) => s.kind === 'bot' && !this.pendingJoin.has(i));
     if (free < 0) return null;
     const seat: Seat = { kind: 'human', token, name, connected: true };
     this.pendingJoin.set(free, seat);
-    this.hooks.record?.({ t: 'buyin', code: this.code, name, token, amount: HOME_BUY });
+    this.note({ t: 'buyin', code: this.code, name, token, amount: HOME_BUY });
     // between hands the seat changes hands right away; during a hand, at the next hand
     if (this.phase !== 'playing') this.applySeatChanges();
     this.broadcast();
@@ -106,7 +137,7 @@ export class Room {
     const g = this.g;
     for (const seat of this.pendingLeave) {
       const p = g.players[seat]!, s = this.seats[seat]!;
-      if (s.kind === 'human' && s.token) this.hooks.record?.({ t: 'cashout', code: this.code, name: s.name, token: s.token, amount: p.stack });
+      if (s.kind === 'human' && s.token) this.note({ t: 'cashout', code: this.code, name: s.name, token: s.token, amount: p.stack });
       const used = new Set(g.players.filter(x => !x.isHuman).map(x => x.type));
       const friend = HOME_FRIENDS.find(f => !used.has(f.type)) ?? HOME_FRIENDS[seat % HOME_FRIENDS.length]!;
       Object.assign(p, makePlayer(g.rs, g.settings, p.seat, friend, HOME_BUY), { i: seat, read: true });
@@ -238,7 +269,7 @@ export class Room {
 
   private recordHand(start: Map<number, { stack: number; buyins: number }>): void {
     const g = this.g;
-    this.hooks.record?.({
+    this.note({
       t: 'hand', code: this.code, handNo: g.handNo, lines: g.hist.filter(l => !l.startsWith('Dealt to ')),
       results: g.players.map(p => ({ name: p.name, token: this.seats[p.i]!.kind === 'human' ? this.seats[p.i]!.token : null, net: p.stack - start.get(p.i)!.stack })),
     });
@@ -260,9 +291,16 @@ export class Room {
       this.rebuyAsk = { seat: p.i, resolve, timer };
       this.broadcast();
     }).then(yes => {
-      if (yes && s.token) this.hooks.record?.({ t: 'buyin', code: this.code, name: s.name, token: s.token, amount: HOME_BUY });
+      if (yes && s.token) this.note({ t: 'buyin', code: this.code, name: s.name, token: s.token, amount: HOME_BUY });
       return yes as boolean;
     });
+  }
+
+  /** End the night: cash everyone out at their current stack, then close. */
+  finish(): void {
+    for (const [i, s] of this.seats.entries()) if (s.kind === 'human' && s.token) this.note({ t: 'cashout', code: this.code, name: s.name, token: s.token, amount: this.g.players[i]!.stack });
+    this.note({ t: 'close', code: this.code });
+    this.close();
   }
 
   close(): void {

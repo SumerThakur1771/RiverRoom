@@ -43,3 +43,10 @@ button:disabled{opacity:.5;cursor:default}
 .rebuy{background:var(--panel);border:1px solid var(--gold);border-radius:12px;padding:12px;margin-top:12px}
 .rebuy button{margin-right:8px}
 .log{margin-top:14px;color:var(--muted)}.log ul{max-height:220px;overflow:auto;padding-left:18px;margin:6px 0}
+.settle{background:var(--panel);border:1px solid var(--gold);border-radius:12px;padding:12px 14px;margin-top:12px}
+.settle h2{margin:0 0 4px;font-size:1.15em}.settle h3{margin:12px 0 4px;font-size:1em}
+.settle .sm{color:var(--muted);font-size:.9em}
+.settle table{border-collapse:collapse;width:100%;max-width:420px}
+.settle td,.settle th{text-align:left;padding:4px 8px;border-bottom:1px solid var(--line)}
+.settle .pos{color:#7fd69a}.settle .neg{color:#ff8f86}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}

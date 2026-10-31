@@ -123,7 +123,7 @@ The bots are a line-by-line port. They are checked statistically, not hand by ha
 All 16 persona/game rows pass. METRICS.md lists the borderline ones, and why the
 tournament samples can only rule out large changes.
 
-## 7. Keeping the page responsive: the compute worker (`src/worker`, `src/coach/compute.js`)
+## 7. Keeping the page responsive: the compute worker (`src/worker`, `src/coach/compute.ts`)
 
 **Problem (measured).** In the original:
 - The split-game opponent model (`oppDist`) took about 0.6–0.75 s on the main thread for
@@ -229,14 +229,21 @@ model it runs from the "AI review eval (live)" workflow, through the deployed en
 
 **Testing it.** `test/server.test.ts` starts a real server and three real Socket.IO clients
 that play full hands against two bots. A hook compares every outgoing view with the
-server's real state at that moment. It checked 1,376 views over 12 hands with 0 leaks, and a
-deliberately broken visibility rule makes it fail. The test also covers:
+server's real state at that moment. In 5 runs it checked 1,312 to 1,445 views over 12 hands
+with 0 leaks, and a deliberately broken visibility rule makes it fail. The test also covers:
 - a player who stops acting (the timer folds or checks for them);
 - a disconnect and a reconnect by token (same seat, same cards);
 - a wrong token being refused;
 - invalid input.
 
 `tools/ui/mp-smoke.mjs` plays two browsers against the bundled server in CI.
+
+One false alarm, and what it taught: the leak check once flagged a player who was waiting for
+a seat. They were shown the cards of the bot in that seat, but only after those cards had
+been turned face up for everyone. The check had treated "the seat you will take" as "your
+own cards". It now applies the public rule to anyone not yet seated, and putting the
+original bug back (waiting players see their future seat's cards) still fails it 3 runs out
+of 3.
 
 **Tradeoffs.**
 - Game state lives in the server's memory (the engine generator cannot be serialized), so a
@@ -246,14 +253,47 @@ deliberately broken visibility rule makes it fail. The test also covers:
 - One server instance. Several instances would need sticky sessions or a shared room
   registry.
 
+## 11. Storage and settling up (`prisma/`, `server/src/store.ts`, `src/ledger/settle.ts`)
 
+**What is stored.** With `DATABASE_URL` set, the server writes to Postgres through Prisma
+(`prisma/schema.prisma`):
+- `Room`: invite code, when it opened and closed.
+- `Player`: display name and a SHA-256 hash of the session token. The token itself is never
+  stored, so a database leak does not let anyone take over a seat.
+- `Hand` and `HandResult`: every finished hand's public log (the "Dealt to" lines with private
+  cards are left out) and each seat's net result. Bots have no player row.
+- `LedgerEntry`: every buy-in, rebuy and cash-out, in cents.
 
-(Superseded: section 10 describes what was built.) For real games with friends, the plan was:
-- the server would own the deck (crypto RNG with rejection sampling) and run this same
-  engine;
-- it would validate every action (the engine already enforces minimum raises and the
-  short-all-in rule);
-- it would send each player only public state plus their own cards.
+**How it writes.** The game never waits for the database. The room emits records (buy-in,
+cash-out, hand, close) and `Store` applies them through one promise chain, so they land in
+order. A failed write is logged and counted, and play goes on. The room also keeps the same
+ledger in memory, so "Settle up" works without a database. The integration test checks that
+both give the same answer.
 
-The generator design (section 1) maps directly onto that: the server drives the generator
-and answers `act` requests with moves received over a socket.
+**Settling up.** Each person's balance is cash-outs + chips on the table − buy-ins. The
+fewest payments that clear every balance equals n − g:
+- n is the number of people with a nonzero balance;
+- g is the largest number of groups the people can be split into so that each group's
+  balances add up to zero (a group of k people needs k − 1 payments).
+
+Finding g is a set-partition problem, which is NP-hard in general. A home game is small, so
+`settle()` runs a dynamic program over subsets (bitmask, O(2^n · n)) for up to 16 people. It
+then settles each group largest-debtor-to-largest-creditor. Above 16 people it uses that
+greedy method on everyone (at most n − 1 payments). A property test compares `settle()`
+with a brute-force minimum on 400 random nights.
+
+Chips won from or lost to the computer players mean the humans' balances don't add up to
+zero. That difference becomes a "Computer players" balance. The settle-up screen lists it,
+but nobody pays it or gets paid by it.
+
+**Deploying.** `railway.json` runs `npm run db:migrate` before each deploy. That is
+`prisma migrate deploy`, skipped when `DATABASE_URL` is not set. CI runs the storage test
+and the two-browser test against a Postgres 16 service container.
+
+**Tradeoffs.**
+- Each hand and its results are one nested Prisma create, so a hand is never half written.
+  But the queue of pending writes lives in memory, so a crash can lose the last few records.
+  In exchange, the database can never block or slow the game.
+- Hand logs are stored as text, not as structured actions. That is enough for history and
+  disputes; replaying hands would need the action list.
+- A player's identity is per room (token hash). There are no accounts, by design.

@@ -1,0 +1,6 @@
+# npx vitest run test/server.test.ts --reporter=verbose, 5 runs, 2026-10-31, Node v22.22.0, 4 vCPU Xeon @ 2.80GHz
+checked 1445 views over 12 hands: 0 leaks  Tests 6 passed (6) 
+checked 1362 views over 12 hands: 0 leaks  Tests 6 passed (6) 
+checked 1365 views over 12 hands: 0 leaks  Tests 6 passed (6) 
+checked 1312 views over 12 hands: 0 leaks  Tests 6 passed (6) 
+checked 1359 views over 12 hands: 0 leaks  Tests 6 passed (6) 

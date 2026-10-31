@@ -14,6 +14,19 @@ jobs:
     name: Typecheck, lint, test, build, browser smoke
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    services:
+      # a throwaway Postgres for the storage tests and the multiplayer browser test
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: riverroom
+          POSTGRES_PASSWORD: riverroom
+          POSTGRES_DB: riverroom_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U riverroom" --health-interval 2s --health-timeout 5s --health-retries 20
+    env:
+      TEST_DATABASE_URL: postgresql://riverroom:riverroom@localhost:5432/riverroom_test
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -23,7 +36,11 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
-      - name: Unit tests, golden replay and property tests (with coverage)
+      - name: Apply database migrations
+        run: npm run db:migrate
+        env:
+          DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
+      - name: Unit, golden replay, property, server and Postgres storage tests (with coverage)
         run: npx vitest run --coverage
       - name: Coverage summary
         if: always()
@@ -39,11 +56,11 @@ jobs:
           node tools/ui/smoke.mjs http://localhost:4173/ 40 home
           node tools/ui/smoke.mjs http://localhost:4173/ 25 tourney
           node tools/ui/review-ui.mjs http://localhost:4173/
-      - name: Multiplayer in the browser (two players, real server)
+      - name: Multiplayer in the browser (two players, real server with Postgres)
         run: |
           npm run server:build
           VITE_MP_SERVER_URL=http://localhost:8099 npx vite build --outDir dist-mp
-          PORT=8099 TIMING=fast ALLOWED_ORIGINS=http://localhost:4177 node server/dist/main.js &
+          DATABASE_URL=$TEST_DATABASE_URL PORT=8099 TIMING=fast ALLOWED_ORIGINS=http://localhost:4177 node server/dist/main.js &
           npx vite preview --outDir dist-mp --port 4177 --strictPort &
           for i in $(seq 30); do curl -sf http://localhost:4177/mp.html > /dev/null && curl -sf http://localhost:8099/health > /dev/null && break; sleep 1; done
           node tools/ui/mp-smoke.mjs http://localhost:4177/mp.html 3

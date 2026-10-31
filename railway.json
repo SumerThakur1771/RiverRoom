@@ -4,6 +4,9 @@
     "buildCommand": "npm ci && npm run server:build"
   },
   "deploy": {
+    "preDeployCommand": [
+      "npm run db:migrate"
+    ],
     "startCommand": "npm run server:start",
     "healthcheckPath": "/health",
     "restartPolicyType": "ON_FAILURE",

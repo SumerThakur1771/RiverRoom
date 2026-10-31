@@ -273,6 +273,49 @@ Commands: `npx tsx tools/review/eval.ts --mock` and `--mock-lazy` (mock models, 
 | Lazy mock ("good, no mistake" every time) | 57.1% (20/20 valid, 10/20 grade, 10/20 mistake, 0/10 street) | The scorer separates good answers from bad ones |
 | Real model (Claude Haiku 5.5) | **not measured yet**: waiting for `ANTHROPIC_API_KEY` in Vercel | |
 
+## Tests with Postgres (current suite)
+
+Command: `TEST_DATABASE_URL=postgresql://…/riverroom_test npx vitest run --reporter=verbose`
+against a local Postgres 16, after `npm run db:migrate`. Output:
+[`results/2026-10-31-tests-with-postgres.txt`](tools/measure/results/2026-10-31-tests-with-postgres.txt).
+
+| Metric | Value |
+|---|---|
+| Test files / tests | 10 / 72, all passing (5 full runs in a row passed) |
+| Without `TEST_DATABASE_URL` | 71 pass, the storage test is skipped |
+| Storage test (`test/store.test.ts`) | Real server, real Postgres, 3 clients, 8+ hands; one player leaves mid-session. Stored 7 hands with 5 results each and 9 ledger entries in the saved run. The settlement read from Postgres equals the in-memory one. The leaver's cash-out equals their buy-ins plus their stored hand results. Tokens are stored only as hashes. 0 failed writes. Passed 6 runs in a row on its own, about 3 s each |
+
+## Multiplayer: no-card-leak check
+
+Command: `npx vitest run test/server.test.ts --reporter=verbose`, run 5 times. Output:
+[`results/2026-10-31-mp-leak-check.txt`](tools/measure/results/2026-10-31-mp-leak-check.txt).
+
+A hook compares every view the server is about to send with the real game state: a player
+may only see their own cards, plus cards turned face up for everyone.
+
+| Run | Views checked (12 hands, 3 clients + 2 bots) | Leaks |
+|---|---|---|
+| 1–5 | 1,445 / 1,362 / 1,365 / 1,312 / 1,359 | 0 in every run |
+
+Mutation check: changing one line so that a player waiting for a seat sees that seat's
+cards makes the test fail in 3 of 3 runs.
+
+## Settlement (fewest payments)
+
+Command: `npx tsx tools/ledger/bench-settle.ts 200` (200 random nights per size; balances
+from −$10 to +$10 in 50-cent steps, a synthetic distribution). Output:
+[`results/2026-10-31-settle-bench.txt`](tools/measure/results/2026-10-31-settle-bench.txt).
+
+| People | `settle()` mean / worst | Payments: exact vs greedy | Exact used fewer payments on |
+|---|---|---|---|
+| 6 | 0.07 ms / 0.8 ms | 907 vs 958 | 51 of 200 nights |
+| 10 | 0.18 ms / 2.2 ms | 1,464 vs 1,717 | 170 of 200 nights |
+| 16 (largest exact size) | 10.65 ms / 20.7 ms | 2,236 vs 2,836 | 198 of 200 nights |
+
+How often exact beats greedy depends on how often balances cancel out within subgroups.
+Round-number balances, as here, make that common. The property test in
+`test/settle.test.ts` checks the minimum against brute force (400 random cases).
+
 ## Not measured yet
 
 - Lighthouse scores (performance, accessibility).

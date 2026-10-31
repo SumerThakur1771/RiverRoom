@@ -1,0 +1,108 @@
+
+ RUN  v5.0.5 /home/user/riverroom
+
+stdout | test/coach-lazy.test.ts > coach graded later = coach graded at the time > home holdem (12 hands)
+home holdem: 27 decisions graded identically
+
+ ✓ test/coach-lazy.test.ts > coach graded later = coach graded at the time > home holdem (12 hands) 785ms
+ ✓ test/evaluator.test.ts > 5-card evaluator > ranks all 2,598,960 hands into the standard category counts and 7,462 distinct values 1513ms
+ ✓ test/properties.test.ts > chip accounting (random hands) > conserves chips, never goes negative, and pays every chip out 1638ms
+ ✓ test/evaluator.test.ts > 5-card evaluator > values 7 cards as their best 5 (checked against brute force on 20,000 random hands) 570ms
+ ✓ test/properties.test.ts > buildPots > splits any contributions into pots that add up, with only live contributors eligible 69ms
+ ✓ test/properties.test.ts > bots in every game > home holdem: 40 hands with bots keep every chip accounted for 578ms
+ ✓ test/properties.test.ts > bots in every game > home std: 8 hands with bots keep every chip accounted for 1615ms
+stdout | test/coach-lazy.test.ts > coach graded later = coach graded at the time > home std (4 hands)
+home std: 15 decisions graded identically
+
+ ✓ test/coach-lazy.test.ts > coach graded later = coach graded at the time > home std (4 hands) 3247ms
+stdout | test/evaluator.test.ts > exact equity > AA vs KK all-in preflop (no shared suits) has 81.3% equity (enumerating all 1,712,304 boards)
+AA (spades, hearts) vs KK (diamonds, clubs): equity 81.255%  wins 1388072  ties 6538
+
+ ✓ test/evaluator.test.ts > 5-card evaluator > handles the wheel (A-2-3-4-5) as a 5-high straight 1ms
+ ✓ test/evaluator.test.ts > 3 Patti scorer > ranks all 22,100 hands into the standard category counts 34ms
+ ✓ test/evaluator.test.ts > 3 Patti scorer > orders sequences A-K-Q > A-2-3 > K-Q-J, and a trail beats a pure sequence 0ms
+ ✓ test/evaluator.test.ts > exact equity > AA vs KK all-in preflop (no shared suits) has 81.3% equity (enumerating all 1,712,304 boards) 2333ms
+ ✓ test/properties.test.ts > bots in every game > home two: 8 hands with bots keep every chip accounted for 1650ms
+ ✓ test/golden.test.ts > golden session home-dealer > replays 40 hands exactly 1174ms
+ ✓ test/golden.test.ts > golden session home-holdem > replays 40 hands exactly 49ms
+ ✓ test/golden.test.ts > golden session home-k8 > replays 30 hands exactly 838ms
+ ✓ test/golden.test.ts > golden session home-n7 > replays 40 hands exactly 189ms
+ ✓ test/golden.test.ts > golden session home-std > replays 40 hands exactly 73ms
+ ✓ test/golden.test.ts > golden session home-two > replays 40 hands exactly 98ms
+ ✓ test/golden.test.ts > golden session tourney-a > replays 7 hands exactly 23ms
+ ✓ test/golden.test.ts > golden session tourney-b > replays 1 hands exactly 6ms
+ ✓ test/golden.test.ts > golden session tourney-c > replays 24 hands exactly 34ms
+ ✓ test/golden.test.ts > golden session tourney-d > replays 1 hands exactly 1ms
+ ✓ test/golden.test.ts > golden session tourney-e > replays 5 hands exactly 3ms
+ ✓ test/golden.test.ts > golden session tourney-f > replays 4 hands exactly 7ms
+stdout | test/coach-lazy.test.ts > coach graded later = coach graded at the time > home two (4 hands)
+home two: 15 decisions graded identically
+
+ ✓ test/coach-lazy.test.ts > coach graded later = coach graded at the time > home two (4 hands) 3876ms
+ ✓ test/properties.test.ts > bots in every game > home k8: 4 hands with bots keep every chip accounted for 4716ms
+stdout | test/store.test.ts > Postgres storage (rooms, hands, ledger, settlement) > records buy-ins, hands and a cash-out, and settles from the database exactly as from memory
+stored 7 hands, 9 ledger entries; settlement: Ana -> Cy $25.20; Ana -> Computer players $14.80; Ben -> Computer players $10.20
+
+ ✓ test/store.test.ts > Postgres storage (rooms, hands, ledger, settlement) > records buy-ins, hands and a cash-out, and settles from the database exactly as from memory 2514ms
+ ✓ test/server.test.ts > multiplayer server > rejects bad input 88ms
+ ✓ test/server.test.ts > multiplayer server > three players create and join a room by invite code; bots fill the other seats 323ms
+ ✓ test/server.test.ts > multiplayer server > a player who stops acting is folded (or checked) for when the turn timer runs out 1078ms
+ ✓ test/server.test.ts > multiplayer server > a disconnected player keeps the seat and gets it back, with the same cards, by session token 445ms
+ ✓ test/server.test.ts > multiplayer server > a wrong token cannot take over a seat 10ms
+stdout | test/server.test.ts > multiplayer server > plays many full hands without ever sending anyone hidden cards
+checked 1322 views over 12 hands: 0 leaks
+
+ ✓ test/server.test.ts > multiplayer server > plays many full hands without ever sending anyone hidden cards 300ms
+ ✓ test/rules.test.ts > minimum raise > turns an under-sized raise into a minimum raise when the player has the chips 32ms
+ ✓ test/rules.test.ts > minimum raise > still allows an all-in for less than a minimum raise 1ms
+ ✓ test/rules.test.ts > short all-ins and re-opening the betting (TDA rule) > one short all-in does not re-open the betting for a player who already acted 34ms
+ ✓ test/rules.test.ts > short all-ins and re-opening the betting (TDA rule) > several short all-ins that add up to a full raise do re-open it 30ms
+ ✓ test/rules.test.ts > blinds, antes and order of play > heads-up: the button posts the small blind, acts first preflop and last after the flop 2ms
+ ✓ test/rules.test.ts > blinds, antes and order of play > posts antes from every player at the ante levels 1ms
+ ✓ test/rules.test.ts > paying the pot > returns an uncalled bet 1ms
+ ✓ test/rules.test.ts > paying the pot > gives the odd chip of a split pot to the first winner left of the button 1ms
+ ✓ test/rules.test.ts > paying the pot > lets a short all-in win only the main pot 1ms
+ ✓ test/rules.test.ts > buildPots > layers contributions into a main pot and side pots with the right players 1ms
+ ✓ test/rules.test.ts > live-play randomness > deals from crypto, and runs everything else on fast generators seeded from crypto 3ms
+ ✓ test/properties.test.ts > bots in every game > home n7: 8 hands with bots keep every chip accounted for 3197ms
+ ✓ test/properties.test.ts > bots in every game > tourney null: 40 hands with bots keep every chip accounted for 43ms
+ ✓ test/settle.test.ts > settle > a simple night: two losers pay one winner 3ms
+ ✓ test/settle.test.ts > settle > finds pairs that cancel out, where the greedy method would use more transfers 2ms
+ ✓ test/settle.test.ts > settle > rejects balances that do not add up to zero 1ms
+ ✓ test/settle.test.ts > settle > always settles everyone exactly, with positive amounts, in the fewest transfers (vs brute force) 69ms
+ ✓ test/settle.test.ts > balances from the ledger > buy-ins, rebuys, cash-outs and chips still on the table; winnings from the computer players show as their loss 1ms
+ ✓ test/review.test.ts > runReview > streams the text and returns a validated review 5ms
+ ✓ test/review.test.ts > runReview > falls back on not JSON 1ms
+ ✓ test/review.test.ts > runReview > falls back on wrong shape 1ms
+ ✓ test/review.test.ts > runReview > falls back on a refusal 0ms
+ ✓ test/review.test.ts > runReview > falls back on a cut-off answer 0ms
+ ✓ test/review.test.ts > runReview > falls back on a model error 0ms
+ ✓ test/review.test.ts > runReview > puts the hand and the app's own analysis in the prompt 0ms
+ ✓ test/review.test.ts > rate limiting > allows up to the limit in the window, then reports when to retry 1ms
+ ✓ test/review.test.ts > rate limiting > limits each IP to 5 a minute and 20 an hour; rejected requests are not counted 2ms
+ ✓ test/review.test.ts > POST /api/review handler > without an API key: 503 and the built-in review 30ms
+ ✓ test/review.test.ts > POST /api/review handler > rejects bad input with 400 before calling the model 6ms
+ ✓ test/review.test.ts > POST /api/review handler > streams deltas, then the validated review 3ms
+ ✓ test/review.test.ts > POST /api/review handler > sends a fallback event when the model output is invalid 1ms
+ ✓ test/review.test.ts > POST /api/review handler > rate-limits by the client IP (first x-forwarded-for entry): 429 with retry-after 5ms
+ ✓ test/review-eval.test.ts > review eval set > has 20 valid requests: 10 with a coach-found mistake, 10 without 10ms
+ ✓ test/review-eval.test.ts > scorer > passes a matching answer 2ms
+ ✓ test/review-eval.test.ts > scorer > fails a wrong grade, a missed mistake, the wrong street and invalid output 1ms
+stdout | test/coach-lazy.test.ts > coach graded later = coach graded at the time > home k8 (2 hands)
+home k8: 7 decisions graded identically
+
+ ✓ test/coach-lazy.test.ts > coach graded later = coach graded at the time > home k8 (2 hands) 7922ms
+stdout | test/coach-lazy.test.ts > coach graded later = coach graded at the time > home n7 (4 hands)
+home n7: 16 decisions graded identically
+
+ ✓ test/coach-lazy.test.ts > coach graded later = coach graded at the time > home n7 (4 hands) 6681ms
+stdout | test/coach-lazy.test.ts > coach graded later = coach graded at the time > tourney null (12 hands)
+tourney holdem: 18 decisions graded identically
+
+ ✓ test/coach-lazy.test.ts > coach graded later = coach graded at the time > tourney null (12 hands) 365ms
+
+ Test Files  10 passed (10)
+      Tests  72 passed (72)
+   Start at  04:29:47
+   Duration  23.16s (tests 97%, import 3%)
+

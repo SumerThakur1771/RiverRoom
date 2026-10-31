@@ -21,11 +21,15 @@
     "review:eval-set": "tsx tools/review/make-eval-set.ts",
     "server:build": "esbuild server/src/main.ts --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=server/dist/main.js",
     "server:start": "node server/dist/main.js",
-    "server:dev": "tsx server/src/main.ts"
+    "server:dev": "tsx server/src/main.ts",
+    "postinstall": "prisma generate",
+    "db:generate": "prisma generate",
+    "db:migrate": "node tools/db/migrate.mjs"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
     "@types/node": "22.20.5",
+    "@types/pg": "8.23.1",
     "@vitest/coverage-v8": "5.0.5",
     "esbuild": "0.28.2",
     "eslint": "10.14.0",
@@ -40,6 +44,10 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.135.0",
+    "@prisma/adapter-pg": "7.10.1",
+    "@prisma/client": "7.10.1",
+    "pg": "8.23.1",
+    "prisma": "7.10.1",
     "socket.io": "4.8.4",
     "socket.io-client": "4.8.4",
     "zod": "4.6.7"
