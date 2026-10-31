@@ -171,7 +171,11 @@ export function applyAction(g: Game, p: Player, a: Action): ActionResult {
     updateRange(g, p, 'call', preRaises);
     res.amt = amt;
   } else {
-    const to = Math.min(Math.round(a.to ?? 0), p.bet + p.stack), prev = g.currentBet, add = to - p.bet, size = to - prev;
+    let to = Math.min(Math.round(a.to ?? 0), p.bet + p.stack);
+    // A raise must be at least a full raise unless it puts the player all-in.
+    // (The original only enforced this in the UI and the bots, not in the engine.)
+    if (to < o.minTo && to < o.maxTo) to = o.minTo;
+    const prev = g.currentBet, add = to - p.bet, size = to - prev;
     putIn(p, add);
     if (size >= g.minRaise) {
       g.minRaise = size;
