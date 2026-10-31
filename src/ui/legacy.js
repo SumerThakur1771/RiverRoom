@@ -5,7 +5,7 @@
 import * as B from '../ai/bots';
 import * as E from '../engine/engine';
 import { Tables } from '../engine/strength';
-import { toPlain } from '../coach/compute.js';
+import { toPlain } from '../coach/compute';
 import { compute, workerMs } from './compute-client.js';
 import { bindGame,
   CONCEPTS, GRADE_LABEL, GRADE_SCORE, HOME_BUY, HOME_FRIENDS, LESSONS, LEVELS, LOGR, PCT, RANKCH,
@@ -14,7 +14,7 @@ import { bindGame,
   gradeDecision, handPct, heroP, holeName, icards, lg, liveList, madeInfo, nm, num,
   oppDist, options, partLabelName, partName, pc, pick, planSplit, posInfo, potTotal, rnd,
   roundChips, splitHintLines, splitKey, splitValue, useSplit, vsOne,
-} from '../coach/coach.js';
+} from '../coach/coach';
 import './styles.css';
 const SEED = new URLSearchParams(location.search).get('seed');
 // Measurement build only (`vite build --mode measure`, see tools/measure/longtasks.mjs): the same

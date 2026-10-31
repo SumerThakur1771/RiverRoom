@@ -4,11 +4,9 @@
 import { describe, expect, it } from 'vitest';
 import { botAction, botFinalSplit, initPlans, pickVariantFor, practiceSplits } from '../src/ai/bots';
 import { planSplit } from '../src/ai/split';
-// @ts-expect-error plain JS module
-import { bindGame, coachContext, coachRec, gradeDecision } from '../src/coach/coach.js';
-// @ts-expect-error plain JS module
-import { computeGrade, computeHint, toPlain } from '../src/coach/compute.js';
-import { newGame, playHand, type Action } from '../src/engine/engine';
+import { bindGame, coachContext, coachRec, gradeDecision, type CoachCtx } from '../src/coach/coach';
+import { computeGrade, computeHint, toPlain, type Snapshot } from '../src/coach/compute';
+import { newGame, playHand, type Action, type ActionResult } from '../src/engine/engine';
 import type { Game } from '../src/engine/state';
 import type { VariantKey } from '../src/engine/variants';
 import { scriptedHero } from '../src/sim/driver';
@@ -22,7 +20,7 @@ function compareSession(mode: 'home' | 'tourney', force: VariantKey | null, hand
   let compared = 0;
   for (let h = 0; h < hands; h++) {
     const flow = playHand(g);
-    let answer: unknown, pending: { pre: unknown; label: string; ctx: unknown; pi: number } | null = null;
+    let answer: unknown, pending: { pre: Snapshot; label: string; ctx: CoachCtx; pi: number } | null = null;
     for (;;) {
       const r = flow.next(answer);
       if (r.done) break;
@@ -44,12 +42,12 @@ function compareSession(mode: 'home' | 'tourney', force: VariantKey | null, hand
       else if (s.kind === 'practiceView') practiceSplits(g);
       else if (s.kind === 'rebuy') answer = 'yes';
       else if (s.kind === 'pause' && s.what === 'action' && pending && (s.data as { p: { i: number } }).p.i === pending.pi) {
-        const act = (s.data as { res: unknown }).res, post = clone(toPlain(g)), recLabel = g.rs.label(g.handNo, 'rec');
+        const act = (s.data as { res: ActionResult }).res, post = clone(toPlain(g)), recLabel = g.rs.label(g.handNo, 'rec');
         bindGame(g, money, settings);
         const rec = g.rs.seg(recLabel, () => coachRec(pending!.ctx));
         const eager = { rec, g: gradeDecision(pending.ctx, act, rec) };
         const lazy = computeGrade({ pre: clone(pending.pre), post, seed, pi: pending.pi, label: pending.label, recLabel, act, money, settings });
-        expect(lazy.ctx.eq).toBe((pending.ctx as { eq: number }).eq);
+        expect(lazy.ctx.eq).toBe(pending.ctx.eq);
         expect({ act: lazy.rec.act, size: lazy.rec.size ?? null }).toEqual({ act: eager.rec.act, size: eager.rec.size ?? null });
         expect(lazy.g).toEqual(eager.g);
         compared++;

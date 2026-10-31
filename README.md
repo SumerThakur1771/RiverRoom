@@ -33,8 +33,8 @@ src/engine/   rules and game state: cards, hand evaluation, variants, betting, p
               needs a decision, so the browser, a simulator and tests drive the same code.
 src/ai/       equity estimates, split-game valuation, and the bots.
 src/sim/      headless driver for simulations and tests.
-src/coach/    the coach and the shared helpers (DOM-free: runs on the page, in the worker
-              and in Node tests; still plain JavaScript).
+src/coach/    the coach and the shared helpers, strict TypeScript and DOM-free: runs on the
+              page, in the worker and in Node tests.
 src/worker/   the compute Web Worker: bots, coach analysis and opponent-model tables run
               here so the page never freezes.
 src/ui/       screens and animations (carried over from the original version and driven

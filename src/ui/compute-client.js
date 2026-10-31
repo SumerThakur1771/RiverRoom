@@ -1,6 +1,6 @@
 // Talks to the compute worker. Every call returns a promise. If the browser cannot start the
 // worker, the same jobs run on the page instead (slower, but the game still works).
-import { run } from '../coach/compute.js';
+import { run } from '../coach/compute';
 
 let worker = null, nextId = 1;
 const waiting = new Map();
@@ -8,7 +8,7 @@ const waiting = new Map();
 export const workerMs = {};
 
 try {
-  worker = new Worker(new URL('../worker/compute-worker.js', import.meta.url), { type: 'module' });
+  worker = new Worker(new URL('../worker/compute-worker.ts', import.meta.url), { type: 'module' });
   worker.onmessage = e => {
     const { id, result, error, ms } = e.data, w = waiting.get(id);
     if (!w) return;

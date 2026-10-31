@@ -152,7 +152,19 @@ tournament samples can only rule out large changes.
 small). The end-of-hand review appears a fraction of a second later while the grades are
 computed.
 
-## 8. Not built yet: server-authoritative multiplayer (Tier 2 plan)
+## 8. The coach in strict TypeScript (`src/coach`)
+
+The coach was carried over from the original as plain JavaScript, then typed under `strict`:
+- `CoachCtx`: the coach's read of a decision.
+- `Rec`: its recommendation.
+- `Grade`: the grade of what you did.
+
+Function bodies were kept as they were, so the grades could not drift. The 98-decision
+eager-vs-lazy test passes before and after. ESLint forbids `window`, `document`,
+`localStorage` and `location` in the engine, bots, coach and worker, which keeps them
+runnable in a Web Worker and in Node. The screen code (`src/ui`) is still plain JavaScript.
+
+## 9. Not built yet: server-authoritative multiplayer (Tier 2 plan)
 
 Today every card lives in the browser, which is fine for a single-player trainer. For real
 games with friends:
