@@ -204,10 +204,51 @@ poker truth.
 In CI it runs against a mock model, which checks the scoring pipeline only. Against the real
 model it runs from the "AI review eval (live)" workflow, through the deployed endpoint.
 
-## 10. Not built yet: server-authoritative multiplayer (Tier 2 plan)
+## 10. Multiplayer: a server-authoritative table (`server/`)
 
-Today every card lives in the browser, which is fine for a single-player trainer. For real
-games with friends:
+**What it does.** Friends play the home game online:
+- One player starts a table and gets a 6-character invite code (no 0/O/1/I).
+- Others join with the code and their name; computer players hold the empty seats.
+- Each human gets a session token, kept in the browser's local storage, so a reload or a
+  dropped connection puts them back in their seat.
+
+**Server-authoritative.**
+- The Node server (Socket.IO) runs the same engine generator as the browser game.
+- It shuffles with the crypto RNG and decides every bot move.
+- It is the only place hole cards exist. After every engine step it builds a view for each
+  seat (`server/src/view.ts`) with public information plus that seat's own cards. Other
+  players' cards appear only once they are turned face up (showdown or an all-in runout).
+  Someone who joins mid-hand watches as a spectator until the next deal, so they never see
+  the cards of the bot whose seat they are taking.
+- Clients can send only `act`, `rebuy` and `leave` for their own seat, on their own turn. Each
+  message is validated with zod.
+- The engine still enforces the betting rules (minimum raise, short all-ins).
+- Each socket may send 20 messages a second.
+- A turn timer (30 s) checks or folds for anyone who doesn't act, so a disconnected player
+  never stalls the table.
+
+**Testing it.** `test/server.test.ts` starts a real server and three real Socket.IO clients
+that play full hands against two bots. A hook compares every outgoing view with the
+server's real state at that moment. It checked 1,376 views over 12 hands with 0 leaks, and a
+deliberately broken visibility rule makes it fail. The test also covers:
+- a player who stops acting (the timer folds or checks for them);
+- a disconnect and a reconnect by token (same seat, same cards);
+- a wrong token being refused;
+- invalid input.
+
+`tools/ui/mp-smoke.mjs` plays two browsers against the bundled server in CI.
+
+**Tradeoffs.**
+- Game state lives in the server's memory (the engine generator cannot be serialized), so a
+  restart ends the current hand. Rooms, buy-ins and hand histories go to the database.
+- Showdown: humans always show their cards (as in the single-player game), with no option
+  to muck.
+- One server instance. Several instances would need sticky sessions or a shared room
+  registry.
+
+
+
+(Superseded: section 10 describes what was built.) For real games with friends, the plan was:
 - the server would own the deck (crypto RNG with rejection sampling) and run this same
   engine;
 - it would validate every action (the engine already enforces minimum raises and the

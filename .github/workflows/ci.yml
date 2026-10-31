@@ -39,6 +39,14 @@ jobs:
           node tools/ui/smoke.mjs http://localhost:4173/ 40 home
           node tools/ui/smoke.mjs http://localhost:4173/ 25 tourney
           node tools/ui/review-ui.mjs http://localhost:4173/
+      - name: Multiplayer in the browser (two players, real server)
+        run: |
+          npm run server:build
+          VITE_MP_SERVER_URL=http://localhost:8099 npx vite build --outDir dist-mp
+          PORT=8099 TIMING=fast ALLOWED_ORIGINS=http://localhost:4177 node server/dist/main.js &
+          npx vite preview --outDir dist-mp --port 4177 --strictPort &
+          for i in $(seq 30); do curl -sf http://localhost:4177/mp.html > /dev/null && curl -sf http://localhost:8099/health > /dev/null && break; sleep 1; done
+          node tools/ui/mp-smoke.mjs http://localhost:4177/mp.html 3
       - name: AI review eval against a mock model (checks the eval pipeline, not the model)
         run: npx tsx tools/review/eval.ts --mock --min 1
       - uses: actions/upload-artifact@v6

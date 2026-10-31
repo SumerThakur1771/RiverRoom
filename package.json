@@ -18,12 +18,16 @@
     "golden:record": "node tools/golden/record.mjs",
     "parity": "tsx tools/sim/parity.ts",
     "review:eval": "tsx tools/review/eval.ts",
-    "review:eval-set": "tsx tools/review/make-eval-set.ts"
+    "review:eval-set": "tsx tools/review/make-eval-set.ts",
+    "server:build": "esbuild server/src/main.ts --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=server/dist/main.js",
+    "server:start": "node server/dist/main.js",
+    "server:dev": "tsx server/src/main.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
     "@types/node": "22.20.5",
     "@vitest/coverage-v8": "5.0.5",
+    "esbuild": "0.28.2",
     "eslint": "10.14.0",
     "fast-check": "4.10.2",
     "globals": "17.13.0",
@@ -36,6 +40,8 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.135.0",
+    "socket.io": "4.8.4",
+    "socket.io-client": "4.8.4",
     "zod": "4.6.7"
   }
 }

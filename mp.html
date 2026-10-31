@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="River Room: play your home game online with friends. Invite-code tables, the server deals.">
+<title>River Room · Play with friends</title>
+<link rel="stylesheet" href="/src/mp/mp.css">
+</head>
+<body>
+<main id="app">
+  <header class="bar"><a class="brand" href="/">River Room</a><span class="sub">Play with friends</span><span id="conn" class="conn" role="status" aria-live="polite"></span></header>
+
+  <section id="lobby" class="panel">
+    <h1>Play your home game online</h1>
+    <p>Start a table and share the code. Empty seats are filled by the computer players. The server deals and keeps everyone's cards private.</p>
+    <label for="name">Your name</label>
+    <input id="name" maxlength="16" autocomplete="nickname" placeholder="e.g. Sumer">
+    <div class="row"><button id="create" class="primary">Start a table</button></div>
+    <div class="or">or join a table</div>
+    <label for="code">Table code</label>
+    <div class="row"><input id="code" maxlength="6" autocapitalize="characters" placeholder="ABC234"><button id="join">Join</button></div>
+    <p id="lobbyErr" class="err" role="alert"></p>
+  </section>
+
+  <section id="table" hidden>
+    <div class="invite">Table <b id="tcode"></b> · <button id="copy" class="link">Copy invite link</button> · <button id="leave" class="link">Leave table</button></div>
+    <div id="seats" class="seats" aria-label="Players"></div>
+    <div class="felt">
+      <div class="pot">Pot <b id="pot">$0.00</b></div>
+      <div id="board" class="cards" aria-label="Table cards"></div>
+      <p id="msg" class="msg" role="status" aria-live="polite"></p>
+    </div>
+    <div class="me">
+      <div><span class="lbl">Your cards</span><div id="mine" class="cards big" aria-label="Your cards"></div></div>
+      <div id="turn" class="turn" role="status" aria-live="polite"></div>
+    </div>
+    <div id="actions" class="actions" hidden>
+      <button id="fold" class="danger">Fold</button>
+      <button id="call"></button>
+      <div class="raise"><input id="amount" type="range" aria-label="Raise to"><button id="raise" class="primary"></button></div>
+    </div>
+    <div id="rebuy" class="rebuy" hidden><p>You are out of chips. Buy back in for $10.00?</p><button id="rebuyYes" class="primary">Rebuy</button><button id="rebuyNo">Stop for tonight</button></div>
+    <details class="log" open><summary>What happened</summary><ul id="log"></ul></details>
+  </section>
+</main>
+<script type="module" src="/src/mp/main.ts"></script>
+</body>
+</html>

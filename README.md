@@ -20,6 +20,9 @@ coach explains each decision.
   split pots and odd chips.
 - **Two modes:** the home cash game (rebuys, cash-out sheet) and a sit-and-go tournament
   with rising blinds.
+- **Play with friends** (`/mp.html`): invite-code tables on a Node + Socket.IO server that
+  deals, runs the bots and sends each player only their own cards. Reconnects by session
+  token; a turn timer keeps the game moving.
 - **Bots** with distinct styles (tight folder, bluffer, strong all-rounder, wild card, and
   eight generic types). They estimate their chances by Monte Carlo simulation against
   what your actions suggest you hold.
@@ -42,6 +45,8 @@ src/worker/   the compute Web Worker: bots, coach analysis and opponent-model ta
               here so the page never freezes.
 src/ui/       screens and animations (carried over from the original version and driven
               by the engine; still plain JavaScript).
+server/       the multiplayer server (Node, Socket.IO), using the same engine.
+api/          Vercel serverless routes (the AI hand review).
 legacy/       the original single-file version, kept as the reference until parity.
 tools/        recorders, measurement scripts and the browser smoke test.
 ```
@@ -57,6 +62,7 @@ through the new engine and requires identical hand histories and chip counts.
 npm install
 npm run dev        # http://localhost:5173 (add ?seed=anything for a reproducible session)
 npm run build      # production build in dist/
+npm run server:dev # multiplayer server on :8080 (open /mp.html from `npm run dev`)
 ```
 
 ## Test it

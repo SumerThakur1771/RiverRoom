@@ -32,3 +32,5 @@ screenshots/
 dist-measure/
 dist-measure-before/
 dist-measure-after/
+server/dist/
+dist-mp/

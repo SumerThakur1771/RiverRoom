@@ -554,7 +554,7 @@ function updateMood(g: Game): void {
   }
 }
 
-export interface HandSummary { handNo: number; totalPot: number; heroNet: number | null; busted: Player[]; rebought: Player[]; newReads: string[]; lines: string[] }
+export interface HandSummary { handNo: number; totalPot: number; heroNet: number | null; busted: Player[]; rebought: Player[]; declined: Player[]; newReads: string[]; lines: string[] }
 
 /* ================= one hand ================= */
 export function* playHand(g: Game): Generator<Step, HandSummary, unknown> {
@@ -665,12 +665,16 @@ export function* playHand(g: Game): Generator<Step, HandSummary, unknown> {
   const lines = g.hist.slice();
   const heroNet = hero.out ? null : hero.stack - hero.start;
   yield { kind: 'pause', what: 'handEnd', ms: 0, data: { totalPot } };
-  const rebought: Player[] = [];
+  const rebought: Player[] = [], declined: Player[] = [];
   if (g.money) {
     for (const p of g.players.filter(x => !x.isHuman && x.stack <= 0)) { p.stack = HOME_BUY; p.buyins++; rebought.push(p); lg(g, `${p.name} rebuys for ${fmt(g, HOME_BUY)}`); }
-    if (hero.stack <= 0) {
-      const c = yield { kind: 'rebuy', p: hero };
-      if (c === 'yes') { hero.stack = HOME_BUY; hero.buyins++; rebought.push(hero); } else g.cashOutReq = true;
+    // every human who is out of chips decides: buy back in, or stop (multiplayer tables have several)
+    const humans = g.players.filter(x => x.isHuman && x.stack <= 0);
+    for (const p of humans) {
+      const c = yield { kind: 'rebuy', p };
+      if (c === 'yes') { p.stack = HOME_BUY; p.buyins++; rebought.push(p); }
+      else if (p === hero) g.cashOutReq = true;
+      else declined.push(p);
     }
   }
   const busted = g.money ? [] : g.players.filter(p => !p.out && p.stack <= 0).sort((a, b) => b.start - a.start);
@@ -680,7 +684,7 @@ export function* playHand(g: Game): Generator<Step, HandSummary, unknown> {
   }
   for (const p of g.players) Object.assign(p, { cards: [], all: [], extra: null, parts: null, splitDone: false, partWin: null, plan: null, vis: 0, shown: false, revealed: false, label: '', winner: false, handName: '', eq: null, bet: 0, allIn: false, folded: p.out });
   Object.assign(g, { board2: [], boardVis2: 0, board: [], boardVis: 0, highlight: null, msg: '', sideInfo: '', pot: 0, street: 0 });
-  return { handNo: g.handNo, totalPot, heroNet, busted, rebought, newReads, lines };
+  return { handNo: g.handNo, totalPot, heroNet, busted, rebought, declined, newReads, lines };
 }
 
 /** Is the session over? (home: cash-out requested; tournament: hero out or one player left) */
