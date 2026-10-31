@@ -1,0 +1,39 @@
+Main-thread measurements of the new app at http://localhost:4176/, 60s per variant, CPU throttle 1x, Chromium 141.0.7390.37
+ms values: median / p95 / max  (n = samples, >50 = samples over 50 ms)
+
+holdem  (hands played: 16, page errors: 0)
+  longtasks     : count=1 median=50 p95=50 max=50
+    longtask in (no timed function) : count=1 max=50
+  worker:tables : 1273.9 / 1273.9 / 1273.9  n=   2 >50=1  (off the main thread)
+  worker:bot    :    0.9 /    4.5 /    9.7  n= 187 >50=0  (off the main thread)
+  worker:hint   :    5.1 /   19.5 /   35.8  n=  84 >50=0  (off the main thread)
+  worker:grade  :   27.5 /  131.8 /  131.8  n=  15 >50=3  (off the main thread)
+
+std  (hands played: 14, page errors: 0)
+  longtasks     : none over 50 ms
+  worker:bot    :   25.7 /   58.1 /   92.7  n= 171 >50=15  (off the main thread)
+  worker:hint   :   67.5 /  109.4 /  138.4  n=  66 >50=47  (off the main thread)
+  worker:grade  :  302.4 /  475.1 /  475.1  n=  13 >50=13  (off the main thread)
+
+two  (hands played: 15, page errors: 0)
+  longtasks     : count=3 median=52 p95=99 max=99
+    longtask in (no timed function) : count=3 max=99
+  worker:bot    :     20 /   39.3 /   79.6  n= 161 >50=3  (off the main thread)
+  worker:hint   :   42.6 /   78.1 /   89.6  n=  72 >50=24  (off the main thread)
+  worker:grade  :  220.1 /  352.7 /  352.7  n=  14 >50=14  (off the main thread)
+
+k8  (hands played: 9, page errors: 0)
+  longtasks     : count=1 median=58 p95=58 max=58
+    longtask in (no timed function) : count=1 max=58
+  worker:bot    :   69.4 /  124.8 /  157.9  n= 118 >50=81  (off the main thread)
+  worker:hint   :  387.2 /  615.2 /  678.4  n=  42 >50=42  (off the main thread)
+  worker:grade  : 1442.3 / 2633.1 / 2633.1  n=   8 >50=8  (off the main thread)
+
+n7  (hands played: 14, page errors: 0)
+  longtasks     : count=2 median=50 p95=50 max=50
+    longtask in (no timed function) : count=2 max=50
+  worker:bot    :   39.5 /   79.3 /  122.1  n= 165 >50=58  (off the main thread)
+  worker:hint   :  106.6 /  214.6 /  230.7  n=  59 >50=55  (off the main thread)
+  worker:grade  :  379.6 / 1031.1 / 1031.1  n=  13 >50=13  (off the main thread)
+
+JSON [{"variant":"holdem","hands":16,"fn":{"showHintInner":{"n":84,"median":0.2,"p95":0.4,"max":0.6,"over50":0}},"worker":{"tables":{"n":2,"median":1273.9,"p95":1273.9,"max":1273.9,"over50":1},"bot":{"n":187,"median":0.9,"p95":4.5,"max":9.7,"over50":0},"hint":{"n":84,"median":5.1,"p95":19.5,"max":35.8,"over50":0},"grade":{"n":15,"median":27.5,"p95":131.8,"max":131.8,"over50":3}},"longtasks":{"n":1,"median":50,"p95":50,"max":50,"over50":0},"attrib":{"(no timed function)":{"n":1,"median":50,"p95":50,"max":50,"over50":0}},"errors":0},{"variant":"std","hands":14,"fn":{"showHintInner":{"n":43,"median":0.3,"p95":0.6,"max":1,"over50":0}},"worker":{"bot":{"n":171,"median":25.7,"p95":58.1,"max":92.7,"over50":15},"hint":{"n":66,"median":67.5,"p95":109.4,"max":138.4,"over50":47},"grade":{"n":13,"median":302.4,"p95":475.1,"max":475.1,"over50":13}},"longtasks":{"n":0},"attrib":{},"errors":0},{"variant":"two","hands":15,"fn":{"showHintInner":{"n":68,"median":0.3,"p95":0.5,"max":2.4,"over50":0}},"worker":{"bot":{"n":161,"median":20,"p95":39.3,"max":79.6,"over50":3},"hint":{"n":72,"median":42.6,"p95":78.1,"max":89.6,"over50":24},"grade":{"n":14,"median":220.1,"p95":352.7,"max":352.7,"over50":14}},"longtasks":{"n":3,"median":52,"p95":99,"max":99,"over50":3},"attrib":{"(no timed function)":{"n":3,"median":52,"p95":99,"max":99,"over50":3}},"errors":0},{"variant":"k8","hands":9,"fn":{},"worker":{"bot":{"n":118,"median":69.4,"p95":124.8,"max":157.9,"over50":81},"hint":{"n":42,"median":387.2,"p95":615.2,"max":678.4,"over50":42},"grade":{"n":8,"median":1442.3,"p95":2633.1,"max":2633.1,"over50":8}},"longtasks":{"n":1,"median":58,"p95":58,"max":58,"over50":1},"attrib":{"(no timed function)":{"n":1,"median":58,"p95":58,"max":58,"over50":1}},"errors":0},{"variant":"n7","hands":14,"fn":{"showHintInner":{"n":22,"median":0.4,"p95":0.9,"max":3.4,"over50":0}},"worker":{"bot":{"n":165,"median":39.5,"p95":79.3,"max":122.1,"over50":58},"hint":{"n":59,"median":106.6,"p95":214.6,"max":230.7,"over50":55},"grade":{"n":13,"median":379.6,"p95":1031.1,"max":1031.1,"over50":13}},"longtasks":{"n":2,"median":50,"p95":50,"max":50,"over50":0},"attrib":{"(no timed function)":{"n":2,"median":50,"p95":50,"max":50,"over50":0}},"errors":0}]
