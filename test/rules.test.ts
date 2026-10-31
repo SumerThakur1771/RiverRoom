@@ -110,3 +110,18 @@ describe('buildPots', () => {
     expect(pots[1]!.eligible).toEqual([b, c]);
   });
 });
+
+describe('live-play randomness', () => {
+  it('deals from crypto, and runs everything else on fast generators seeded from crypto', async () => {
+    const { Streams } = await import('../src/engine/rng');
+    let cryptoCalls = 0;
+    const counting = (): number => { cryptoCalls++; return Math.random(); };
+    const rs = new Streams(null, counting);
+    const before = cryptoCalls;
+    rs.seg('h1:deck', () => { for (let i = 0; i < 52; i++) rs.rand(); });
+    expect(cryptoCalls - before).toBe(52); // every deck draw comes from crypto
+    const mid = cryptoCalls;
+    rs.seg('h1:ai:0', () => { for (let i = 0; i < 10000; i++) rs.rand(); });
+    expect(cryptoCalls - mid).toBe(1); // one crypto draw to seed the fast generator
+  });
+});

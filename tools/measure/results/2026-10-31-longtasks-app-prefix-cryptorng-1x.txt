@@ -1,0 +1,54 @@
+Main-thread measurements of the new app at http://localhost:4175/, 60s per variant, CPU throttle 1x, Chromium 141.0.7390.37
+ms values: median / p95 / max  (n = samples, >50 = samples over 50 ms)
+
+holdem  (hands played: 15, page errors: 0)
+  longtasks     : count=36 median=72 p95=529 max=765
+    longtask in oppDist             : count=4 max=765
+    longtask in coachContext        : count=16 max=195
+    longtask in (no timed function) : count=14 max=80
+    longtask in aiAction(sync)      : count=2 max=62
+  oppDist       :  529.5 /  764.9 /  764.9  n=   4 >50=4
+  coachContext  :   19.4 /  105.4 /  194.2  n=  71 >50=16
+  aiAction(sync):    6.6 /   31.5 /   60.9  n= 155 >50=2
+
+std  (hands played: 12, page errors: 0)
+  longtasks     : count=93 median=83 p95=148 max=773
+    longtask in oppDist             : count=3 max=773
+    longtask in coachContext        : count=55 max=544
+    longtask in aiAction(sync)      : count=34 max=107
+    longtask in (no timed function) : count=1 max=65
+  oppDist       :  117.8 /  773.9 /  773.9  n=   3 >50=3
+  coachContext  :   92.7 /  149.4 /  541.9  n=  60 >50=55
+  aiAction(sync):   37.5 /   79.2 /  107.1  n= 137 >50=32
+
+two  (hands played: 13, page errors: 0)
+  longtasks     : count=67 median=70 p95=127 max=815
+    longtask in coachContext        : count=43 max=815
+    longtask in oppDist             : count=3 max=647
+    longtask in aiAction(sync)      : count=18 max=84
+    longtask in (no timed function) : count=3 max=54
+  coachContext  :   65.5 /  126.5 /  813.6  n=  59 >50=42
+  oppDist       :  104.1 /  647.3 /  647.3  n=   3 >50=3
+  aiAction(sync):   29.8 /   62.4 /   83.1  n= 136 >50=17
+
+k8  (hands played: 8, page errors: 0)
+  longtasks     : count=118 median=127 p95=597 max=750
+    longtask in (no timed function) : count=5 max=750
+    longtask in coachContext        : count=37 max=732
+    longtask in aiAction(sync)      : count=73 max=190
+    longtask in oppDist             : count=3 max=120
+  coachContext  :    448 /  712.6 /  728.5  n=  37 >50=37
+  aiAction(sync):     96 /  169.5 /  189.7  n= 102 >50=73
+  oppDist       :  105.5 /  120.6 /  120.6  n=   3 >50=3
+
+n7  (hands played: 11, page errors: 0)
+  longtasks     : count=133 median=95 p95=232 max=639
+    longtask in oppDist             : count=3 max=639
+    longtask in coachContext        : count=49 max=289
+    longtask in aiAction(sync)      : count=78 max=198
+    longtask in (no timed function) : count=3 max=64
+  oppDist       :  135.7 /  639.1 /  639.1  n=   3 >50=3
+  coachContext  :  142.5 /  271.1 /  287.6  n=  49 >50=49
+  aiAction(sync):   59.3 /  129.6 /  196.9  n= 135 >50=77
+
+JSON [{"variant":"holdem","hands":15,"fn":{"aiAction(sync)":{"n":155,"median":6.6,"p95":31.5,"max":60.9,"over50":2},"coachContext":{"n":71,"median":19.4,"p95":105.4,"max":194.2,"over50":16},"oppDist":{"n":4,"median":529.5,"p95":764.9,"max":764.9,"over50":4}},"worker":{},"longtasks":{"n":36,"median":72,"p95":529,"max":765,"over50":35},"attrib":{"coachContext":{"n":16,"median":88,"p95":195,"max":195,"over50":16},"oppDist":{"n":4,"median":529,"p95":765,"max":765,"over50":4},"(no timed function)":{"n":14,"median":55,"p95":80,"max":80,"over50":13},"aiAction(sync)":{"n":2,"median":62,"p95":62,"max":62,"over50":2}},"errors":0},{"variant":"std","hands":12,"fn":{"aiAction(sync)":{"n":137,"median":37.5,"p95":79.2,"max":107.1,"over50":32},"coachContext":{"n":60,"median":92.7,"p95":149.4,"max":541.9,"over50":55},"oppDist":{"n":3,"median":117.8,"p95":773.9,"max":773.9,"over50":3}},"worker":{},"longtasks":{"n":93,"median":83,"p95":148,"max":773,"over50":92},"attrib":{"coachContext":{"n":55,"median":96,"p95":150,"max":544,"over50":55},"aiAction(sync)":{"n":34,"median":66,"p95":103,"max":107,"over50":33},"oppDist":{"n":3,"median":117,"p95":773,"max":773,"over50":3},"(no timed function)":{"n":1,"median":65,"p95":65,"max":65,"over50":1}},"errors":0},{"variant":"two","hands":13,"fn":{"coachContext":{"n":59,"median":65.5,"p95":126.5,"max":813.6,"over50":42},"aiAction(sync)":{"n":136,"median":29.8,"p95":62.4,"max":83.1,"over50":17},"oppDist":{"n":3,"median":104.1,"p95":647.3,"max":647.3,"over50":3}},"worker":{},"longtasks":{"n":67,"median":70,"p95":127,"max":815,"over50":65},"attrib":{"coachContext":{"n":43,"median":80,"p95":127,"max":815,"over50":42},"oppDist":{"n":3,"median":104,"p95":647,"max":647,"over50":3},"aiAction(sync)":{"n":18,"median":62,"p95":84,"max":84,"over50":17},"(no timed function)":{"n":3,"median":54,"p95":54,"max":54,"over50":3}},"errors":0},{"variant":"k8","hands":8,"fn":{"aiAction(sync)":{"n":102,"median":96,"p95":169.5,"max":189.7,"over50":73},"coachContext":{"n":37,"median":448,"p95":712.6,"max":728.5,"over50":37},"oppDist":{"n":3,"median":105.5,"p95":120.6,"max":120.6,"over50":3}},"worker":{},"longtasks":{"n":118,"median":127,"p95":597,"max":750,"over50":118},"attrib":{"(no timed function)":{"n":5,"median":69,"p95":750,"max":750,"over50":5},"coachContext":{"n":37,"median":449,"p95":714,"max":732,"over50":37},"oppDist":{"n":3,"median":105,"p95":120,"max":120,"over50":3},"aiAction(sync)":{"n":73,"median":105,"p95":181,"max":190,"over50":73}},"errors":0},{"variant":"n7","hands":11,"fn":{"aiAction(sync)":{"n":135,"median":59.3,"p95":129.6,"max":196.9,"over50":77},"coachContext":{"n":49,"median":142.5,"p95":271.1,"max":287.6,"over50":49},"oppDist":{"n":3,"median":135.7,"p95":639.1,"max":639.1,"over50":3}},"worker":{},"longtasks":{"n":133,"median":95,"p95":232,"max":639,"over50":131},"attrib":{"coachContext":{"n":49,"median":143,"p95":272,"max":289,"over50":49},"oppDist":{"n":3,"median":136,"p95":639,"max":639,"over50":3},"aiAction(sync)":{"n":78,"median":76,"p95":141,"max":198,"over50":77},"(no timed function)":{"n":3,"median":61,"p95":64,"max":64,"over50":2}},"errors":0}]

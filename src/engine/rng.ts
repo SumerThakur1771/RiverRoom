@@ -43,14 +43,16 @@ export class Streams {
   private counterHand = -1;
 
   /**
-   * @param seed table seed; `null` means production mode: segments draw from `entropy`
-   *             (crypto-backed) instead of derived seeded generators.
+   * @param seed table seed; `null` means live play: each segment gets a fast generator seeded
+   *             from the platform's crypto RNG, and the deck draws from crypto directly.
+   *             (Drawing every number from crypto was about 160x slower and made the
+   *             Monte Carlo equity estimates block for longer; see METRICS.md.)
    */
   constructor(
     readonly seed: string | null,
     private readonly entropy: Rng = cryptoRandom,
   ) {
-    this.cur = seed === null ? entropy : mulberry32(hash32('ui'));
+    this.cur = seed === null ? mulberry32(u32(entropy)) : mulberry32(hash32('ui'));
   }
 
   /** The current stream. Pass this to helpers that need randomness. */
@@ -59,7 +61,7 @@ export class Streams {
   /** Run `fn` with its own stream for `label`; the previous stream resumes afterwards. */
   seg<T>(label: string, fn: () => T): T {
     this.stack.push(this.cur);
-    this.cur = this.seed === null ? this.entropy : mulberry32(hash32(this.seed + '|' + label));
+    this.cur = this.seed !== null ? mulberry32(hash32(this.seed + '|' + label)) : label.endsWith(':deck') ? this.entropy : mulberry32(u32(this.entropy));
     try {
       return fn();
     } finally {
