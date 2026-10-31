@@ -83,9 +83,9 @@ and coach.
 | Rule fixes | Engine-side minimum raise; cumulative short all-ins re-open betting (TDA). Each with a test that fails before and passes after | `3fa51fd`, `f1b239c` |
 | Bots | Ported; VPIP, PFR and aggression within 3 standard errors of the original for all 16 persona/game rows | `487424e`, `18eab21` |
 | UI on the new engine | Vite build, live at https://sumer-riverroom.vercel.app | `487424e` |
-| Tests + CI | 37 tests (plus 6 lazy-coach checks), about 89% statement coverage of engine/bots/simulator; CI on every push; live smoke test after each deploy | `18eab21`, `12979cf` |
+| Tests + CI | 43 tests in 5 files, about 89% statement coverage of engine/bots/simulator; CI on every push; live smoke test after each deploy | `18eab21`, `12979cf` |
 | Freeze fix | Bots, coach and tables in a Web Worker; coach on demand. At 1x worst long task 719 ms → 99 ms; at 4x 3.5 s → under 200 ms. Grades unchanged | `5d267fd`, `2e6dad5`, `b936163` |
-| Simulator | Per-persona stats per game with hand counts chosen from measured speed | see METRICS.md |
+| Simulator | 150 to 7,900 hands per game, about 1–1.7 minutes each; per-persona stats with confidence intervals | see METRICS.md |
 
 **Changed from the plan.**
 - The coach and UI are still plain JavaScript, not strict TypeScript. They were moved, not

@@ -233,9 +233,38 @@ while a browser measurement was also running, so treat the exact figures as roug
 Fixed in `2e6dad5`: each random segment now gets a fast generator seeded from crypto, and
 the deck still draws every card from crypto. The after numbers above include this fix.
 
+## Simulator (TypeScript engine and bots, headless)
+
+Command: `npx tsx tools/sim/simulate.ts 90` (90 s budget per game). Output:
+[`results/2026-10-31-simulator.txt`](tools/measure/results/2026-10-31-simulator.txt).
+
+Hand counts are chosen per game from a 20-hand timing pilot so each game fits the budget.
+The pilot overestimates Hold'em's per-hand cost (JIT warm-up), so Hold'em used 63 s of its 90.
+
+| Game | Hands | Runtime | ms per hand |
+|---|---|---|---|
+| Hold'em (home) | 4,050 | 63.3 s | 15.6 |
+| Poker + 3 Patti | 350 | 73.8 s | 210.8 |
+| Two boards | 300 | 85.3 s | 284.3 |
+| 7 cards | 150 | 82.3 s | 548.6 |
+| 8 cards | 150 | 103.5 s | 690.2 |
+| Tournament (Hold'em) | 7,900 | 56.5 s | 7.2 |
+
+Per-persona VPIP, PFR, aggression, went-to-showdown and bb/100 with 95% confidence
+intervals are in the output file. How to read them:
+- **Opponent.** The win rates are against the scripted hero, which plays loose and raises a
+  lot on purpose. They show how each persona exploits that player, not who is the strongest
+  overall. For example, in home Hold'em Krish, Nikhil and Rohit all win about 230–260 bb/100
+  with overlapping intervals, and Venky (who calls almost everything) loses. "Nikhil beats
+  the weak personas" cannot be claimed from this.
+- **Samples.** The split games have only 150–350 hands, so their win-rate intervals are very
+  wide (often several hundred bb/100).
+- **Throughput.** The split games run 13–44x slower per hand than Hold'em, because every bot
+  decision plays the whole hand out many times (the reason for the Web Worker in the app).
+
 ## Not measured yet
 
 - Lighthouse scores (performance, accessibility).
 - Real-device phone performance.
-- Simulator throughput per variant and persona win rates (simulator step).
+- Persona win rates against each other (head-to-head), as opposed to against the scripted hero.
 - Users and hands played by real people.
