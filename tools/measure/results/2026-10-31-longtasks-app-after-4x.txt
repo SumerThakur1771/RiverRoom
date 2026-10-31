@@ -1,0 +1,41 @@
+Main-thread measurements of the new app at http://localhost:4176/, 60s per variant, CPU throttle 4x, Chromium 141.0.7390.37
+ms values: median / p95 / max  (n = samples, >50 = samples over 50 ms)
+
+holdem  (hands played: 10, page errors: 0)
+  longtasks     : count=75 median=61 p95=106 max=117
+    longtask in (no timed function) : count=75 max=117
+  worker:bot    :    1.1 /      5 /    9.8  n= 103 >50=0  (off the main thread)
+  worker:hint   :    6.7 /     15 /   20.1  n=  41 >50=0  (off the main thread)
+  worker:grade  :   23.5 /     49 /     49  n=   9 >50=0  (off the main thread)
+
+std  (hands played: 8, page errors: 0)
+  longtasks     : count=90 median=69 p95=125 max=157
+    longtask in (no timed function) : count=90 max=157
+  worker:bot    :   36.5 /   77.1 /   91.6  n= 102 >50=33  (off the main thread)
+  worker:hint   :   84.2 /  142.2 /  197.8  n=  31 >50=29  (off the main thread)
+  worker:grade  :  358.3 /  544.3 /  544.3  n=   7 >50=7  (off the main thread)
+
+two  (hands played: 8, page errors: 0)
+  longtasks     : count=87 median=72 p95=145 max=196
+    longtask in (no timed function) : count=87 max=196
+  showHintInner :    1.4 /    4.5 /    5.3  n=  36 >50=0
+  worker:bot    :   18.1 /   43.4 /   56.2  n=  82 >50=3  (off the main thread)
+  worker:hint   :   50.6 /   99.6 /  112.3  n=  36 >50=19  (off the main thread)
+  worker:grade  :  235.4 /  383.7 /  383.7  n=   7 >50=7  (off the main thread)
+
+k8  (hands played: 7, page errors: 0)
+  longtasks     : count=100 median=65 p95=124 max=199
+    longtask in (no timed function) : count=100 max=199
+  worker:bot    :   75.7 /  150.2 /  171.8  n=  75 >50=50  (off the main thread)
+  worker:hint   :  382.9 /  722.8 /  757.8  n=  27 >50=27  (off the main thread)
+  worker:grade  : 1659.9 / 2024.1 / 2024.1  n=   6 >50=6  (off the main thread)
+
+n7  (hands played: 8, page errors: 0)
+  longtasks     : count=90 median=62 p95=134 max=181
+    longtask in (no timed function) : count=90 max=181
+  showHintInner :    1.6 /    2.7 /    6.1  n=  31 >50=0
+  worker:bot    :   38.9 /   79.4 /   93.7  n=  78 >50=28  (off the main thread)
+  worker:hint   :   97.8 /  177.1 /    191  n=  36 >50=33  (off the main thread)
+  worker:grade  :  408.7 /  726.7 /  726.7  n=   7 >50=7  (off the main thread)
+
+JSON [{"variant":"holdem","hands":10,"fn":{"showHintInner":{"n":41,"median":0.5,"p95":2.6,"max":3.3,"over50":0}},"worker":{"bot":{"n":103,"median":1.1,"p95":5,"max":9.8,"over50":0},"hint":{"n":41,"median":6.7,"p95":15,"max":20.1,"over50":0},"grade":{"n":9,"median":23.5,"p95":49,"max":49,"over50":0}},"longtasks":{"n":75,"median":61,"p95":106,"max":117,"over50":73},"attrib":{"(no timed function)":{"n":75,"median":61,"p95":106,"max":117,"over50":73}},"errors":0},{"variant":"std","hands":8,"fn":{"showHintInner":{"n":29,"median":1.4,"p95":3.6,"max":3.8,"over50":0}},"worker":{"bot":{"n":102,"median":36.5,"p95":77.1,"max":91.6,"over50":33},"hint":{"n":31,"median":84.2,"p95":142.2,"max":197.8,"over50":29},"grade":{"n":7,"median":358.3,"p95":544.3,"max":544.3,"over50":7}},"longtasks":{"n":90,"median":69,"p95":125,"max":157,"over50":85},"attrib":{"(no timed function)":{"n":90,"median":69,"p95":125,"max":157,"over50":85}},"errors":0},{"variant":"two","hands":8,"fn":{"showHintInner":{"n":36,"median":1.4,"p95":4.5,"max":5.3,"over50":0}},"worker":{"bot":{"n":82,"median":18.1,"p95":43.4,"max":56.2,"over50":3},"hint":{"n":36,"median":50.6,"p95":99.6,"max":112.3,"over50":19},"grade":{"n":7,"median":235.4,"p95":383.7,"max":383.7,"over50":7}},"longtasks":{"n":87,"median":72,"p95":145,"max":196,"over50":87},"attrib":{"(no timed function)":{"n":87,"median":72,"p95":145,"max":196,"over50":87}},"errors":0},{"variant":"k8","hands":7,"fn":{"showHintInner":{"n":1,"median":0.6,"p95":0.6,"max":0.6,"over50":0}},"worker":{"bot":{"n":75,"median":75.7,"p95":150.2,"max":171.8,"over50":50},"hint":{"n":27,"median":382.9,"p95":722.8,"max":757.8,"over50":27},"grade":{"n":6,"median":1659.9,"p95":2024.1,"max":2024.1,"over50":6}},"longtasks":{"n":100,"median":65,"p95":124,"max":199,"over50":93},"attrib":{"(no timed function)":{"n":100,"median":65,"p95":124,"max":199,"over50":93}},"errors":0},{"variant":"n7","hands":8,"fn":{"showHintInner":{"n":31,"median":1.6,"p95":2.7,"max":6.1,"over50":0}},"worker":{"bot":{"n":78,"median":38.9,"p95":79.4,"max":93.7,"over50":28},"hint":{"n":36,"median":97.8,"p95":177.1,"max":191,"over50":33},"grade":{"n":7,"median":408.7,"p95":726.7,"max":726.7,"over50":7}},"longtasks":{"n":90,"median":62,"p95":134,"max":181,"over50":86},"attrib":{"(no timed function)":{"n":90,"median":62,"p95":134,"max":181,"over50":86}},"errors":0}]

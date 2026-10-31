@@ -173,6 +173,66 @@ Caveats:
 - The aggression factor (bets+raises / calls) is printed for reference but not tested: as a
   ratio of small counts it swings too much at these sample sizes.
 
+## Freeze fix: before and after (Web Worker + coach on demand)
+
+Same script, same settings as the Phase 1 baseline: `tools/measure/longtasks.mjs`, 60 s per
+variant, hero opens a hint on every decision then calls, Chromium 141, same machine type.
+
+- **Before** is the Phase 1 baseline: the original game, `node tools/measure/longtasks.mjs 60 1`
+  and `... 60 4`.
+- **After** is the new app's measurement build: `npx vite build --mode measure --outDir dist-measure-after`,
+  `npx vite preview --outDir dist-measure-after --port 4176`, then
+  `node tools/measure/longtasks.mjs 60 1 --app=http://localhost:4176/` and `... 60 4 --app=...`.
+
+Outputs: [`longtasks-1x`](tools/measure/results/2026-10-31-longtasks-1x.txt),
+[`longtasks-4x`](tools/measure/results/2026-10-31-longtasks-4x.txt) (before);
+[`longtasks-app-after-1x`](tools/measure/results/2026-10-31-longtasks-app-after-1x.txt),
+[`longtasks-app-after-4x`](tools/measure/results/2026-10-31-longtasks-app-after-4x.txt) (after).
+
+### Main-thread long tasks (over 50 ms) in 60 s
+
+| Variant | 1x before: count / worst | 1x after: count / worst | 4x before: count / worst | 4x after: count / worst |
+|---|---|---|---|---|
+| Hold'em | 5 / 645 ms | 1 / 50 ms | 77 / 3,132 ms | 75 / 117 ms |
+| Poker + 3 Patti | 51 / 719 ms | 0 / none | 132 / 2,480 ms | 90 / 157 ms |
+| Two boards | 34 / 675 ms | 3 / 99 ms | 155 / 3,476 ms | 87 / 196 ms |
+| 8 cards | 128 / 627 ms | 1 / 58 ms | 97 / 2,509 ms | 100 / 199 ms |
+| 7 cards | 104 / 603 ms | 2 / 50 ms | 127 / 3,022 ms | 90 / 181 ms |
+
+### Where the work went (1x, median / max)
+
+| Work | Before: on the main thread | After: in the worker (page not blocked) |
+|---|---|---|
+| Coach read, 8-card game | 295.9 / 539.6 ms on every hero turn | 387.2 / 678.4 ms, only when a hint is opened |
+| Bot decision, 8-card game | 64 / 138.3 ms | 69.4 / 157.9 ms |
+| Opponent-model tables | up to 645–719 ms, once per variant | about 1.27 s for all four variants, once per table |
+| End-of-hand grading, 8-card game | (part of each turn) | 1,442 / 2,633 ms per hand, while the result shows |
+
+### What this means, and what it does not
+
+- At 1x, the 600–720 ms freezes are gone; the worst long task left is 99 ms.
+- At 4x (an emulated slow phone, not a real device), the worst freeze goes from 2.5–3.5 s
+  to under 200 ms. The count of 50–200 ms tasks stays similar. None of them falls inside
+  the bots, the coach or the table building any more. The likely causes are rendering,
+  animations and the measuring driver itself; that is the next thing to look at.
+- Hands played in 60 s are about the same as before (for example, 9 vs 11 in the 8-card game
+  at 1x), so this is not fewer hands doing less work.
+- Grades are unchanged: `test/coach-lazy.test.ts` grades 98 decisions both at the time and
+  later from snapshots, with identical results.
+
+### A regression found and fixed on the way
+
+The first measurement of the port (before the worker change) was slower than the original:
+the Hold'em coach read was 19.4 ms median vs 2.4 ms, and the 8-card one 448 ms vs 296 ms
+(output: [`longtasks-app-prefix-cryptorng-1x`](tools/measure/results/2026-10-31-longtasks-app-prefix-cryptorng-1x.txt)).
+
+The cause: in live play every random number came from `crypto.getRandomValues`, which
+measured about 0.3 M draws/s against 49 M for mulberry32 (a quick Node microbenchmark, run
+while a browser measurement was also running, so treat the exact figures as rough).
+
+Fixed in `2e6dad5`: each random segment now gets a fast generator seeded from crypto, and
+the deck still draws every card from crypto. The after numbers above include this fix.
+
 ## Not measured yet
 
 - Lighthouse scores (performance, accessibility).
