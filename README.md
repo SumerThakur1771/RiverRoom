@@ -33,8 +33,12 @@ src/engine/   rules and game state: cards, hand evaluation, variants, betting, p
               needs a decision, so the browser, a simulator and tests drive the same code.
 src/ai/       equity estimates, split-game valuation, and the bots.
 src/sim/      headless driver for simulations and tests.
-src/ui/       screens, animations and the coach (carried over from the original version
-              and driven by the engine; still plain JavaScript).
+src/coach/    the coach and the shared helpers (DOM-free: runs on the page, in the worker
+              and in Node tests; still plain JavaScript).
+src/worker/   the compute Web Worker: bots, coach analysis and opponent-model tables run
+              here so the page never freezes.
+src/ui/       screens and animations (carried over from the original version and driven
+              by the engine; still plain JavaScript).
 legacy/       the original single-file version, kept as the reference until parity.
 tools/        recorders, measurement scripts and the browser smoke test.
 ```
@@ -74,3 +78,4 @@ Every number about this project (speed, freezes, test results, bot statistics) i
 
 - [ANALYSIS.md](ANALYSIS.md): audit of the original version.
 - [PLAN.md](PLAN.md): the roadmap and what changed along the way.
+- [DESIGN.md](DESIGN.md): how the engine, randomness, evaluator, equity, bots and the worker work, with tradeoffs.

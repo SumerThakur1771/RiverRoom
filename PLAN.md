@@ -69,3 +69,35 @@ Analytics only once real people are using it.
    `// @ts-check` at first, so the refactor doesn't stall on typing about 2,000 lines of DOM code.
 3. **Keep `legacy/river-room.html` in the repo** as the reference build and trace source.
    Delete it once the new app replaces it.
+
+## Tier 1: what was done (2026-10-31)
+
+The order agreed after Phase 1 was: headless engine with golden traces, the two rule fixes,
+the Vite UI deployed early, tests and CI, then the freeze fix. Mid-way the scope was
+narrowed: exact golden matching for the rules engine only; statistical parity for the bots
+and coach.
+
+| Step | Result | Commits |
+|---|---|---|
+| Engine port + golden traces | 272 recorded hands replay exactly (logs and stacks) | `f8d2762` |
+| Rule fixes | Engine-side minimum raise; cumulative short all-ins re-open betting (TDA). Each with a test that fails before and passes after | `3fa51fd`, `f1b239c` |
+| Bots | Ported; VPIP, PFR and aggression within 3 standard errors of the original for all 16 persona/game rows | `487424e`, `18eab21` |
+| UI on the new engine | Vite build, live at https://sumer-riverroom.vercel.app | `487424e` |
+| Tests + CI | 37 tests (plus 6 lazy-coach checks), about 89% statement coverage of engine/bots/simulator; CI on every push; live smoke test after each deploy | `18eab21`, `12979cf` |
+| Freeze fix | Bots, coach and tables in a Web Worker; coach on demand. At 1x worst long task 719 ms → 99 ms; at 4x 3.5 s → under 200 ms. Grades unchanged | `5d267fd`, `2e6dad5`, `b936163` |
+| Simulator | Per-persona stats per game with hand counts chosen from measured speed | see METRICS.md |
+
+**Changed from the plan.**
+- The coach and UI are still plain JavaScript, not strict TypeScript. They were moved, not
+  rewritten, to get a working app fast. Typing them is the first polish item.
+- Seating now uses an unbiased Fisher-Yates shuffle; the original's biased sort trick
+  depended on the JavaScript engine.
+- A performance regression introduced by the port (crypto RNG on every draw) was found by
+  the measurements and fixed.
+
+**Left for later (polish).**
+- Type the coach and UI.
+- Investigate the remaining 50–200 ms long tasks at 4x (rendering and animation).
+- Self-host fonts and add a CSP.
+- Card accessibility labels and a Lighthouse run.
+- Bigger parity samples for the tournament personas.
