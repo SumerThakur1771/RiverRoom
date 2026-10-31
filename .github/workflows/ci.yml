@@ -38,7 +38,7 @@ jobs:
           for i in $(seq 30); do curl -sf http://localhost:4173/ > /dev/null && break; sleep 1; done
           node tools/ui/smoke.mjs http://localhost:4173/ 40 home
           node tools/ui/smoke.mjs http://localhost:4173/ 25 tourney
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: screenshots-and-coverage

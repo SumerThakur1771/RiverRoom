@@ -1,5 +1,8 @@
 # River Room
 
+[![CI](https://github.com/SumerThakur1771/RiverRoom/actions/workflows/ci.yml/badge.svg)](https://github.com/SumerThakur1771/RiverRoom/actions/workflows/ci.yml)
+[![Live smoke test](https://github.com/SumerThakur1771/RiverRoom/actions/workflows/live-smoke.yml/badge.svg)](https://github.com/SumerThakur1771/RiverRoom/actions/workflows/live-smoke.yml)
+
 **Live:** https://sumer-riverroom.vercel.app
 
 A poker trainer built around a real home game. You play No-Limit Hold'em and four
@@ -56,7 +59,11 @@ npm run typecheck
 npm run lint
 npm test           # unit tests and the golden replay
 npm run smoke      # clicks through hands in Chromium (needs `npm run dev` running)
+npm run parity     # bot statistics vs the original game (about 2 minutes)
 ```
+
+CI runs typecheck, lint, the tests with coverage, the build and the browser smoke test on
+every push. After each production deploy, the smoke test also runs against the live site.
 
 ## Measurements
 

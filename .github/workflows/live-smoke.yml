@@ -28,7 +28,7 @@ jobs:
         run: |
           node tools/ui/smoke.mjs https://sumer-riverroom.vercel.app/ 40 home
           node tools/ui/smoke.mjs https://sumer-riverroom.vercel.app/ 25 tourney
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: live-screenshots
