@@ -116,4 +116,5 @@ Every number about this project (speed, freezes, test results, bot statistics) i
 
 - [ANALYSIS.md](ANALYSIS.md): audit of the original version.
 - [PLAN.md](PLAN.md): the roadmap and what changed along the way.
+- [INTERVIEW_QUESTIONS.md](INTERVIEW_QUESTIONS.md): questions to expect about the server, security and the database, with answers.
 - [DESIGN.md](DESIGN.md): how the engine, randomness, evaluator, equity, bots, the worker, the AI review, the multiplayer server and storage work, with tradeoffs.

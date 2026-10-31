@@ -28,6 +28,7 @@ jobs:
         run: |
           code=$(curl -s -o body.json -w '%{http_code}' -X POST -H 'content-type: application/json' -d '{}' https://sumer-riverroom.vercel.app/api/review)
           echo "status $code: $(cat body.json)"
+          if [ "$code" = 400 ]; then echo "::notice title=AI review endpoint::status 400: ANTHROPIC_API_KEY is configured"; else echo "::notice title=AI review endpoint::status $code: ANTHROPIC_API_KEY is not configured yet"; fi
           # 503 = no API key configured yet, 400 = key present and the empty body was rejected
           [ "$code" = 400 ] || [ "$code" = 503 ]
           grep -q '"fallback":true' body.json

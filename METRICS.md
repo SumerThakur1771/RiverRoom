@@ -283,6 +283,7 @@ against a local Postgres 16, after `npm run db:migrate`. Output:
 |---|---|
 | Test files / tests | 10 / 72, all passing (5 full runs in a row passed) |
 | Without `TEST_DATABASE_URL` | 71 pass, the storage test is skipped |
+| Coverage (`npx vitest run --coverage`, with Postgres) of everything outside the page: engine, bots, simulator, coach, AI review, ledger, server | Statements 88.88%, branches 82.27%, functions 91.58%, lines 91.52%. Per file: [`results/2026-10-31-coverage-current.txt`](tools/measure/results/2026-10-31-coverage-current.txt). Lowest: `src/ai/equity.ts` at 60.07% of statements; the uncovered part is mostly the multi-opponent range equity (`equityVsMulti`) that split-game bots use, which the unit tests rarely reach |
 | Storage test (`test/store.test.ts`) | Real server, real Postgres, 3 clients, 8+ hands; one player leaves mid-session. Stored 7 hands with 5 results each and 9 ledger entries in the saved run. The settlement read from Postgres equals the in-memory one. The leaver's cash-out equals their buy-ins plus their stored hand results. Tokens are stored only as hashes. 0 failed writes. Passed 6 runs in a row on its own, about 3 s each |
 
 ## Multiplayer: no-card-leak check
@@ -334,9 +335,22 @@ full reports for run 1: [`results/lighthouse/`](tools/measure/results/lighthouse
   `robots.txt`.
 - Best practices 96 on `/mp.html`: the page logs a console error when it cannot reach a
   multiplayer server, and none runs in this local measurement.
-- These are local numbers on a cloud VM. The live site is measured by the "Live smoke test"
-  workflow after each deploy (3 runs per page, in its step summary); those numbers are not
-  copied here yet.
+- These are local numbers on a cloud VM. The live site is measured below.
+
+## Lighthouse (live site)
+
+The "Live smoke test" workflow runs `node tools/measure/lighthouse.mjs https://sumer-riverroom.vercel.app/ lighthouse 3 95`
+after each production deploy, on a GitHub-hosted runner. Each score is also posted as an annotation. Output, from
+[run 41171217087](https://github.com/SumerThakur1771/RiverRoom/actions/runs/41171217087) (commit `3c8c09d`):
+[`results/2026-10-31-lighthouse-live.txt`](tools/measure/results/2026-10-31-lighthouse-live.txt).
+
+| Page | Performance | Accessibility | Best practices | SEO |
+|---|---|---|---|---|
+| `/` | 83, 84, 76 | 100, 100, 100 | 100, 100, 100 | 100, 100, 100 |
+| `/mp.html` | 100, 100, 100 | 100, 100, 100 | 96, 96, 96 | 100, 100, 100 |
+
+Best practices 96 on `/mp.html` has the same cause as locally. The live page has no
+multiplayer server to connect to yet (Railway is not set up), so it logs a connection error.
 
 ## Accessibility of in-game screens (axe-core)
 
@@ -362,7 +376,6 @@ On a phone-sized page:
 
 ## Not measured yet
 
-- Lighthouse on the live site (runs in CI after each deploy; not yet copied here).
 - Vercel Web Analytics numbers (needs the toggle in Vercel, then real visitors).
 - Real-device phone performance.
 - Persona win rates against each other (head-to-head), as opposed to against the scripted hero.

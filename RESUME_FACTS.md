@@ -12,6 +12,9 @@ proof. Nothing here is an estimate. Dates are when the measurement was taken.
   It covers Hold'em plus four split variants (2-of-3 majority pots), side pots, odd chips,
   antes, and the TDA short-all-in rule.
 - **Coach.** In strict TypeScript, DOM-free: [src/coach](src/coach).
+- **Screen code type-checked.** The UI, 1,576 lines in [src/ui/legacy.js](src/ui/legacy.js) (`wc -l`, 2026-10-31), is
+  checked by TypeScript (checkJs, non-strict) in CI: 94 errors at first, now 0. The worker
+  client is strict TypeScript with per-job result types. Not claimed: a strict TypeScript UI.
 - **Bots and the coach run in a Web Worker:** [src/worker](src/worker),
   [src/coach/compute.ts](src/coach/compute.ts).
 - **AI hand review.** A Vercel serverless route ([api/review.ts](api/review.ts)) streams a
@@ -36,7 +39,7 @@ proof. Nothing here is an estimate. Dates are when the measurement was taken.
 |---|---|
 | The TypeScript engine replays all 272 hands recorded from the original game with identical hand histories and chip counts (12 sessions; 35 with side pots, 104 all-ins) | [test/golden.test.ts](test/golden.test.ts), [METRICS.md](METRICS.md#tests-and-coverage-typescript-port) |
 | 72 tests in 10 files, all passing, including the Postgres storage test | [tools/measure/results/2026-10-31-tests-with-postgres.txt](tools/measure/results/2026-10-31-tests-with-postgres.txt), [METRICS.md](METRICS.md#tests-with-postgres-current-suite) |
-| About 89% statement coverage of the engine, bots and simulator (88.65% on 2026-10-31) | [tools/measure/results/2026-10-31-tests.txt](tools/measure/results/2026-10-31-tests.txt) |
+| 88.88% statement coverage (82.27% branches) of all code outside the page: engine, bots, simulator, coach, AI review, ledger and multiplayer server | [tools/measure/results/2026-10-31-coverage-current.txt](tools/measure/results/2026-10-31-coverage-current.txt), [METRICS.md](METRICS.md#tests-with-postgres-current-suite) |
 | The 5-card evaluator ranks all 2,598,960 hands into the standard categories, with exactly 7,462 distinct values | [test/evaluator.test.ts](test/evaluator.test.ts) |
 | All 22,100 three-card (3 Patti) hands match the standard category counts | [test/evaluator.test.ts](test/evaluator.test.ts) |
 | AA vs KK (no shared suits): 81.255% equity, by exact enumeration of all 1,712,304 boards | [test/evaluator.test.ts](test/evaluator.test.ts), [METRICS.md](METRICS.md#tests-and-coverage-typescript-port) |
@@ -54,7 +57,8 @@ proof. Nothing here is an estimate. Dates are when the measurement was taken.
 
 | Fact | Proof |
 |---|---|
-| Lighthouse accessibility 100 on both pages (3 runs each, local production build, Lighthouse 13.5.0 mobile); CI fails below 95 | [METRICS.md](METRICS.md#lighthouse-local-production-build), [tools/measure/results/2026-10-31-lighthouse-local.txt](tools/measure/results/2026-10-31-lighthouse-local.txt) |
+| Lighthouse accessibility 100 on both pages of the live site, 3 runs each (Lighthouse 13.5.0, mobile); also 100 locally. CI and the post-deploy check fail below 95 | [tools/measure/results/2026-10-31-lighthouse-live.txt](tools/measure/results/2026-10-31-lighthouse-live.txt), [METRICS.md](METRICS.md#lighthouse-live-site), [run 41171217087](https://github.com/SumerThakur1771/RiverRoom/actions/runs/41171217087) |
+| Lighthouse accessibility 100 on the local production build (3 runs per page) | [METRICS.md](METRICS.md#lighthouse-local-production-build), [tools/measure/results/2026-10-31-lighthouse-local.txt](tools/measure/results/2026-10-31-lighthouse-local.txt) |
 | 0 axe-core WCAG 2.1 A/AA violations on 6 in-game screens (table, hint, review × desktop, phone); found and fixed 1 that Lighthouse's start-screen audit could not see | [METRICS.md](METRICS.md#accessibility-of-in-game-screens-axe-core), [tools/ui/axe-table.mjs](tools/ui/axe-table.mjs) |
 | Installable PWA with a hand-written service worker (no Workbox); single-player plays with the network cut (to hand #3 in 60 s in the test), checked in CI | [src/pwa/sw.js](src/pwa/sw.js), [METRICS.md](METRICS.md#offline-play-service-worker) |
 
@@ -71,8 +75,8 @@ proof. Nothing here is an estimate. Dates are when the measurement was taken.
 ## Not claimed
 
 - No user numbers yet.
-- No Lighthouse score for the live site copied here yet (it runs after each deploy).
 - No real-model score for the AI review yet (waiting for the API key in Vercel).
 - Multiplayer and storage are built and tested, but not yet deployed (waiting for the Railway
   service).
 - No real-device phone measurements.
+- No analytics numbers yet: Vercel Web Analytics is wired in, and needs its toggle in Vercel plus real visitors.

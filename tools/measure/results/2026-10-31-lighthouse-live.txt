@@ -1,0 +1,10 @@
+# Lighthouse on the live site, from the 'Live smoke test' workflow after the deploy of commit 3c8c09d
+# Run: https://github.com/SumerThakur1771/RiverRoom/actions/runs/41171217087 (GitHub-hosted ubuntu-latest runner)
+# Command (in the workflow): node tools/measure/lighthouse.mjs https://sumer-riverroom.vercel.app/ lighthouse 3 95
+# Read back with: gh api repos/SumerThakur1771/RiverRoom/check-runs/124449375862/annotations
+Lighthouse https://sumer-riverroom.vercel.app/ run 1: performance 83, accessibility 100, best practices 100, SEO 100 (Lighthouse 13.5.0, mobile)
+Lighthouse https://sumer-riverroom.vercel.app/ run 2: performance 84, accessibility 100, best practices 100, SEO 100 (Lighthouse 13.5.0, mobile)
+Lighthouse https://sumer-riverroom.vercel.app/ run 3: performance 76, accessibility 100, best practices 100, SEO 100 (Lighthouse 13.5.0, mobile)
+Lighthouse https://sumer-riverroom.vercel.app/mp.html run 1: performance 100, accessibility 100, best practices 96, SEO 100 (Lighthouse 13.5.0, mobile)
+Lighthouse https://sumer-riverroom.vercel.app/mp.html run 2: performance 100, accessibility 100, best practices 96, SEO 100 (Lighthouse 13.5.0, mobile)
+Lighthouse https://sumer-riverroom.vercel.app/mp.html run 3: performance 100, accessibility 100, best practices 96, SEO 100 (Lighthouse 13.5.0, mobile)

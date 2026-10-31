@@ -337,7 +337,7 @@ turned on in the Vercel project.
 
 ## 13. Typing the screen code (`src/ui`, `tsconfig.ui.json`)
 
-The screens (`src/ui/legacy.js`, about 1,570 lines of DOM code) are still JavaScript. They
+The screens (`src/ui/legacy.js`, 1,576 lines of DOM code by `wc -l`) are still JavaScript. They
 are now type-checked by TypeScript with `checkJs`, in non-strict mode, and
 `npm run typecheck` (so CI) fails on any error. Converting them to strict TypeScript would
 mean about 789 errors, measured with `checkJs` and `strict: true`. 615 of those are only
