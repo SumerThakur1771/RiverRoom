@@ -8,7 +8,7 @@ proof. Nothing here is an estimate. Dates are when the measurement was taken.
 - **Live app.** https://sumer-riverroom.vercel.app, deployed from this repository on Vercel.
   A smoke test runs against it after every production deploy:
   [.github/workflows/live-smoke.yml](.github/workflows/live-smoke.yml).
-- **Engine.** A TypeScript poker engine, about 1,000 lines in [src/engine](src/engine).
+- **Engine.** A TypeScript poker engine, 1,501 lines in [src/engine](src/engine) (`wc -l src/engine/*.ts`, 2026-10-31).
   It covers Hold'em plus four split variants (2-of-3 majority pots), side pots, odd chips,
   antes, and the TDA short-all-in rule.
 - **Coach.** In strict TypeScript, DOM-free: [src/coach](src/coach).
