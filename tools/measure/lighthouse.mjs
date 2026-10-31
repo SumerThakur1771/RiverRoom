@@ -23,6 +23,8 @@ for (const page of ['', 'mp.html']) {
     const s = k => Math.round(rep.categories[k].score * 100);
     if (s('accessibility') < +min) low = true;
     rows.push(`| ${base + page} | ${i} | ${s('performance')} | ${s('accessibility')} | ${s('best-practices')} | ${s('seo')} | ${rep.lighthouseVersion} |`);
+    // in GitHub Actions, also record each run as an annotation (readable through the API)
+    if (process.env.GITHUB_ACTIONS) console.log(`::notice title=Lighthouse ${base + page} run ${i}::performance ${s('performance')}, accessibility ${s('accessibility')}, best practices ${s('best-practices')}, SEO ${s('seo')} (Lighthouse ${rep.lighthouseVersion}, ${rep.configSettings.formFactor})`);
   }
 }
 const table = ['| Page | Run | Performance | Accessibility | Best practices | SEO | Lighthouse |', '|---|---|---|---|---|---|---|', ...rows].join('\n');

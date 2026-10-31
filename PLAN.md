@@ -88,8 +88,9 @@ and coach.
 | Simulator | 150 to 7,900 hands per game, about 1–1.7 minutes each; per-persona stats with confidence intervals | see METRICS.md |
 
 **Changed from the plan.**
-- The coach and UI are still plain JavaScript, not strict TypeScript. They were moved, not
-  rewritten, to get a working app fast. Typing them is the first polish item.
+- The coach and UI were moved, not rewritten, to get a working app fast. Later the coach
+  became strict TypeScript, and the screen code is type-checked as JavaScript (non-strict
+  checkJs) in CI (see DESIGN.md sections 8 and 13).
 - Seating now uses an unbiased Fisher-Yates shuffle; the original's biased sort trick
   depended on the JavaScript engine.
 - A performance regression introduced by the port (crypto RNG on every draw) was found by

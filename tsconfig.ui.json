@@ -1,0 +1,7 @@
+{
+  // The screen code (src/ui/*.js) is plain JavaScript, type-checked by TypeScript (checkJs)
+  // without strict mode. The rest of the project is strict TypeScript (tsconfig.json).
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "allowJs": true, "checkJs": true, "strict": false },
+  "include": ["src/ui", "src/env.d.ts"]
+}

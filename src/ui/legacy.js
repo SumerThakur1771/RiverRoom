@@ -6,7 +6,7 @@ import * as B from '../ai/bots';
 import * as E from '../engine/engine';
 import { Tables } from '../engine/strength';
 import { toPlain } from '../coach/compute';
-import { compute, workerMs } from './compute-client.js';
+import { compute, workerMs } from './compute-client';
 import { readReviewEvents } from '../review/sse';
 import { bindGame,
   CONCEPTS, GRADE_LABEL, GRADE_SCORE, HOME_BUY, HOME_FRIENDS, LESSONS, LEVELS, LOGR, PCT, RANKCH,
@@ -168,8 +168,10 @@ const CHAT = {
   tilt: ['rigged lol', 'this deck hates me', 'cant win a hand'],
   bust: ['gg all', 'gg', 'gl everyone']
 };
+/** @type {Array<[number, string, string?]>} */
 const DENOMS = [[5000,'#d97a2b'],[1000,'#e0bd45'],[500,'#7b52b8'],[100,'#26282c'],[25,'#2c8a4d'],[5,'#c23a2e'],[1,'#ece8dc','#3b6fb6']];
 // home game chips, in cents: black $1, green 50c, red 20c, blue 10c
+/** @type {Array<[number, string, string?]>} */
 const DENOMS_HOME = [[100,'#1d1e22'],[50,'#2c8a4d'],[20,'#c23a2e'],[10,'#2f6fd0']];
 const BUYIN = 10;
 const PACE = {learn: 1, normal: 0.55, fast: MEASURE ? 0.02 : 0.3};
@@ -194,7 +196,9 @@ const saveSettings = () => saveLocal(SKEY, settings);
 
 /* ================= state ================= */
 const board2El = $('#board2'), arena = $('#arena'), stage = $('#stage'), boardEl = $('#board'), potEl = $('#pot'), msgEl = $('#msg'), dbtnEl = $('#dbtn');
-let S = null, GID = 0, L = LAY.land, pending = null, curAmt = 0;
+/** The game in progress: the engine's state plus what the screens keep alongside it. @type {(ReturnType<typeof E.newGame> & Record<string, any>) | null} */
+let S = null;
+let GID = 0, L = LAY.land, pending = null, curAmt = 0;
 class Abort extends Error {}
 const SPEED = () => {
   const hero = S && S.players.find(p => p.isHuman);
@@ -214,7 +218,7 @@ function buildSeats(){
     const p = S.players.find(x => x.seat === s);
     const seat = document.createElement('div');
     seat.className = 'seat' + (p ? '' : ' empty') + (p && p.isHuman ? ' hero' : '');
-    seat.dataset.seat = s;
+    seat.dataset.seat = String(s);
     if (p){
       const ini = p.isHuman ? (p.name.trim()[0] || 'Y').toUpperCase() : p.name.slice(0, 2).toUpperCase();
       seat.innerHTML = `<div class="hole"></div><div class="plate" style="--pc:${p.color}"><div class="avatar${p.avatar ? ' pic' : ''}">${p.avatar ? avatarSVG(p.avatar, p.color) : `<span>${esc(ini)}</span>`}</div><div class="meta"><div class="nm"></div><div class="stk"></div>${p.isHuman ? '' : '<div class="hud"></div>'}</div><div class="timer"><i></i></div><div class="eqp" hidden></div></div><div class="hn" hidden></div><div class="xp" hidden></div><div class="gain"></div>${p.isHuman ? '' : '<div class="bubble"></div>'}`;
@@ -384,7 +388,7 @@ function renderInfo(){
   $('#tableName').textContent = `Table ${S.tableNo} · $${BUYIN} Sit & Go`;
 }
 let toastT = 0;
-function toast(t, ms = 2800){ const el = $('#toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), ms); }
+function toast(t, ms = 2800){ const el = $('#toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toastT); toastT = window.setTimeout(() => el.classList.remove('show'), ms); }
 function feedPush(t){ S.feed.unshift(t); if (S.feed.length > 3) S.feed.length = 3; renderFeed(); }
 function renderFeed(){ $('#feed').innerHTML = S && S.feed.length ? S.feed.map(t => `<span>${esc(t)}</span>`).join('') : ''; }
 function streetFlash(t){ const el = $('#streetLbl'); el.textContent = t; el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 1400); }
@@ -633,7 +637,7 @@ function setupTable(snap){
   const mode = snap ? (snap.mode || 'tourney') : settings.mode; MONEY = mode === 'home';
   // the engine reads `settings` live (name, opponents, stack, blind level length, practice view, games)
   const g = E.newGame({mode, settings, seed: SEED ? SEED + ':' + GID : null, snap: snap || null});
-  S = Object.assign(g, {gid: GID, history: [], dec: [], paused: false, pre: null, heroEq: null, snap: null, feed: [], running: false, splitDec: null, hintBest: null});
+  S = Object.assign(g, {gid: GID, history: [], dec: [], paused: false, pre: null, heroEq: null, snap: null, feed: [], running: false, splitDec: null, hintBest: null, tablesReady: Promise.resolve()});
   bindGame(S, MONEY, settings);
   // the split-game opponent model is built by the compute worker, never on this thread
   const myGid = GID;
@@ -731,7 +735,7 @@ async function playHand(){
   for (;;){
     const r = flow.next(answer); answer = undefined;
     if (r.done){ summary = r.value; break; }
-    const s = r.value;
+    const s = /** @type {import('../engine/engine').Step} */ (r.value);
     if (s.kind === 'act'){
       const p = s.p;
       S.turnStart = performance.now(); S.turnLen = p.isHuman ? (settings.timer > 0 ? settings.timer * 1000 : 1e12) : 30000; S.warned = false;
@@ -970,9 +974,11 @@ async function endOfHand(review, reviewNow){
   guard(gid);
 }
 function storyLines(){
+  // event payloads differ by type (cards, parts, list...), so they are read loosely here
+  const evs = /** @type {any[]} */ (S.ev);
   const hero = heroP(), lines = [], streets = ['Preflop', 'Flop', 'Turn', 'River', 'Showdown'];
   const by = [[], [], [], [], []];
-  for (const e of S.ev) by[Math.min(4, e.st)].push(e);
+  for (const e of evs) by[Math.min(4, e.st)].push(e);
   const phrase = e => {
     const who = nm(e.p), you = e.p.isHuman;
     switch (e.t){
@@ -1005,21 +1011,22 @@ function storyLines(){
     const b2t = b2e ? ` Board 2: ${icards(b2e.cards)}.` : '';
     lines.push([streets[st], `${icards(newCards)}${st > 1 ? ` (board ${icards(bc)})` : ''}.${b2t}${made} ${acts.length ? esc(join(acts)) : (S.revealed ? 'Everyone was all-in, so no more betting.' : '')}`]);
   }
-  const sd = S.ev.filter(e => ['show', 'muck', 'win'].includes(e.t));
+  const sd = evs.filter(e => ['show', 'muck', 'win'].includes(e.t));
   if (sd.length){
     const parts = sd.map(e => e.t === 'show' ? (e.parts ? `${esc(nm(e.p))} showed ${e.parts.map(x => `${esc(x.label)} ${icards(x.cards)} (${esc(x.name)})`).join(', ')}` : `${esc(nm(e.p))} showed ${icards(e.cards)}: ${esc(e.name)}`) : e.t === 'muck' ? `${esc(e.p.name)} threw away (mucked) a losing hand` : `${esc(nm(e.p))} won ${fmt(e.amt)}${e.part ? ` for ${esc(e.part)} (${esc(e.name)})` : ''}${e.label && e.label !== 'pot' ? ' from the ' + e.label : ''}${e.noShow ? ' without showing, because everyone else folded' : ''}`);
     lines.push([sd.some(e => e.t === 'show') ? 'Showdown' : 'Result', parts.join('. ') + '.' + (S.explain ? ` Why: ${esc(S.explain)}.` : '')]);
   }
-  const allE = S.ev.find(e => e.t === 'all');
+  const allE = evs.find(e => e.t === 'all');
   if (allE) lines.push(['All cards', allE.list.filter(x => !x.p.isHuman).map(x => `${esc(x.p.name)} ${icards(x.cards)} ${x.folded ? `folded, would have had ${esc(x.name)}` : esc(x.name) + (x.mucked ? ' (mucked)' : '')}${x.extra ? ', ' + x.extra.map(y => `${esc(y.label)} ${icards(y.cards)} (${esc(y.name)})`).join(', ') : ''}`).join('; ') + '.']);
   return lines;
 }
 function readTip(){
-  const allE = S.ev.find(e => e.t === 'all'), winE = S.ev.find(e => e.t === 'win' && e.noShow);
+  const evs = /** @type {any[]} */ (S.ev);
+  const allE = evs.find(e => e.t === 'all'), winE = evs.find(e => e.t === 'win' && e.noShow);
   if (allE && winE && !winE.p.isHuman){
-    const p = winE.p, lastAgg = S.ev.filter(x => x.p === p && (x.t === 'bet' || x.t === 'raise')).pop();
+    const p = winE.p, lastAgg = evs.filter(x => x.p === p && (x.t === 'bet' || x.t === 'raise')).pop();
     if (lastAgg){
-      const at = S.ev.filter(x => x.t === 'board' && x.st <= lastAgg.st).pop(), bb = at ? at.cards : [];
+      const at = evs.filter(x => x.t === 'board' && x.st <= lastAgg.st).pop(), bb = at ? at.cards : [];
       const mi = bb.length >= 3 ? madeInfo(p.cards, bb) : null, di = bb.length >= 3 ? drawInfo(p.cards, bb) : {};
       const hn = mi ? mi.name : holeName(p.cards[0], p.cards[1]);
       const weak = mi ? !mi.improves : handPct(p.cards[0], p.cards[1]) > 0.35;
@@ -1028,9 +1035,9 @@ function readTip(){
       return `${p.name} had ${hn} when they bet, so folding against that bet was reasonable.${known}`;
     }
   }
-  const shown = S.ev.filter(e => e.t === 'show' && !e.p.isHuman);
+  const shown = evs.filter(e => e.t === 'show' && !e.p.isHuman);
   for (const e of shown){
-    const p = e.p, acts = S.ev.filter(x => x.p === p && x.st >= 1);
+    const p = e.p, acts = evs.filter(x => x.p === p && x.st >= 1);
     const aggro = acts.some(x => x.t === 'bet' || x.t === 'raise'), calls = acts.filter(x => x.t === 'call').length;
     const sc = evaluate(p.cards.concat(S.board)), cat = catOf(sc), bcat = catOf(evaluate(S.board));
     const weak = cat <= bcat || cat === 0;
@@ -1187,6 +1194,7 @@ function skill(){
 function renderProgress(){
   const P = prof, h = Math.max(1, P.hands), sk = skill();
   const rate = (a, b) => b ? a / b : null;
+  /** @type {Array<[string, number, [number, number], string, boolean?]>} */
   const rows = [
     ['VPIP', rate(P.vpip, P.hands), [0.2, 0.3], 'How often you put money in before the flop. Under 20% is very tight, over 30% is loose for a 6-player table.'],
     ['PFR', rate(P.pfr, P.hands), [0.15, 0.25], 'How often you raise before the flop. Strong players raise most hands they play.'],
@@ -1257,6 +1265,7 @@ const LEARN = {
     <ul><li><b>Fold:</b> give up the hand and anything you put in.</li><li><b>Check:</b> pass without betting, only if nobody has bet.</li><li><b>Call:</b> match the current bet.</li><li><b>Bet / Raise:</b> put in more chips. Everyone must call, raise again or fold.</li><li><b>All-in:</b> bet every chip you have.</li></ul>
     <p>After each hand the button moves one seat to the left, so everyone takes turns paying the blinds.</p>`,
   ranks: () => {
+    /** @type {Array<[string, string, number[]]>} */
     const ex = [['Royal Flush', 'A, K, Q, J, 10 of one suit', [50, 46, 42, 38, 34]], ['Straight Flush', 'Five in a row, same suit', [29, 25, 21, 17, 13]], ['Four of a Kind', 'Four cards of the same rank', [36, 37, 38, 39, 8]], ['Full House', 'Three of a kind plus a pair', [44, 45, 46, 20, 21]], ['Flush', 'Any five of the same suit', [48, 36, 24, 16, 4]], ['Straight', 'Five in a row, any suits', [33, 30, 27, 22, 19]], ['Three of a Kind', 'Three cards of the same rank', [20, 21, 22, 46, 6]], ['Two Pair', 'Two different pairs', [44, 45, 12, 13, 26]], ['One Pair', 'Two cards of the same rank', [48, 49, 37, 22, 10]], ['High Card', 'Nothing else: highest card plays', [50, 37, 26, 18, 5]]];
     return `<p>From best to worst. If two players have the same type of hand, the higher cards win. Suits never break ties: identical hands split the pot.</p>` + ex.map(([n, d, cards], i) => `<div class="rank"><b>${i + 1}</b><div><div class="rn">${n}</div><div class="rd">${d}</div></div><div class="mini">${cards.map(c => cardHTML(c)).join('')}</div></div>`).join('');
   },
@@ -1302,7 +1311,7 @@ LEARN.home = () => `
     ${VAR_ORDER.map(k => `<h3>${VARIANTS[k].name}</h3><p>${VARIANTS[k].desc}</p>`).join('')}
     <h3>Who usually picks what</h3><ul><li><b>Rohit:</b> mostly Poker + 3 Patti, sometimes Two boards.</li><li><b>Krish:</b> mostly 8 cards (two 3 Patti), sometimes Poker + 3 Patti. He usually puts his stronger 3 Patti 2nd, but switches sometimes so he is hard to predict.</li><li><b>Nikhil:</b> 7 cards (hand poker) or Simple poker.</li><li><b>Venky:</b> mostly Poker + 3 Patti, sometimes Simple poker.</li><li><b>You:</b> you pick when you have the dealer chip.</li></ul>
     <h3>3 Patti hands, best to worst</h3>
-    <div class="tp-ranks">${[['Trail', 'Three of a kind', [48, 49, 50]], ['Pure sequence', '3 in a row, same suit', [45, 41, 37]], ['Sequence', '3 in a row, any suits', [44, 41, 38]], ['Color', '3 of the same suit', [47, 31, 11]], ['Pair', 'Two of the same rank', [36, 37, 18]], ['High card', 'None of the above', [50, 33, 13]]].map(([n, d, cards]) => `<div><b>${n}</b> <span>${d}</span></div><div class="mini">${cards.map(c => cardHTML(c)).join('')}</div>`).join('')}</div>
+    <div class="tp-ranks">${/** @type {Array<[string, string, number[]]>} */ ([['Trail', 'Three of a kind', [48, 49, 50]], ['Pure sequence', '3 in a row, same suit', [45, 41, 37]], ['Sequence', '3 in a row, any suits', [44, 41, 38]], ['Color', '3 of the same suit', [47, 31, 11]], ['Pair', 'Two of the same rank', [36, 37, 18]], ['High card', 'None of the above', [50, 33, 13]]]).map(([n, d, cards]) => `<div><b>${n}</b> <span>${d}</span></div><div class="mini">${cards.map(c => cardHTML(c)).join('')}</div>`).join('')}</div>
     <p>A-K-Q is the best sequence, then A-2-3, then K-Q-J and down to 4-3-2. When two hands are the same type, the higher cards win.</p>
     <h3>How to split well</h3><ul><li>3 Patti: a pair, a sequence or three of one suit wins most of the time. Three random high cards usually lose.</li><li>Poker: two high cards, a pair, or two cards of the same suit that are close together.</li><li>Do not put everything into one part: a decent hand in every part often beats one great part and one terrible part.</li><li>8 cards: you choose which 3 Patti plays 1st and which plays 2nd. Most players put the stronger one 1st; putting it 2nd can beat their weaker hand, but your weak one then meets their strong one.</li><li>The best split can change as table cards come out, so look again at the showdown.</li><li>Not sure? Tap Hint: it shows your arrangement next to the best all-round split, the strongest poker split and the strongest 3 Patti split, so you can pick.</li></ul>`;
 const LEARN_TABS = [['basics', 'Basics'], ['home', 'Home games'], ['ranks', 'Hand ranks'], ['betting', 'Betting'], ['positions', 'Positions'], ['hands', 'Starting hands'], ['strategy', 'Strategy'], ['players', 'Player types'], ['glossary', 'Glossary']];
@@ -1320,7 +1329,7 @@ function tick(){
   if (!S || S.toAct < 0) return;
   const p = S.players[S.toAct]; if (!p || !p.el) return;
   const left = Math.max(0, 1 - (performance.now() - S.turnStart) / S.turnLen);
-  const bar = p.el.querySelector('.timer i');
+  const bar = /** @type {HTMLElement | null} */ (p.el.querySelector('.timer i'));
   if (bar){ bar.style.transform = `scaleX(${p.isHuman && settings.timer === 0 ? 1 : left})`; bar.classList.toggle('low', left < 0.3 && !(p.isHuman && settings.timer === 0)); }
   if (p.isHuman && pending && settings.timer > 0){
     if (left < 0.3 && !S.warned){ S.warned = true; Snd.tick(); }
@@ -1446,10 +1455,10 @@ document.addEventListener('keydown', e => {
     if (!$('#revOv').hidden) closeReview('back');
     return;
   }
-  if (!$('#revOv').hidden && e.key === 'Enter' && !e.target.matches('button')){ e.preventDefault(); closeReview('next'); return; }
-  if (contWait && $('#setOv').hidden && $('#learnOv').hidden && $('#progOv').hidden && (e.key === 'Enter' || e.key === ' ' || e.key.toLowerCase() === 'n') && !e.target.matches('input,button')){ e.preventDefault(); doContinue('primary'); return; }
+  if (!$('#revOv').hidden && e.key === 'Enter' && !/** @type {Element} */ (e.target).matches('button')){ e.preventDefault(); closeReview('next'); return; }
+  if (contWait && $('#setOv').hidden && $('#learnOv').hidden && $('#progOv').hidden && (e.key === 'Enter' || e.key === ' ' || e.key.toLowerCase() === 'n') && !/** @type {Element} */ (e.target).matches('input,button')){ e.preventDefault(); doContinue('primary'); return; }
   if (!pending) return;
-  if (e.target.matches('input[type=text],input[type=number]')) return;
+  if (/** @type {Element} */ (e.target).matches('input[type=text],input[type=number]')) return;
   if (!$('#revOv').hidden || !$('#learnOv').hidden || !$('#progOv').hidden || !$('#setOv').hidden) return;
   const k = e.key.toLowerCase();
   if (k === 'f'){ e.preventDefault(); $('#bFold').click(); }
@@ -1525,6 +1534,9 @@ $('#pauseBtn').onclick = () => {
 $('#histBtn').onclick = () => { renderHistory(); $('#drawer').classList.add('open'); };
 $('#histClose').onclick = () => $('#drawer').classList.remove('open');
 
+// A saved table to resume (from this browser, or from the account when inside Claude).
+/** @type {any} */
+let resumeSnap = null;
 // Connect to saved progress and Claude coaching when the page runs inside Claude.
 (async () => {
   if (!window.claude || typeof window.claude.use !== 'function') return;
@@ -1549,7 +1561,6 @@ $('#histClose').onclick = () => $('#drawer').classList.remove('open');
   } catch (e) { /* run without saving to the account */ }
 })();
 
-let resumeSnap = null;
 if (window.claude && window.claude.hot && window.claude.hot.snapshot){
   try { window.claude.hot.snapshot(() => ({snap: S && S.running ? S.snap : null})); } catch (e) {}
 }

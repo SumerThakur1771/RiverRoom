@@ -123,7 +123,17 @@ export function computeGrade({ pre, post, seed, pi, label, recLabel, act, money,
   return { ctx, act, rec, g: gradeDecision(ctx, act, rec) };
 }
 
-export function run(job: Job): unknown {
+/** What each kind of job returns. */
+export interface JobResults {
+  tables: BuiltTables;
+  bot: ReturnType<typeof computeBot>;
+  hint: ReturnType<typeof computeHint>;
+  grade: Graded[];
+}
+export type ResultOf<J extends Job> = JobResults[J['type']];
+
+export function run<J extends Job>(job: J): ResultOf<J>;
+export function run(job: Job): JobResults[Job['type']] {
   switch (job.type) {
     case 'tables': return computeTables(job.seed);
     case 'bot': return computeBot(job);

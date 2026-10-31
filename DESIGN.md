@@ -162,7 +162,7 @@ The coach was carried over from the original as plain JavaScript, then typed und
 Function bodies were kept as they were, so the grades could not drift. The 98-decision
 eager-vs-lazy test passes before and after. ESLint forbids `window`, `document`,
 `localStorage` and `location` in the engine, bots, coach and worker, which keeps them
-runnable in a Web Worker and in Node. The screen code (`src/ui`) is still plain JavaScript.
+runnable in a Web Worker and in Node. The screen code is covered in section 13.
 
 ## 9. AI hand review (`api/review.ts`, `src/review`)
 
@@ -334,3 +334,28 @@ score drops below 95 or axe finds any WCAG 2.1 A/AA violation.
 It is skipped on localhost. Query strings are removed before anything is sent, because the
 multiplayer page's `?code=` is a private invite code. Data appears once Web Analytics is
 turned on in the Vercel project.
+
+## 13. Typing the screen code (`src/ui`, `tsconfig.ui.json`)
+
+The screens (`src/ui/legacy.js`, about 1,570 lines of DOM code) are still JavaScript. They
+are now type-checked by TypeScript with `checkJs`, in non-strict mode, and
+`npm run typecheck` (so CI) fails on any error. Converting them to strict TypeScript would
+mean about 789 errors, measured with `checkJs` and `strict: true`. 615 of those are only
+"implicitly any". That was out of scope for the time given.
+
+**What the checker found, and what changed:**
+- 94 errors at first. Most came from browser globals it did not know (the artifact host's
+  `window.claude`, the measurement hooks, `webkitAudioContext`). These are now declared in
+  `src/ui/globals.d.ts`.
+- One fragile spot: an async block read `resumeSnap` before its `let` line. It only worked
+  because the read came after several `await`s. The declaration now comes first.
+- The DOM elements the screens attach to engine players (`p.el`, `p.betEl`) are declared by
+  module augmentation in the UI's declarations, so the engine's own `Player` type stays
+  DOM-free.
+- Typing the game-state variable `S` as the engine's game type uncovered more spots,
+  which are now annotated with JSDoc. Event payloads are free-form by design (`unknown` in
+  the engine); the two functions that format them read them through one `any` alias.
+
+**The worker client is strict TypeScript** (`src/ui/compute-client.ts`). Each job kind now
+has a result type (`JobResults` in `src/coach/compute.ts`), so `compute({ type: 'bot', … })`
+resolves to `{ action, patch }`, not `unknown`.

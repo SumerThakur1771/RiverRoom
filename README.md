@@ -52,7 +52,8 @@ src/coach/    the coach and the shared helpers, strict TypeScript and DOM-free: 
 src/worker/   the compute Web Worker: bots, coach analysis and opponent-model tables run
               here so the page never freezes.
 src/ui/       screens and animations (carried over from the original version and driven
-              by the engine; still plain JavaScript).
+              by the engine). JavaScript, type-checked by TypeScript (checkJs, not strict);
+              the worker client is strict TypeScript.
 server/       the multiplayer server (Node, Socket.IO), using the same engine, and its
               Postgres storage (server/src/store.ts).
 src/pwa/      service worker and page setup (offline cache, analytics).
