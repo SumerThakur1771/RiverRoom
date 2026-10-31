@@ -43,3 +43,13 @@ export function script(steps: Array<[number, Action]>, onAsk?: (p: Player, g: Ga
     return { type: 'check' }; // check if possible; the engine turns it into a fold otherwise
   };
 }
+
+/**
+ * A deck whose cards come out in `order` (the engine deals with pop(): hole cards one at a
+ * time round the table from the small blind, then burn + flop, burn + turn, burn + river).
+ */
+export function deckFor(order: number[]): number[] {
+  const rest = Array.from({ length: 52 }, (_, i) => i).filter(c => !order.includes(c));
+  return rest.concat(order.slice().reverse());
+}
+export const card = (rank: number, suit: number): number => (rank - 2) * 4 + suit;

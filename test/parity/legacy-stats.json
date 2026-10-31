@@ -1,0 +1,156 @@
+{
+ "recorded": "2026-10-31",
+ "handsPlayed": 3432,
+ "totals": {
+  "tourney": {
+   "casual": {
+    "hands": 562,
+    "vpip": 187,
+    "pfr": 52,
+    "agg": 93,
+    "calls": 103,
+    "sawFlop": 152,
+    "wtsd": 71
+   },
+   "weak": {
+    "hands": 640,
+    "vpip": 147,
+    "pfr": 66,
+    "agg": 59,
+    "calls": 66,
+    "sawFlop": 118,
+    "wtsd": 57
+   },
+   "rock": {
+    "hands": 736,
+    "vpip": 77,
+    "pfr": 45,
+    "agg": 50,
+    "calls": 41,
+    "sawFlop": 89,
+    "wtsd": 48
+   },
+   "lag": {
+    "hands": 614,
+    "vpip": 210,
+    "pfr": 159,
+    "agg": 137,
+    "calls": 81,
+    "sawFlop": 168,
+    "wtsd": 80
+   },
+   "station": {
+    "hands": 569,
+    "vpip": 254,
+    "pfr": 39,
+    "agg": 105,
+    "calls": 162,
+    "sawFlop": 194,
+    "wtsd": 106
+   },
+   "tag": {
+    "hands": 493,
+    "vpip": 134,
+    "pfr": 95,
+    "agg": 69,
+    "calls": 43,
+    "sawFlop": 115,
+    "wtsd": 61
+   },
+   "tricky": {
+    "hands": 588,
+    "vpip": 187,
+    "pfr": 129,
+    "agg": 92,
+    "calls": 93,
+    "sawFlop": 167,
+    "wtsd": 82
+   },
+   "maniac": {
+    "hands": 304,
+    "vpip": 145,
+    "pfr": 107,
+    "agg": 97,
+    "calls": 51,
+    "sawFlop": 110,
+    "wtsd": 55
+   }
+  },
+  "home-std": {
+   "venky": {
+    "hands": 400,
+    "vpip": 337,
+    "pfr": 18,
+    "agg": 298,
+    "calls": 393,
+    "sawFlop": 358,
+    "wtsd": 211
+   },
+   "krish": {
+    "hands": 400,
+    "vpip": 224,
+    "pfr": 0,
+    "agg": 207,
+    "calls": 152,
+    "sawFlop": 255,
+    "wtsd": 95
+   },
+   "rohit": {
+    "hands": 400,
+    "vpip": 143,
+    "pfr": 1,
+    "agg": 56,
+    "calls": 122,
+    "sawFlop": 178,
+    "wtsd": 53
+   },
+   "nikhil": {
+    "hands": 400,
+    "vpip": 192,
+    "pfr": 8,
+    "agg": 135,
+    "calls": 150,
+    "sawFlop": 215,
+    "wtsd": 69
+   }
+  },
+  "home-holdem": {
+   "venky": {
+    "hands": 2000,
+    "vpip": 1625,
+    "pfr": 72,
+    "agg": 1289,
+    "calls": 1492,
+    "sawFlop": 1739,
+    "wtsd": 868
+   },
+   "nikhil": {
+    "hands": 2000,
+    "vpip": 931,
+    "pfr": 46,
+    "agg": 397,
+    "calls": 458,
+    "sawFlop": 1053,
+    "wtsd": 217
+   },
+   "krish": {
+    "hands": 2000,
+    "vpip": 1000,
+    "pfr": 28,
+    "agg": 632,
+    "calls": 405,
+    "sawFlop": 1134,
+    "wtsd": 237
+   },
+   "rohit": {
+    "hands": 2000,
+    "vpip": 840,
+    "pfr": 18,
+    "agg": 277,
+    "calls": 385,
+    "sawFlop": 944,
+    "wtsd": 199
+   }
+  }
+ }
+}

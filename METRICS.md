@@ -133,10 +133,49 @@ Used only to locate the long task. One run, sampled every 200 µs via the DevToo
 
 Single run; treat it as directional, not a benchmark.
 
+## Tests and coverage (TypeScript port)
+
+Command: `npx vitest run --coverage`. Output:
+[`results/2026-10-31-tests.txt`](tools/measure/results/2026-10-31-tests.txt).
+
+| Metric | Value |
+|---|---|
+| Test files / tests | 4 / 36, all passing |
+| Golden replay | 272 hands from 12 recorded sessions of the original game (6 home-game sessions, one per variant plus dealer's choice; 6 tournaments) replay with identical hand-history lines and stacks |
+| Situations in the golden hands | 35 with side pots, 104 all-ins, 144 uncalled bets returned, 7 mucks, 4 tied pots, 74 two-of-three majority wins and 5 three-way splits (8-card game). No antes: covered by a unit test instead |
+| Property tests (fast-check) | 300 random hands with random, often illegal, actions: chips conserved, no negative stacks, pot paid out. 500 random contribution layouts: side pots add up and only live contributors are eligible |
+| Coverage of `src/engine`, `src/ai`, `src/sim` | Statements 88.65%, branches 83.03%, functions 91.07%, lines 90.04% (varies by about 0.1 point between runs, because the property tests draw new random cases each run) |
+| Not covered by unit tests | `src/ui` (the browser layer), which the Playwright smoke test exercises instead |
+| AA vs KK exact equity (As Ah vs Kd Kc, all 1,712,304 boards) | 81.255% (wins 1,388,072, ties 6,538) |
+
+## Bot parity (TypeScript bots vs the original)
+
+Commands: `node tools/golden/persona-stats.mjs` (original, in Chromium; 3,432 hands in 27.1 min,
+output [`results/2026-10-31-legacy-persona-stats.txt`](tools/measure/results/2026-10-31-legacy-persona-stats.txt))
+and `npx tsx tools/sim/parity.ts` (TypeScript; 3,400 hands in about 2 minutes, output
+[`results/2026-10-31-bot-parity.txt`](tools/measure/results/2026-10-31-bot-parity.txt)).
+
+Both play the same session plan with the same scripted hero: home Hold'em (8 sessions x 250
+hands), home Poker + 3 Patti (4 x 100) and tournaments (4 x at least 250 hands, new
+tournaments started as the hero busts). The test compares each persona's VPIP, PFR and
+postflop aggression frequency; each must be within 3 standard errors of the difference
+(floor: 3 percentage points). **Result: all 16 persona/game rows within tolerance.**
+
+Caveats:
+- Tournament personas have only about 300 to 740 hands each, so the bands are wide: this
+  rules out large behaviour changes, not small ones. The widest passing gaps are Rock VPIP
+  (10.5% vs 15.6%) and Trapper PFR (21.9% vs 15.6%).
+- In home Hold'em, Nikhil's and Krish's aggression frequencies differ by about 6 to 7 points
+  (z about 2.7, in opposite directions). That is inside the tolerance but more than chance
+  usually gives. Each side ran only 8 sessions, and seating (how far each bot sits from
+  the aggressive scripted hero) does not average out across so few sessions; the two
+  sides also seat players differently. Not investigated further yet.
+- The aggression factor (bets+raises / calls) is printed for reference but not tested: as a
+  ratio of small counts it swings too much at these sample sizes.
+
 ## Not measured yet
 
 - Lighthouse scores (performance, accessibility).
 - Real-device phone performance.
-- Test counts and coverage: there are no tests in the repo yet.
-- Simulator throughput and persona win rates.
+- Simulator throughput per variant and persona win rates (simulator step).
 - Users and hands played by real people.

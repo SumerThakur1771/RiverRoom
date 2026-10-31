@@ -1,0 +1,18 @@
+hands played: 3432 in 27.1 min
+tourney      casual   hands=  562 VPIP=33.3% PFR=9.3% AF=0.90
+tourney      weak     hands=  640 VPIP=23.0% PFR=10.3% AF=0.89
+tourney      rock     hands=  736 VPIP=10.5% PFR=6.1% AF=1.22
+tourney      lag      hands=  614 VPIP=34.2% PFR=25.9% AF=1.69
+tourney      station  hands=  569 VPIP=44.6% PFR=6.9% AF=0.65
+tourney      tag      hands=  493 VPIP=27.2% PFR=19.3% AF=1.60
+tourney      tricky   hands=  588 VPIP=31.8% PFR=21.9% AF=0.99
+tourney      maniac   hands=  304 VPIP=47.7% PFR=35.2% AF=1.90
+home-std     venky    hands=  400 VPIP=84.3% PFR=4.5% AF=0.76
+home-std     krish    hands=  400 VPIP=56.0% PFR=0.0% AF=1.36
+home-std     rohit    hands=  400 VPIP=35.8% PFR=0.3% AF=0.46
+home-std     nikhil   hands=  400 VPIP=48.0% PFR=2.0% AF=0.90
+home-holdem  venky    hands= 2000 VPIP=81.3% PFR=3.6% AF=0.86
+home-holdem  nikhil   hands= 2000 VPIP=46.5% PFR=2.3% AF=0.87
+home-holdem  krish    hands= 2000 VPIP=50.0% PFR=1.4% AF=1.56
+home-holdem  rohit    hands= 2000 VPIP=42.0% PFR=0.9% AF=0.72
+exit 0

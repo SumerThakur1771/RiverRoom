@@ -40,12 +40,14 @@ const secs = (performance.now() - t0) / 1000;
 const legacy = JSON.parse(readFileSync(new URL('../../test/parity/legacy-stats.json', import.meta.url), 'utf8')) as { handsPlayed: number; totals: typeof totals };
 writeFileSync(new URL('../../test/parity/ts-stats.json', import.meta.url), JSON.stringify({ handsPlayed, seconds: +secs.toFixed(1), totals }, null, 1) + '\n');
 
-// Tolerance: VPIP and PFR within 3 standard errors of the difference (binomial, both samples),
-// with a floor of 3 percentage points; aggression factor within 30% (it is a ratio of counts).
+// Tolerance: VPIP, PFR and postflop aggression frequency (bets+raises / (bets+raises+calls))
+// each within 3 standard errors of the difference (binomial, both samples), with a floor of
+// 3 percentage points. The aggression factor (bets+raises / calls) is printed for reference
+// but not tested: as a ratio of small counts it swings too much at these sample sizes.
 let bad = 0;
 const pct = (x: number): string => (100 * x).toFixed(1).padStart(5) + '%';
 console.log(`TS: ${handsPlayed} hands in ${secs.toFixed(0)} s.  Original: ${legacy.handsPlayed} hands.`);
-console.log('group        persona   hands(orig/ts)    VPIP orig/ts        PFR orig/ts         AF orig/ts');
+console.log('group        persona   hands(orig/ts)    VPIP orig/ts        PFR orig/ts         Aggression freq orig/ts   (AF orig/ts)');
 for (const [group, types] of Object.entries(legacy.totals)) {
   for (const [type, a] of Object.entries(types)) {
     const b = totals[group]?.[type];
@@ -53,9 +55,11 @@ for (const [group, types] of Object.entries(legacy.totals)) {
     const tolP = (x: number, y: number): number => Math.max(0.03, 3 * Math.sqrt(x * (1 - x) / a.hands + y * (1 - y) / b.hands));
     const v1 = a.vpip / a.hands, v2 = b.vpip / b.hands, p1 = a.pfr / a.hands, p2 = b.pfr / b.hands;
     const af1 = a.agg / Math.max(1, a.calls), af2 = b.agg / Math.max(1, b.calls);
-    const okV = Math.abs(v1 - v2) <= tolP(v1, v2), okP = Math.abs(p1 - p2) <= tolP(p1, p2), okA = Math.abs(af1 - af2) <= 0.3 * Math.max(af1, af2, 0.2);
+    const n1 = a.agg + a.calls, n2 = b.agg + b.calls, f1 = a.agg / Math.max(1, n1), f2 = b.agg / Math.max(1, n2);
+    const tolF = Math.max(0.03, 3 * Math.sqrt(f1 * (1 - f1) / Math.max(1, n1) + f2 * (1 - f2) / Math.max(1, n2)));
+    const okV = Math.abs(v1 - v2) <= tolP(v1, v2), okP = Math.abs(p1 - p2) <= tolP(p1, p2), okA = Math.abs(f1 - f2) <= tolF;
     if (!okV || !okP || !okA) bad++;
-    console.log(`${group.padEnd(12)} ${type.padEnd(8)} ${String(a.hands).padStart(5)}/${String(b.hands).padEnd(5)}   ${pct(v1)}/${pct(v2)} ${okV ? 'ok ' : 'OFF'}   ${pct(p1)}/${pct(p2)} ${okP ? 'ok ' : 'OFF'}   ${af1.toFixed(2)}/${af2.toFixed(2)} ${okA ? 'ok' : 'OFF'}`);
+    console.log(`${group.padEnd(12)} ${type.padEnd(8)} ${String(a.hands).padStart(5)}/${String(b.hands).padEnd(5)}   ${pct(v1)}/${pct(v2)} ${okV ? 'ok ' : 'OFF'}   ${pct(p1)}/${pct(p2)} ${okP ? 'ok ' : 'OFF'}   ${pct(f1)}/${pct(f2)} ${okA ? 'ok ' : 'OFF'}   (${af1.toFixed(2)}/${af2.toFixed(2)})`);
   }
 }
 console.log(bad ? `RESULT: ${bad} persona/game rows outside tolerance` : 'RESULT: all personas within tolerance');

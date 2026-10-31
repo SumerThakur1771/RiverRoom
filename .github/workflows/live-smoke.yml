@@ -1,0 +1,36 @@
+name: Live smoke test
+
+# Runs after Vercel reports a successful production deployment (Vercel posts a GitHub
+# deployment status for each push to main), so the test always hits the new version.
+on:
+  deployment_status:
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    name: Smoke test https://sumer-riverroom.vercel.app
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.deployment_status.state == 'success' && contains(github.event.deployment.environment, 'Production'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.deployment.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Desktop and phone, home game and tournament
+        run: |
+          node tools/ui/smoke.mjs https://sumer-riverroom.vercel.app/ 40 home
+          node tools/ui/smoke.mjs https://sumer-riverroom.vercel.app/ 25 tourney
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: live-screenshots
+          path: screenshots/
+          retention-days: 14

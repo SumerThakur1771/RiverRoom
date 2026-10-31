@@ -1,0 +1,156 @@
+{
+ "handsPlayed": 3400,
+ "seconds": 123.8,
+ "totals": {
+  "home-holdem": {
+   "venky": {
+    "hands": 2000,
+    "vpip": 1616,
+    "pfr": 85,
+    "agg": 1193,
+    "calls": 1428,
+    "sawFlop": 1709,
+    "wtsd": 813
+   },
+   "krish": {
+    "hands": 2000,
+    "vpip": 1043,
+    "pfr": 21,
+    "agg": 583,
+    "calls": 472,
+    "sawFlop": 1152,
+    "wtsd": 259
+   },
+   "rohit": {
+    "hands": 2000,
+    "vpip": 799,
+    "pfr": 19,
+    "agg": 286,
+    "calls": 340,
+    "sawFlop": 895,
+    "wtsd": 182
+   },
+   "nikhil": {
+    "hands": 2000,
+    "vpip": 975,
+    "pfr": 46,
+    "agg": 469,
+    "calls": 416,
+    "sawFlop": 1047,
+    "wtsd": 230
+   }
+  },
+  "home-std": {
+   "nikhil": {
+    "hands": 400,
+    "vpip": 189,
+    "pfr": 1,
+    "agg": 133,
+    "calls": 128,
+    "sawFlop": 209,
+    "wtsd": 65
+   },
+   "venky": {
+    "hands": 400,
+    "vpip": 335,
+    "pfr": 17,
+    "agg": 269,
+    "calls": 348,
+    "sawFlop": 355,
+    "wtsd": 213
+   },
+   "rohit": {
+    "hands": 400,
+    "vpip": 140,
+    "pfr": 3,
+    "agg": 62,
+    "calls": 103,
+    "sawFlop": 171,
+    "wtsd": 55
+   },
+   "krish": {
+    "hands": 400,
+    "vpip": 228,
+    "pfr": 8,
+    "agg": 194,
+    "calls": 139,
+    "sawFlop": 245,
+    "wtsd": 100
+   }
+  },
+  "tourney": {
+   "lag": {
+    "hands": 526,
+    "vpip": 173,
+    "pfr": 128,
+    "agg": 104,
+    "calls": 58,
+    "sawFlop": 130,
+    "wtsd": 69
+   },
+   "casual": {
+    "hands": 479,
+    "vpip": 162,
+    "pfr": 44,
+    "agg": 56,
+    "calls": 82,
+    "sawFlop": 124,
+    "wtsd": 59
+   },
+   "maniac": {
+    "hands": 390,
+    "vpip": 177,
+    "pfr": 124,
+    "agg": 100,
+    "calls": 63,
+    "sawFlop": 144,
+    "wtsd": 66
+   },
+   "tag": {
+    "hands": 601,
+    "vpip": 157,
+    "pfr": 105,
+    "agg": 77,
+    "calls": 75,
+    "sawFlop": 138,
+    "wtsd": 62
+   },
+   "rock": {
+    "hands": 685,
+    "vpip": 107,
+    "pfr": 53,
+    "agg": 64,
+    "calls": 61,
+    "sawFlop": 105,
+    "wtsd": 57
+   },
+   "weak": {
+    "hands": 597,
+    "vpip": 124,
+    "pfr": 67,
+    "agg": 72,
+    "calls": 68,
+    "sawFlop": 121,
+    "wtsd": 53
+   },
+   "station": {
+    "hands": 575,
+    "vpip": 238,
+    "pfr": 28,
+    "agg": 101,
+    "calls": 134,
+    "sawFlop": 193,
+    "wtsd": 91
+   },
+   "tricky": {
+    "hands": 526,
+    "vpip": 145,
+    "pfr": 82,
+    "agg": 83,
+    "calls": 68,
+    "sawFlop": 127,
+    "wtsd": 58
+   }
+  }
+ }
+}

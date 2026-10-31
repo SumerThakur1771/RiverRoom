@@ -1,0 +1,18 @@
+
+ RUN  v5.0.5 /home/user/riverroom
+      Coverage enabled with v8
+
+
+ Test Files  4 passed (4)
+      Tests  36 passed (36)
+   Start at  02:08:48
+   Duration  49.69s (tests 99%)
+
+[34m % [39m[2mCoverage report from [22m[33mv8[39m
+
+=============================== Coverage summary ===============================
+Statements   : 88.65% ( 2150/2425 )
+Branches     : 83.03% ( 1610/1939 )
+Functions    : 91.07% ( 306/336 )
+Lines        : 90.04% ( 1338/1486 )
+================================================================================
