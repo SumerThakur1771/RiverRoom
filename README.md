@@ -24,6 +24,9 @@ coach explains each decision.
   eight generic types). They estimate their chances by Monte Carlo simulation against
   what your actions suggest you hold.
 - **Coach:** a hint on demand during a hand, a grade for each decision, and a hand review.
+- **AI hand review (optional):** after a hand, Claude (Haiku 5.5) writes a short review
+  through a server route (`api/review.ts`). It needs `ANTHROPIC_API_KEY` set on the server.
+  Without it, or when rate-limited, the built-in review is used.
 
 ## How it is built
 

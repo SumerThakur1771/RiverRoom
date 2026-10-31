@@ -1,0 +1,28 @@
+name: AI review eval (live)
+
+# Runs the 20-hand review eval against the deployed /api/review (the real model, using the
+# ANTHROPIC_API_KEY stored in Vercel). Run it by hand from the Actions tab. It sends 20
+# requests, paced to stay under the endpoint's rate limit, so it takes about 5 minutes.
+on:
+  workflow_dispatch:
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Run the eval
+        run: |
+          npx tsx tools/review/eval.ts --live https://sumer-riverroom.vercel.app/api/review --out review-eval-live.txt
+          { echo '```'; cat review-eval-live.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: review-eval-live
+          path: review-eval-live.txt

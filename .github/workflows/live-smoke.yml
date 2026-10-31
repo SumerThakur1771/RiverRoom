@@ -24,6 +24,13 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      - name: The AI review endpoint is deployed and validates input (no model call)
+        run: |
+          code=$(curl -s -o body.json -w '%{http_code}' -X POST -H 'content-type: application/json' -d '{}' https://sumer-riverroom.vercel.app/api/review)
+          echo "status $code: $(cat body.json)"
+          # 503 = no API key configured yet, 400 = key present and the empty body was rejected
+          [ "$code" = 400 ] || [ "$code" = 503 ]
+          grep -q '"fallback":true' body.json
       - name: Desktop and phone, home game and tournament
         run: |
           node tools/ui/smoke.mjs https://sumer-riverroom.vercel.app/ 40 home

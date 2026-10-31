@@ -7,6 +7,7 @@ import * as E from '../engine/engine';
 import { Tables } from '../engine/strength';
 import { toPlain } from '../coach/compute';
 import { compute, workerMs } from './compute-client.js';
+import { readReviewEvents } from '../review/sse';
 import { bindGame,
   CONCEPTS, GRADE_LABEL, GRADE_SCORE, HOME_BUY, HOME_FRIENDS, LESSONS, LEVELS, LOGR, PCT, RANKCH,
   SEATSHORT, SUITCLS, SUITS, TYPES, VAR, VARIANTS, VAR_ORDER, actWords, cardTxt, catOf,
@@ -1067,7 +1068,7 @@ function showReview(r, blocking){
   $('#rvReadWrap').hidden = !r.read; $('#rvRead').textContent = r.read;
   $('#rvAiWrap').hidden = !r.ai; if (r.ai) $('#rvAi').innerHTML = mdLite(r.ai);
   $('#rvNext').textContent = blocking ? 'Next hand' : 'Close';
-  $('#rvAsk').hidden = !sampleFn; $('#rvAsk').disabled = false; $('#rvAsk').textContent = r.ai ? 'Ask Claude again' : 'Ask Claude for a deeper review';
+  $('#rvAsk').hidden = !sampleFn && serverReviewOff; $('#rvAsk').disabled = false; $('#rvAsk').textContent = r.ai ? 'Ask Claude again' : 'Ask Claude for a deeper review';
   segment($('#rvSeg'), [['all', 'Every hand'], ['played', 'Hands I played'], ['off', 'Off']], () => settings.review, v => { settings.review = v; saveSettings(); });
   revCurrent = r;
   const ov = $('#revOv'); ov.hidden = false; ov.scrollTop = 0;
@@ -1082,8 +1083,33 @@ function mdLite(t){
   return blocks.map(b => /^\s*[-•]\s/m.test(b) ? '<ul>' + b.split('\n').filter(x => x.trim()).map(x => `<li>${x.replace(/^\s*[-•]\s*/, '')}</li>`).join('') + '</ul>' : `<p>${b.replace(/\n/g, '<br>')}</p>`).join('');
 }
 function playersBrief(){ return S.players.filter(p => !p.isHuman).map(p => `${p.name}: ${TYPES[p.type].label} (${TYPES[p.type].desc})`).join('\n'); }
+// Off the claude.ai host: the AI review comes from this site's own /api/review route.
+let serverReviewOff = false;
+const reviewMarkdown = v => `**Grade:** ${GRADE_LABEL[v.grade] || v.grade}\n\n${v.mistake ? `**Biggest mistake:** ${v.mistake}\n\n` : '**Biggest mistake:** none. Every decision was reasonable.\n\n'}**What to remember:** ${v.lesson}`;
+async function serverReview(r){
+  const btn = $('#rvAsk'), out = $('#rvAi');
+  $('#rvAiWrap').hidden = false; out.textContent = 'Claude is reviewing this hand…'; btn.disabled = true;
+  const note = (reason, retryAfter) => {
+    if (reason === 'not_configured'){ serverReviewOff = true; btn.hidden = true; out.textContent = 'Claude reviews are not set up on this site yet. The review above is from the app\'s own coach.'; return; }
+    out.textContent = reason === 'rate_limited' ? `Too many reviews in a short time. Try again in ${retryAfter || 60} seconds. The review above is from the app's own coach.` : 'Claude could not finish this review. The review above is from the app\'s own coach.';
+  };
+  revCtl = new AbortController();
+  try {
+    const body = {hand: r.text.slice(0, 8000), decisions: r.decs.map(d => d.raw).slice(0, 20), money: MONEY, ...(r.game ? {game: r.game.slice(0, 80), gameDesc: (r.gameDesc || '').slice(0, 600)} : {})};
+    const res = await fetch('/api/review', {method: 'POST', headers: {'content-type': 'application/json'}, body: JSON.stringify(body), signal: revCtl.signal});
+    if (!res.ok){ const j = await res.json().catch(() => ({})); note(j.reason, j.retryAfter); return; }
+    let n = 0;
+    const ev = await readReviewEvents(res, t => { n += t.length; out.textContent = `Claude is reviewing this hand… (${n} characters so far)`; });
+    if (ev.review){ r.ai = reviewMarkdown(ev.review); out.innerHTML = mdLite(r.ai); btn.textContent = 'Ask Claude again'; }
+    else note(ev.fallback);
+  } catch (e) {
+    if (e && e.name === 'AbortError') return;
+    note('network');
+  } finally { btn.disabled = false; revCtl = null; }
+}
 async function askClaudeReview(){
-  const r = revCurrent; if (!r || !sampleFn) return;
+  const r = revCurrent; if (!r) return;
+  if (!sampleFn) return serverReview(r);
   const btn = $('#rvAsk'), out = $('#rvAi');
   $('#rvAiWrap').hidden = false; out.textContent = 'Thinking…'; btn.disabled = true;
   revCtl = new AbortController();

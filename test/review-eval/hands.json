@@ -1,0 +1,1237 @@
+[
+ {
+  "id": "home-holdem-m1",
+  "request": {
+   "hand": "Home Game Hand #1: Dealer's choice No Limit ($0.10/$0.20 USD)\nTable 5994 5-max. Seat #2 is the button\nSeat 1: Sumer ($10.00 in chips)\nSeat 2: Nikhil ($10.00 in chips)\nSeat 3: Venky ($10.00 in chips)\nSeat 5: Rohit ($10.00 in chips)\nSeat 6: Krish ($10.00 in chips)\nGame: Simple poker (Nikhil's choice)\nVenky: posts small blind $0.10\nRohit: posts big blind $0.20\n*** HOLE CARDS ***\nDealt to Sumer [Ac 2h]\nKrish: calls $0.20\nSumer: calls $0.20\nNikhil: calls $0.20\nVenky: calls $0.10\nRohit: checks\n*** FLOP *** [7s 6d Td]\nVenky: checks\nRohit: checks\nKrish: checks\nSumer: bets $0.20\nNikhil: folds\nVenky: calls $0.20\nRohit: folds\nKrish: calls $0.20\n*** TURN *** [7s 6d Td] [Jc]\nVenky: bets $2.80\nKrish: folds\nSumer: calls $2.80\n*** RIVER *** [7s 6d Td Jc] [Ad]\nVenky: checks\nSumer: checks\n*** SHOW DOWN ***\nVenky: shows [9h 9s] (Pair of Nines)\nSumer: shows [Ac 2h] (Pair of Aces)\nSumer collected $7.20 from pot\n*** ALL CARDS (practice view) ***\nSumer: [Ac 2h]\nNikhil: [5c Kh] (folded)\nVenky: [9h 9s]\nRohit: [4h Ah] (folded)\nKrish: [7c Ks] (folded)\n*** SUMMARY ***\nTotal pot $7.20 | Board [7s 6d Td Jc Ad]",
+   "decisions": [
+    {
+     "st": 0,
+     "pos": "CO",
+     "pot": 50,
+     "toCall": 20,
+     "eq": 0.212,
+     "need": 0.286,
+     "act": "call",
+     "to": 0,
+     "rec": "fold",
+     "grade": "fine",
+     "cat": "loose_pre"
+    },
+    {
+     "st": 1,
+     "pos": "CO",
+     "pot": 100,
+     "toCall": 0,
+     "eq": 0.061,
+     "need": 0,
+     "act": "raise",
+     "to": 20,
+     "rec": "check",
+     "grade": "mistake",
+     "cat": "bluff_multi"
+    },
+    {
+     "st": 2,
+     "pos": "CO",
+     "pot": 440,
+     "toCall": 280,
+     "eq": 0.294,
+     "need": 0.389,
+     "act": "call",
+     "to": 0,
+     "rec": "fold",
+     "grade": "fine",
+     "cat": ""
+    },
+    {
+     "st": 3,
+     "pos": "CO",
+     "pot": 720,
+     "toCall": 0,
+     "eq": 0.748,
+     "need": 0,
+     "act": "check",
+     "to": 0,
+     "rec": "bet",
+     "grade": "mistake",
+     "cat": "missed_value"
+    }
+   ],
+   "money": true
+  },
+  "expected": {
+   "grade": "mistake",
+   "hasMistake": true,
+   "street": 1,
+   "cat": "bluff_multi"
+  }
+ },
+ {
+  "id": "home-holdem-m2",
+  "request": {
+   "hand": "Home Game Hand #2: Dealer's choice No Limit ($0.10/$0.20 USD)\nTable 5994 5-max. Seat #3 is the button\nSeat 1: Sumer ($14.00 in chips)\nSeat 2: Nikhil ($9.80 in chips)\nSeat 3: Venky ($6.80 in chips)\nSeat 5: Rohit ($9.80 in chips)\nSeat 6: Krish ($9.60 in chips)\nGame: Simple poker (Venky's choice)\nRohit: posts small blind $0.10\nKrish: posts big blind $0.20\n*** HOLE CARDS ***\nDealt to Sumer [6h 9c]\nSumer: calls $0.20\nNikhil: calls $0.20\nVenky: calls $0.20\nRohit: calls $0.10\nKrish: checks\n*** FLOP *** [Ks 8s Ad]\nRohit: checks\nKrish: checks\nSumer: checks\nNikhil: checks\nVenky: bets $1.40\nRohit: folds\nKrish: folds\nSumer: raises $12.40 to $13.80 and is all-in\nNikhil: folds\nVenky: folds\nUncalled bet ($12.40) returned to Sumer\nSumer collected $3.80 from pot\nSumer: doesn't show hand\n*** ALL CARDS (practice view) ***\nSumer: [6h 9c]\nNikhil: [Kc Ts] (folded)\nVenky: [8d 7s] (folded)\nRohit: [5c 4s] (folded)\nKrish: [9s 9d] (folded)\n*** SUMMARY ***\nTotal pot $3.80 | Board [Ks 8s Ad]",
+   "decisions": [
+    {
+     "st": 0,
+     "pos": "HJ",
+     "pot": 30,
+     "toCall": 20,
+     "eq": 0.177,
+     "need": 0.4,
+     "act": "call",
+     "to": 0,
+     "rec": "fold",
+     "grade": "mistake",
+     "cat": "loose_pre"
+    },
+    {
+     "st": 1,
+     "pos": "HJ",
+     "pot": 100,
+     "toCall": 0,
+     "eq": 0.043,
+     "need": 0,
+     "act": "check",
+     "to": 0,
+     "rec": "check",
+     "grade": "good",
+     "cat": ""
+    },
+    {
+     "st": 1,
+     "pos": "HJ",
+     "pot": 240,
+     "toCall": 140,
+     "eq": 0.079,
+     "need": 0.368,
+     "act": "raise",
+     "to": 1380,
+     "rec": "fold",
+     "grade": "mistake",
+     "cat": "risky_allin"
+    }
+   ],
+   "money": true
+  },
+  "expected": {
+   "grade": "mistake",
+   "hasMistake": true,
+   "street": 0,
+   "cat": "loose_pre"
+  }
+ },
+ {
+  "id": "home-holdem-m3",
+  "request": {
+   "hand": "Home Game Hand #3: Dealer's choice No Limit ($0.10/$0.20 USD)\nTable 5994 5-max. Seat #5 is the button\nSeat 1: Sumer ($16.20 in chips)\nSeat 2: Nikhil ($9.60 in chips)\nSeat 3: Venky ($5.20 in chips)\nSeat 5: Rohit ($9.60 in chips)\nSeat 6: Krish ($9.40 in chips)\nGame: Simple poker (Rohit's choice)\nKrish: posts small blind $0.10\nSumer: posts big blind $0.20\n*** HOLE CARDS ***\nDealt to Sumer [6c Qh]\nNikhil: folds\nVenky: calls $0.20\nRohit: folds\nKrish: calls $0.10\nSumer: checks\n*** FLOP *** [4h 9c Kh]\nKrish: bets $0.30\nSumer: calls $0.30\nVenky: calls $0.30\n*** TURN *** [4h 9c Kh] [7c]\nKrish: checks\nSumer: checks\nVenky: checks\n*** RIVER *** [4h 9c Kh 7c] [9h]\nKrish: checks\nSumer: checks\nVenky: bets $1.90\nKrish: calls $1.90\nSumer: calls $1.90\n*** SHOW DOWN ***\nVenky: shows [3c Th] (Pair of Nines)\nKrish: shows [Qc 4d] (Two Pair, Nines and Fours)\nSumer: shows [6c Qh] (Pair of Nines)\nKrish collected $7.20 from pot\n*** ALL CARDS (practice view) ***\nSumer: [6c Qh]\nNikhil: [Jh 5d] (folded)\nVenky: [3c Th]\nRohit: [5h Jc] (folded)\nKrish: [Qc 4d]\n*** SUMMARY ***\nTotal pot $7.20 | Board [4h 9c Kh 7c 9h]",
+   "decisions": [
+    {
+     "st": 0,
+     "pos": "BB",
+     "pot": 60,
+     "toCall": 0,
+     "eq": 0.296,
+     "need": 0,
+     "act": "check",
+     "to": 0,
+     "rec": "check",
+     "grade": "good",
+     "cat": ""
+    },
+    {
+     "st": 1,
+     "pos": "BB",
+     "pot": 90,
+     "toCall": 30,
+     "eq": 0.173,
+     "need": 0.25,
+     "act": "call",
+     "to": 0,
+     "rec": "fold",
+     "grade": "fine",
+     "cat": ""
+    },
+    {
+     "st": 2,
+     "pos": "BB",
+     "pot": 150,
+     "toCall": 0,
+     "eq": 0.068,
+     "need": 0,
+     "act": "check",
+     "to": 0,
+     "rec": "check",
+     "grade": "good",
+     "cat": ""
+    },
+    {
+     "st": 3,
+     "pos": "BB",
+     "pot": 150,
+     "toCall": 0,
+     "eq": 0.008,
+     "need": 0,
+     "act": "check",
+     "to": 0,
+     "rec": "check",
+     "grade": "good",
+     "cat": ""
+    },
+    {
+     "st": 3,
+     "pos": "BB",
+     "pot": 530,
+     "toCall": 190,
+     "eq": 0.013,
+     "need": 0.264,
+     "act": "call",
+     "to": 0,
+     "rec": "fold",
+     "grade": "mistake",
+     "cat": "call_no_odds"
+    }
+   ],
+   "money": true
+  },
+  "expected": {
+   "grade": "mistake",
+   "hasMistake": true,
+   "street": 3,
+   "cat": "call_no_odds"
+  }
+ },
+ {
+  "id": "home-holdem-m4",
+  "request": {
+   "hand": "Home Game Hand #4: Dealer's choice No Limit ($0.10/$0.20 USD)\nTable 5994 5-max. Seat #6 is the button\nSeat 1: Sumer ($13.80 in chips)\nSeat 2: Nikhil ($9.60 in chips)\nSeat 3: Venky ($2.80 in chips)\nSeat 5: Rohit ($9.60 in chips)\nSeat 6: Krish ($14.20 in chips)\nGame: Simple poker (Krish's choice)\nSumer: posts small blind $0.10\nNikhil: posts big blind $0.20\n*** HOLE CARDS ***\nDealt to Sumer [9d 6c]\nVenky: calls $0.20\nRohit: calls $0.20\nKrish: calls $0.20\nSumer: calls $0.10\nNikhil: checks\n*** FLOP *** [8d 2d 7s]\nSumer: checks\nNikhil: checks\nVenky: checks\nRohit: checks\nKrish: bets $0.40\nSumer: raises $0.40 to $0.80\nNikhil: folds\nVenky: calls $0.80\nRohit: folds\nKrish: calls $0.40\n*** TURN *** [8d 2d 7s] [5d]\nSumer: checks\nVenky: bets $1.80 and is all-in\nKrish: folds\nSumer: folds\nUncalled bet ($1.80) returned to Venky\nVenky collected $3.40 from pot\nVenky: doesn't show hand\n*** ALL CARDS (practice view) ***\nSumer: [9d 6c] (folded)\nNikhil: [5s Js] (folded)\nVenky: [9s 8s]\nRohit: [Ts Kc] (folded)\nKrish: [2h Ks] (folded)\n*** SUMMARY ***\nTotal pot $3.40 | Board [8d 2d 7s 5d]",
+   "decisions": [
+    {
+     "st": 0,
+     "pos": "SB",
+     "pot": 90,
+     "toCall": 10,
+     "eq": 0.185,
+     "need": 0.1,
+     "act": "call",
+     "to": 0,
+     "rec": "fold",
+     "grade": "fine",
+     "cat": "loose_pre"
+    },
+    {
+     "st": 1,
+     "pos": "SB",
+     "pot": 100,
+     "toCall": 0,
+     "eq": 0.31,
+     "need": 0,
+     "act": "check",
+     "to": 0,
+     "rec": "check",
+     "grade": "good",
+     "cat": ""
+    },
+    {
+     "st": 1,
+     "pos": "SB",
+     "pot": 140,
+     "toCall": 40,
+     "eq": 0.268,
+     "need": 0.222,
+     "act": "raise",
+     "to": 80,
+     "rec": "call",
+     "grade": "fine",
+     "cat": ""
+    },
+    {
+     "st": 2,
+     "pos": "SB",
+     "pot": 340,
+     "toCall": 0,
+     "eq": 0.811,
+     "need": 0,
+     "act": "check",
+     "to": 0,
+     "rec": "bet",
+     "grade": "fine",
+     "cat": "missed_value"
+    },
+    {
+     "st": 2,
+     "pos": "SB",
+     "pot": 520,
+     "toCall": 180,
+     "eq": 0.916,
+     "need": 0.257,
+     "act": "fold",
+     "to": 0,
+     "rec": "call",
+     "grade": "blunder",
+     "cat": "overfold"
+    }
+   ],
+   "money": true
+  },
+  "expected": {
+   "grade": "blunder",
+   "hasMistake": true,
+   "street": 2,
+   "cat": "overfold"
+  }
+ },
+ {
+  "id": "home-holdem-c1",
+  "request": {
+   "hand": "Home Game Hand #23: Dealer's choice No Limit ($0.10/$0.20 USD)\nTable 5994 5-max. Seat #5 is the button\nSeat 1: Sumer ($19.20 in chips)\nSeat 2: Nikhil ($6.40 in chips)\nSeat 3: Venky ($19.10 in chips)\nSeat 5: Rohit ($28.20 in chips)\nSeat 6: Krish ($27.10 in chips)\nGame: Simple poker (Rohit's choice)\nKrish: posts small blind $0.10\nSumer: posts big blind $0.20\n*** HOLE CARDS ***\nDealt to Sumer [Ah 2d]\nNikhil: folds\nVenky: calls $0.20\nRohit: folds\nKrish: folds\nSumer: checks\n*** FLOP *** [Ac Kc 8h]\nSumer: bets $0.20\nVenky: calls $0.20\n*** TURN *** [Ac Kc 8h] [Ks]\nSumer: bets $18.80 and is all-in\nVenky: calls $18.70 and is all-in\nUncalled bet ($0.10) returned to Sumer\n*** ALL-IN *** Sumer [Ah 2d], Venky [2s 6h]\n*** RIVER *** [Ac Kc 8h Ks] [5d]\n*** SHOW DOWN ***\nSumer: shows [Ah 2d] (Two Pair, Aces and Kings)\nVenky: shows [2s 6h] (Pair of Kings)\nSumer collected $38.30 from pot\n*** ALL CARDS (practice view) ***\nSumer: [Ah 2d]\nNikhil: [Jd 3h] (folded)\nVenky: [2s 6h]\nRohit: [4c Qh] (folded)\nKrish: [4d 8c] (folded)\n*** SUMMARY ***\nTotal pot $38.30 | Board [Ac Kc 8h Ks 5d]\nVenky rebuys for $10.00",
+   "decisions": [
+    {
+     "st": 0,
+     "pos": "BB",
+     "pot": 50,
+     "toCall": 0,
+     "eq": 0.536,
+     "need": 0,
+     "act": "check",
+     "to": 0,
+     "rec": "check",
+     "grade": "good",
+     "cat": ""
+    },
+    {
+     "st": 1,
+     "pos": "BB",
+     "pot": 50,
+     "toCall": 0,
+     "eq": 0.836,
+     "need": 0,
+     "act": "raise",
+     "to": 20,
+     "rec": "bet",
+     "grade": "great",
+     "cat": ""
+    },
+    {
+     "st": 2,
+     "pos": "BB",
+     "pot": 90,
+     "toCall": 0,
+     "eq": 0.74,
+     "need": 0,
+     "act": "raise",
+     "to": 1880,
+     "rec": "bet",
+     "grade": "great",
+     "cat": ""
+    }
+   ],
+   "money": true
+  },
+  "expected": {
+   "grade": "good",
+   "hasMistake": false,
+   "street": null,
+   "cat": null
+  }
+ },
+ {
+  "id": "home-holdem-c2",
+  "request": {
+   "hand": "Home Game Hand #33: Dealer's choice No Limit ($0.10/$0.20 USD)\nTable 5994 5-max. Seat #5 is the button\nSeat 1: Sumer ($5.60 in chips)\nSeat 2: Nikhil ($25.50 in chips)\nSeat 3: Venky ($20.60 in chips)\nSeat 5: Rohit ($54.90 in chips)\nSeat 6: Krish ($33.40 in chips)\nGame: Simple poker (Rohit's choice)\nKrish: posts small blind $0.10\nSumer: posts big blind $0.20\n*** HOLE CARDS ***\nDealt to Sumer [4s 3s]\nNikhil: folds\nVenky: calls $0.20\nRohit: folds\nKrish: calls $0.10\nSumer: checks\n*** FLOP *** [7s 5c 5s]\nKrish: bets $0.30\nSumer: calls $0.30\nVenky: folds\n*** TURN *** [7s 5c 5s] [4h]\nKrish: checks\nSumer: bets $0.20\nKrish: calls $0.20\n*** RIVER *** [7s 5c 5s 4h] [Kc]\nKrish: checks\nSumer: checks\n*** SHOW DOWN ***\nKrish: shows [8d 9s] (Pair of Fives)\nSumer: shows [4s 3s] (Two Pair, Fives and Fours)\nSumer collected $1.60 from pot\n*** ALL CARDS (practice view) ***\nSumer: [4s 3s]\nNikhil: [6s Js] (folded)\nVenky: [Kd Qc] (folded)\nRohit: [Qs 4c] (folded)\nKrish: [8d 9s]\n*** SUMMARY ***\nTotal pot $1.60 | Board [7s 5c 5s 4h Kc]",
+   "decisions": [
+    {
+     "st": 0,
+     "pos": "BB",
+     "pot": 60,
+     "toCall": 0,
+     "eq": 0.248,
+     "need": 0,
+     "act": "check",
+     "to": 0,
+     "rec": "check",
+     "grade": "good",
+     "cat": ""
+    },
+    {
+     "st": 1,
+     "pos": "BB",
+     "pot": 90,
+     "toCall": 30,
+     "eq": 0.379,
+     "need": 0.25,
+     "act": "call",
+     "to": 0,
+     "rec": "call",
+     "grade": "good",
+     "cat": ""
+    },
+    {
+     "st": 2,
+     "pos": "BB",
+     "pot": 120,
+     "toCall": 0,
+     "eq": 0.534,
+     "need": 0,
+     "act": "raise",
+     "to": 20,
+     "rec": "bet",
+     "grade": "good",
+     "cat": ""
+    },
+    {
+     "st": 3,
+     "pos": "BB",
+     "pot": 160,
+     "toCall": 0,
+     "eq": 0.251,
+     "need": 0,
+     "act": "check",
+     "to": 0,
+     "rec": "check",
+     "grade": "good",
+     "cat": ""
+    }
+   ],
+   "money": true
+  },
+  "expected": {
+   "grade": "good",
+   "hasMistake": false,
+   "street": null,
+   "cat": null
+  }
+ },
+ {
+  "id": "home-holdem-c3",
+  "request": {
+   "hand": "Home Game Hand #155: Dealer's choice No Limit ($0.10/$0.20 USD)\nTable 5994 5-max. Seat #1 is the button\nSeat 1: Sumer ($27.40 in chips)\nSeat 2: Nikhil ($117.30 in chips)\nSeat 3: Venky ($18.40 in chips)\nSeat 5: Rohit ($104.70 in chips)\nSeat 6: Krish ($92.20 in chips)\nGame: Simple poker (Sumer's choice)\nNikhil: posts small blind $0.10\nVenky: posts big blind $0.20\n*** HOLE CARDS ***\nDealt to Sumer [Qc Kd]\nRohit: folds\nKrish: calls $0.20\nSumer: calls $0.20\nNikhil: calls $0.10\nVenky: checks\n*** FLOP *** [4c 5d 9s]\nNikhil: checks\nVenky: checks\nKrish: checks\nSumer: checks\n*** TURN *** [4c 5d 9s] [Qs]\nNikhil: checks\nVenky: checks\nKrish: checks\nSumer: bets $0.20\nNikhil: folds\nVenky: calls $0.20\nKrish: folds\n*** RIVER *** [4c 5d 9s Qs] [Ad]\nVenky: bets $1.80\nSumer: raises $2.30 to $4.10\nVenky: folds\nUncalled bet ($2.30) returned to Sumer\nSumer collected $4.80 from pot\nSumer: doesn't show hand\n*** ALL CARDS (practice view) ***\nSumer: [Qc Kd]\nNikhil: [2s Kc] (folded)\nVenky: [7s 3s] (folded)\nRohit: [3d Jc] (folded)\nKrish: [Ah Th] (folded)\n*** SUMMARY ***\nTotal pot $4.80 | Board [4c 5d 9s Qs Ad]",
+   "decisions": [
+    {
+     "st": 0,
+     "pos": "BTN",
+     "pot": 50,
+     "toCall": 20,
+     "eq": 0.34,
+     "need": 0.286,
+     "act": "call",
+     "to": 0,
+     "rec": "call",
+     "grade": "good",
+     "cat": ""
+    },
+    {
+     "st": 1,
+     "pos": "BTN",
+     "pot": 80,
+     "toCall": 0,
+     "eq": 0.192,
+     "need": 0,
+     "act": "check",
+     "to": 0,
+     "rec": "check",
+     "grade": "good",
+     "cat": ""
+    },
+    {
+     "st": 2,
+     "pos": "BTN",
+     "pot": 80,
+     "toCall": 0,
+     "eq": 0.598,
+     "need": 0,
+     "act": "raise",
+     "to": 20,
+     "rec": "bet",
+     "grade": "great",
+     "cat": ""
+    },
+    {
+     "st": 3,
+     "pos": "BTN",
+     "pot": 300,
+     "toCall": 180,
+     "eq": 0.752,
+     "need": 0.375,
+     "act": "raise",
+     "to": 410,
+     "rec": "raise",
+     "grade": "great",
+     "cat": ""
+    }
+   ],
+   "money": true
+  },
+  "expected": {
+   "grade": "good",
+   "hasMistake": false,
+   "street": null,
+   "cat": null
+  }
+ },
+ {
+  "id": "home-holdem-c4",
+  "request": {
+   "hand": "Home Game Hand #204: Dealer's choice No Limit ($0.10/$0.20 USD)\nTable 5994 5-max. Seat #6 is the button\nSeat 1: Sumer ($10.00 in chips)\nSeat 2: Nikhil ($118.20 in chips)\nSeat 3: Venky ($53.90 in chips)\nSeat 5: Rohit ($261.40 in chips)\nSeat 6: Krish ($36.50 in chips)\nGame: Simple poker (Krish's choice)\nSumer: posts small blind $0.10\nNikhil: posts big blind $0.20\n*** HOLE CARDS ***\nDealt to Sumer [7c Ah]\nVenky: calls $0.20\nRohit: folds\nKrish: calls $0.20\nSumer: calls $0.10\nNikhil: checks\n*** FLOP *** [Tc 8c 2d]\nSumer: checks\nNikhil: checks\nVenky: bets $0.90\nKrish: folds\nSumer: folds\nNikhil: folds\nUncalled bet ($0.90) returned to Venky\nVenky collected $0.80 from pot\nVenky: doesn't show hand\n*** ALL CARDS (practice view) ***\nSumer: [7c Ah] (folded)\nNikhil: [5s 4d] (folded)\nVenky: [Qd 2s]\nRohit: [Qs 5d] (folded)\nKrish: [3d 3h] (folded)\n*** SUMMARY ***\nTotal pot $0.80 | Board [Tc 8c 2d]",
+   "decisions": [
+    {
+     "st": 0,
+     "pos": "SB",
+     "pot": 70,
+     "toCall": 10,
+     "eq": 0.273,
+     "need": 0.125,
+     "act": "call",
+     "to": 0,
+     "rec": "call",
+     "grade": "good",
+     "cat": ""
+    },
+    {
+     "st": 1,
+     "pos": "SB",
+     "pot": 80,
+     "toCall": 0,
+     "eq": 0.179,
+     "need": 0,
+     "act": "check",
+     "to": 0,
+     "rec": "check",
+     "grade": "good",
+     "cat": ""
+    },
+    {
+     "st": 1,
+     "pos": "SB",
+     "pot": 170,
+     "toCall": 90,
+     "eq": 0.25,
+     "need": 0.346,
+     "act": "fold",
+     "to": 0,
+     "rec": "fold",
+     "grade": "good",
+     "cat": ""
+    }
+   ],
+   "money": true
+  },
+  "expected": {
+   "grade": "good",
+   "hasMistake": false,
+   "street": null,
+   "cat": null
+  }
+ },
+ {
+  "id": "tourney-m1",
+  "request": {
+   "hand": "River Room Hand #1: Hold'em No Limit (10/20) - Level 1\nTable 4400 6-max. Seat #1 is the button\nSeat 1: You (1,500 in chips)\nSeat 2: Grace (1,500 in chips)\nSeat 3: Tomás (1,500 in chips)\nSeat 4: Aiko (1,500 in chips)\nSeat 5: Dmitri (1,500 in chips)\nSeat 6: Marco (1,500 in chips)\nGrace: posts small blind 10\nTomás: posts big blind 20\n*** HOLE CARDS ***\nDealt to You [Qh 4c]\nAiko: calls 20\nDmitri: folds\nMarco: raises 70 to 90\nYou: calls 90\nGrace: folds\nTomás: folds\nAiko: folds\n*** FLOP *** [9h 7d 2d]\nMarco: bets 175\nYou: folds\nUncalled bet (175) returned to Marco\nMarco collected 230 from pot\nMarco: doesn't show hand\n*** ALL CARDS (practice view) ***\nYou: [Qh 4c] (folded)\nGrace: [6h Ad] (folded)\nTomás: [5d 4h] (folded)\nAiko: [8c 7c] (folded)\nDmitri: [4d 3s] (folded)\nMarco: [Kc Js]\n*** SUMMARY ***\nTotal pot 230 | Board [9h 7d 2d]",
+   "decisions": [
+    {
+     "st": 0,
+     "pos": "BTN",
+     "pot": 140,
+     "toCall": 90,
+     "eq": 0.138,
+     "need": 0.391,
+     "act": "call",
+     "to": 0,
+     "rec": "fold",
+     "grade": "mistake",
+     "cat": "loose_pre"
+    },
+    {
+     "st": 1,
+     "pos": "BTN",
+     "pot": 405,
+     "toCall": 175,
+     "eq": 0.154,
+     "need": 0.302,
+     "act": "fold",
+     "to": 0,
+     "rec": "fold",
+     "grade": "good",
+     "cat": ""
+    }
+   ],
+   "money": false
+  },
+  "expected": {
+   "grade": "mistake",
+   "hasMistake": true,
+   "street": 0,
+   "cat": "loose_pre"
+  }
+ },
+ {
+  "id": "tourney-m2",
+  "request": {
+   "hand": "River Room Hand #2: Hold'em No Limit (10/20) - Level 1\nTable 4400 6-max. Seat #2 is the button\nSeat 1: You (1,410 in chips)\nSeat 2: Grace (1,490 in chips)\nSeat 3: Tomás (1,480 in chips)\nSeat 4: Aiko (1,480 in chips)\nSeat 5: Dmitri (1,500 in chips)\nSeat 6: Marco (1,640 in chips)\nTomás: posts small blind 10\nAiko: posts big blind 20\n*** HOLE CARDS ***\nDealt to You [Jd 4c]\nDmitri: calls 20\nMarco: folds\nYou: calls 20\nGrace: folds\nTomás: folds\nAiko: checks\n*** FLOP *** [7h 2c 8s]\nAiko: checks\nDmitri: checks\nYou: checks\n*** TURN *** [7h 2c 8s] [4s]\nAiko: checks\nDmitri: checks\nYou: checks\n*** RIVER *** [7h 2c 8s 4s] [3s]\nAiko: checks\nDmitri: bets 35\nYou: calls 35\nAiko: folds\n*** SHOW DOWN ***\nDmitri: shows [9s Jc] (High Card, Jack)\nYou: shows [Jd 4c] (Pair of Fours)\nYou collected 140 from pot\n*** ALL CARDS (practice view) ***\nYou: [Jd 4c]\nGrace: [6s Td] (folded)\nTomás: [Qd 2s] (folded)\nAiko: [3c Qc] (folded)\nDmitri: [9s Jc]\nMarco: [Js 6h] (folded)\n*** SUMMARY ***\nTotal pot 140 | Board [7h 2c 8s 4s 3s]",
+   "decisions": [
+    {
+     "st": 0,
+     "pos": "CO",
+     "pot": 50,
+     "toCall": 20,
+     "eq": 0.17,
+     "need": 0.286,
+     "act": "call",
+     "to": 0,
+     "rec": "fold",
+     "grade": "mistake",
+     "cat": "loose_pre"
+    },
+    {
+     "st": 1,
+     "pos": "CO",
+     "pot": 70,
+     "toCall": 0,
+     "eq": 0.135,
+     "need": 0,
+     "act": "check",
+     "to": 0,
+     "rec": "check",
+     "grade": "good",
+     "cat": ""
+    },
+    {
+     "st": 2,
+     "pos": "CO",
+     "pot": 70,
+     "toCall": 0,
+     "eq": 0.337,
+     "need": 0,
+     "act": "check",
+     "to": 0,
+     "rec": "check",
+     "grade": "good",
+     "cat": ""
+    },
+    {
+     "st": 3,
+     "pos": "CO",
+     "pot": 105,
+     "toCall": 35,
+     "eq": 0.182,
+     "need": 0.25,
+     "act": "call",
+     "to": 0,
+     "rec": "fold",
+     "grade": "fine",
+     "cat": ""
+    }
+   ],
+   "money": false
+  },
+  "expected": {
+   "grade": "mistake",
+   "hasMistake": true,
+   "street": 0,
+   "cat": "loose_pre"
+  }
+ },
+ {
+  "id": "tourney-m3",
+  "request": {
+   "hand": "River Room Hand #3: Hold'em No Limit (10/20) - Level 1\nTable 4400 6-max. Seat #3 is the button\nSeat 1: You (1,495 in chips)\nSeat 2: Grace (1,490 in chips)\nSeat 3: Tomás (1,470 in chips)\nSeat 4: Aiko (1,460 in chips)\nSeat 5: Dmitri (1,445 in chips)\nSeat 6: Marco (1,640 in chips)\nAiko: posts small blind 10\nDmitri: posts big blind 20\n*** HOLE CARDS ***\nDealt to You [Ac 4h]\nMarco: folds\nYou: calls 20\nGrace: raises 50 to 70\nTomás: calls 70\nAiko: folds\nDmitri: folds\nYou: calls 50\n*** FLOP *** [6d 5d 6h]\nYou: bets 20\nGrace: calls 20\nTomás: calls 20\n*** TURN *** [6d 5d 6h] [4s]\nYou: bets 20\nGrace: calls 20\nTomás: calls 20\n*** RIVER *** [6d 5d 6h 4s] [2h]\nYou: checks\nGrace: checks\nTomás: bets 240\nYou: folds\nGrace: calls 240\n*** SHOW DOWN ***\nTomás: shows [9s 9c] (Two Pair, Nines and Sixes)\nGrace: mucks hand\nTomás collected 840 from pot\n*** ALL CARDS (practice view) ***\nYou: [Ac 4h] (folded)\nGrace: [Kd Jd] (mucked)\nTomás: [9s 9c]\nAiko: [As 5c] (folded)\nDmitri: [8s 7c] (folded)\nMarco: [8c Qh] (folded)\n*** SUMMARY ***\nTotal pot 840 | Board [6d 5d 6h 4s 2h]",
+   "decisions": [
+    {
+     "st": 0,
+     "pos": "HJ",
+     "pot": 30,
+     "toCall": 20,
+     "eq": 0.206,
+     "need": 0.4,
+     "act": "call",
+     "to": 0,
+     "rec": "fold",
+     "grade": "fine",
+     "cat": "loose_pre"
+    },
+    {
+     "st": 0,
+     "pos": "HJ",
+     "pot": 190,
+     "toCall": 50,
+     "eq": 0.267,
+     "need": 0.208,
+     "act": "call",
+     "to": 0,
+     "rec": "fold",
+     "grade": "mistake",
+     "cat": "loose_pre"
+    },
+    {
+     "st": 1,
+     "pos": "HJ",
+     "pot": 240,
+     "toCall": 0,
+     "eq": 0.294,
+     "need": 0,
+     "act": "raise",
+     "to": 20,
+     "rec": "check",
+     "grade": "fine",
+     "cat": ""
+    },
+    {
+     "st": 2,
+     "pos": "HJ",
+     "pot": 300,
+     "toCall": 0,
+     "eq": 0.485,
+     "need": 0,
+     "act": "raise",
+     "to": 20,
+     "rec": "check",
+     "grade": "fine",
+     "cat": ""
+    },
+    {
+     "st": 3,
+     "pos": "HJ",
+     "pot": 360,
+     "toCall": 0,
+     "eq": 0.634,
+     "need": 0,
+     "act": "check",
+     "to": 0,
+     "rec": "bet",
+     "grade": "fine",
+     "cat": "missed_value"
+    },
+    {
+     "st": 3,
+     "pos": "HJ",
+     "pot": 600,
+     "toCall": 240,
+     "eq": 0.475,
+     "need": 0.286,
+     "act": "fold",
+     "to": 0,
+     "rec": "call",
+     "grade": "mistake",
+     "cat": "overfold"
+    }
+   ],
+   "money": false
+  },
+  "expected": {
+   "grade": "mistake",
+   "hasMistake": true,
+   "street": 0,
+   "cat": "loose_pre"
+  }
+ },
+ {
+  "id": "tourney-c1",
+  "request": {
+   "hand": "River Room Hand #12: Hold'em No Limit (15/30) - Level 2\nTable 4181 6-max. Seat #5 is the button\nSeat 1: You (1,985 in chips)\nSeat 2: Owen (1,510 in chips)\nSeat 3: Aiko (1,370 in chips)\nSeat 4: Grace (1,710 in chips)\nSeat 5: Nadia (1,120 in chips)\nSeat 6: Marco (1,305 in chips)\nMarco: posts small blind 15\nYou: posts big blind 30\n*** HOLE CARDS ***\nDealt to You [9d Jd]\nOwen: folds\nAiko: calls 30\nGrace: folds\nNadia: raises 90 to 120\nMarco: folds\nYou: calls 90\nAiko: folds\n*** FLOP *** [8c 7d 4s]\nYou: checks\nNadia: checks\n*** TURN *** [8c 7d 4s] [Ad]\nYou: bets 215\nNadia: folds\nUncalled bet (215) returned to You\nYou collected 285 from pot\nYou: doesn't show hand\n*** ALL CARDS (practice view) ***\nYou: [9d Jd]\nOwen: [7c 4d] (folded)\nAiko: [5s 3s] (folded)\nGrace: [Qd 6s] (folded)\nNadia: [Ts Js] (folded)\nMarco: [7s Qs] (folded)\n*** SUMMARY ***\nTotal pot 285 | Board [8c 7d 4s Ad]",
+   "decisions": [
+    {
+     "st": 0,
+     "pos": "BB",
+     "pot": 195,
+     "toCall": 90,
+     "eq": 0.282,
+     "need": 0.316,
+     "act": "call",
+     "to": 0,
+     "rec": "call",
+     "grade": "good",
+     "cat": ""
+    },
+    {
+     "st": 1,
+     "pos": "BB",
+     "pot": 285,
+     "toCall": 0,
+     "eq": 0.344,
+     "need": 0,
+     "act": "check",
+     "to": 0,
+     "rec": "check",
+     "grade": "good",
+     "cat": ""
+    },
+    {
+     "st": 2,
+     "pos": "BB",
+     "pot": 285,
+     "toCall": 0,
+     "eq": 0.311,
+     "need": 0,
+     "act": "raise",
+     "to": 215,
+     "rec": "bet",
+     "grade": "good",
+     "cat": ""
+    }
+   ],
+   "money": false
+  },
+  "expected": {
+   "grade": "good",
+   "hasMistake": false,
+   "street": null,
+   "cat": null
+  }
+ },
+ {
+  "id": "tourney-c2",
+  "request": {
+   "hand": "River Room Hand #21: Hold'em No Limit (25/50) - Level 3\nTable 7536 6-max. Seat #6 is the button\nSeat 1: You (919 in chips)\nSeat 3: Hana (4,440 in chips)\nSeat 4: Marco (1,668 in chips)\nSeat 5: Priya (1,115 in chips)\nSeat 6: Ravi (858 in chips)\nYou: posts small blind 25\nHana: posts big blind 50\n*** HOLE CARDS ***\nDealt to You [As Jd]\nMarco: folds\nPriya: folds\nRavi: raises 100 to 150\nYou: calls 125\nHana: calls 100\n*** FLOP *** [4s 5c Kd]\nYou: checks\nHana: checks\nRavi: bets 205\nYou: folds\nHana: folds\nUncalled bet (205) returned to Ravi\nRavi collected 450 from pot\nRavi: doesn't show hand\n*** ALL CARDS (practice view) ***\nYou: [As Jd] (folded)\nHana: [Th Qc] (folded)\nMarco: [Qh Jc] (folded)\nPriya: [Kh 2h] (folded)\nRavi: [Ah Qd]\n*** SUMMARY ***\nTotal pot 450 | Board [4s 5c Kd]",
+   "decisions": [
+    {
+     "st": 0,
+     "pos": "SB",
+     "pot": 225,
+     "toCall": 125,
+     "eq": 0.348,
+     "need": 0.357,
+     "act": "call",
+     "to": 0,
+     "rec": "call",
+     "grade": "good",
+     "cat": ""
+    },
+    {
+     "st": 1,
+     "pos": "SB",
+     "pot": 450,
+     "toCall": 0,
+     "eq": 0.27,
+     "need": 0,
+     "act": "check",
+     "to": 0,
+     "rec": "check",
+     "grade": "good",
+     "cat": ""
+    },
+    {
+     "st": 1,
+     "pos": "SB",
+     "pot": 655,
+     "toCall": 205,
+     "eq": 0.164,
+     "need": 0.238,
+     "act": "fold",
+     "to": 0,
+     "rec": "fold",
+     "grade": "good",
+     "cat": ""
+    }
+   ],
+   "money": false
+  },
+  "expected": {
+   "grade": "good",
+   "hasMistake": false,
+   "street": null,
+   "cat": null
+  }
+ },
+ {
+  "id": "tourney-c3",
+  "request": {
+   "hand": "River Room Hand #1: Hold'em No Limit (10/20) - Level 1\nTable 5602 6-max. Seat #2 is the button\nSeat 1: You (1,500 in chips)\nSeat 2: Sam (1,500 in chips)\nSeat 3: Hana (1,500 in chips)\nSeat 4: Ravi (1,500 in chips)\nSeat 5: Tomás (1,500 in chips)\nSeat 6: Owen (1,500 in chips)\nHana: posts small blind 10\nRavi: posts big blind 20\n*** HOLE CARDS ***\nDealt to You [5c 7c]\nTomás: folds\nOwen: calls 20\nYou: calls 20\nSam: folds\nHana: folds\nRavi: checks\n*** FLOP *** [8c Jh 9c]\nRavi: checks\nOwen: checks\nYou: bets 1,480 and is all-in\nRavi: folds\nOwen: folds\nUncalled bet (1,480) returned to You\nYou collected 70 from pot\nYou: doesn't show hand\n*** ALL CARDS (practice view) ***\nYou: [5c 7c]\nSam: [9d Kd] (folded)\nHana: [7d 3d] (folded)\nRavi: [3c 5s] (folded)\nTomás: [8d Js] (folded)\nOwen: [As Qd] (folded)\n*** SUMMARY ***\nTotal pot 70 | Board [8c Jh 9c]",
+   "decisions": [
+    {
+     "st": 0,
+     "pos": "CO",
+     "pot": 50,
+     "toCall": 20,
+     "eq": 0.21,
+     "need": 0.286,
+     "act": "call",
+     "to": 0,
+     "rec": "call",
+     "grade": "good",
+     "cat": ""
+    },
+    {
+     "st": 1,
+     "pos": "CO",
+     "pot": 70,
+     "toCall": 0,
+     "eq": 0.45,
+     "need": 0,
+     "act": "raise",
+     "to": 1480,
+     "rec": "bet",
+     "grade": "good",
+     "cat": ""
+    }
+   ],
+   "money": false
+  },
+  "expected": {
+   "grade": "good",
+   "hasMistake": false,
+   "street": null,
+   "cat": null
+  }
+ },
+ {
+  "id": "home-std-m1",
+  "request": {
+   "hand": "Home Game Hand #1: Dealer's choice No Limit ($0.10/$0.20 USD)\nTable 7225 5-max. Seat #1 is the button\nSeat 1: Sumer ($10.00 in chips)\nSeat 2: Nikhil ($10.00 in chips)\nSeat 3: Rohit ($10.00 in chips)\nSeat 5: Krish ($10.00 in chips)\nSeat 6: Venky ($10.00 in chips)\nGame: Poker + 3 Patti (Sumer's choice)\nNikhil: posts small blind $0.10\nRohit: posts big blind $0.20\n*** HOLE CARDS ***\nDealt to Sumer [3c 9d 9s Td 6h]\nKrish: calls $0.20\nVenky: calls $0.20\nSumer: calls $0.20\nNikhil: calls $0.10\nRohit: checks\n*** FLOP *** [7d 4s 4c]\nNikhil: checks\nRohit: checks\nKrish: bets $0.40\nVenky: calls $0.40\nSumer: raises $0.40 to $0.80\nNikhil: folds\nRohit: calls $0.80\nKrish: raises $1.50 to $2.30\nVenky: calls $1.90\nSumer: calls $1.50\nRohit: calls $1.50\n*** TURN *** [7d 4s 4c] [Qc]\nRohit: checks\nKrish: bets $3.60\nVenky: calls $3.60\nSumer: calls $3.60\nRohit: calls $3.60\n*** RIVER *** [7d 4s 4c Qc] [Js]\nRohit: checks\nKrish: bets $3.90 and is all-in\nVenky: folds\nSumer: calls $3.90 and is all-in\nRohit: calls $3.90 and is all-in\n*** ALL-IN *** Sumer [3c 9d 9s Td 6h], Rohit [8c 4d 2s 2d 6d], Krish [Ah 5c 3h 2h 8s]\nSumer splits: Poker [3c 6h] | 3 Patti [9d 9s Td]\n*** SHOW DOWN ***\nKrish: shows Poker [5c 8s] (Pair of Fours) | 3 Patti [Ah 3h 2h] (Pure sequence A-2-3)\nSumer: shows Poker [3c 6h] (Pair of Fours) | 3 Patti [9d 9s Td] (Pair of Nines)\nRohit: shows Poker [4d 6d] (Three of a Kind, Fours) | 3 Patti [8c 2s 2d] (Pair of Twos)\nRohit collected $18.20 from pot (Poker: Three of a Kind, Fours)\nKrish collected $18.10 from pot (3 Patti: Pure sequence A-2-3)\n*** ALL CARDS (practice view) ***\nSumer: Poker [3c 6h] | 3 Patti [9d 9s Td]\nNikhil: Poker [7h Jh] | 3 Patti [Ac 2c Kd] (folded)\nRohit: Poker [4d 6d] | 3 Patti [8c 2s 2d]\nKrish: Poker [5c 8s] | 3 Patti [Ah 3h 2h]\nVenky: Poker [7s 4h] | 3 Patti [9c 6s Tc] (folded)\n*** SUMMARY ***\nTotal pot $36.30 | Board [7d 4s 4c Qc Js]",
+   "decisions": [
+    {
+     "st": 0,
+     "pos": "BTN",
+     "pot": 70,
+     "toCall": 20,
+     "eq": 0.129,
+     "need": 0.222,
+     "act": "call",
+     "to": 0,
+     "rec": "fold",
+     "grade": "fine",
+     "cat": "loose_pre"
+    },
+    {
+     "st": 1,
+     "pos": "BTN",
+     "pot": 180,
+     "toCall": 40,
+     "eq": 0.073,
+     "need": 0.182,
+     "act": "raise",
+     "to": 80,
+     "rec": "fold",
+     "grade": "mistake",
+     "cat": "bluff_multi"
+    },
+    {
+     "st": 1,
+     "pos": "BTN",
+     "pot": 720,
+     "toCall": 150,
+     "eq": 0.113,
+     "need": 0.172,
+     "act": "call",
+     "to": 0,
+     "rec": "fold",
+     "grade": "fine",
+     "cat": ""
+    },
+    {
+     "st": 2,
+     "pos": "BTN",
+     "pot": 1740,
+     "toCall": 360,
+     "eq": 0.051,
+     "need": 0.171,
+     "act": "call",
+     "to": 0,
+     "rec": "fold",
+     "grade": "blunder",
+     "cat": "call_no_odds"
+    },
+    {
+     "st": 3,
+     "pos": "BTN",
+     "pot": 2850,
+     "toCall": 390,
+     "eq": 0.055,
+     "need": 0.12,
+     "act": "call",
+     "to": 0,
+     "rec": "fold",
+     "grade": "fine",
+     "cat": ""
+    }
+   ],
+   "money": true,
+   "game": "Poker + 3 Patti",
+   "gameDesc": "5 cards each. Pick 2 for normal poker with the table cards and 3 for a 3 Patti hand. Half the pot goes to the best poker hand, half to the best 3 Patti hand."
+  },
+  "expected": {
+   "grade": "blunder",
+   "hasMistake": true,
+   "street": 2,
+   "cat": "call_no_odds"
+  }
+ },
+ {
+  "id": "home-std-m2",
+  "request": {
+   "hand": "Home Game Hand #4: Dealer's choice No Limit ($0.10/$0.20 USD)\nTable 7225 5-max. Seat #5 is the button\nSeat 1: Sumer ($4.80 in chips)\nSeat 2: Nikhil ($11.80 in chips)\nSeat 3: Rohit ($18.10 in chips)\nSeat 5: Krish ($19.80 in chips)\nSeat 6: Venky ($5.50 in chips)\nGame: Poker + 3 Patti (Krish's choice)\nVenky: posts small blind $0.10\nSumer: posts big blind $0.20\n*** HOLE CARDS ***\nDealt to Sumer [Ks Js Qs 3d Td]\nNikhil: folds\nRohit: folds\nKrish: folds\nVenky: calls $0.10\nSumer: raises $0.20 to $0.40\nVenky: calls $0.20\n*** FLOP *** [2d 4d Kd]\nVenky: checks\nSumer: checks\n*** TURN *** [2d 4d Kd] [6c]\nVenky: bets $0.80\nSumer: folds\nUncalled bet ($0.80) returned to Venky\nVenky collected $0.80 from pot\nVenky: doesn't show hand\n*** ALL CARDS (practice view) ***\nSumer: Poker [Ks Js] | 3 Patti [Qs 3d Td] (folded)\nNikhil: Poker [3s Qh] | 3 Patti [7c Ad Jh] (folded)\nRohit: Poker [4s 4c] | 3 Patti [As 8d 9c] (folded)\nKrish: Poker [3h 6h] | 3 Patti [Qc 2c Tc] (folded)\nVenky: Poker [Kc Kh] | 3 Patti [Qd 9h Ts]\n*** SUMMARY ***\nTotal pot $0.80 | Board [2d 4d Kd 6c]",
+   "decisions": [
+    {
+     "st": 0,
+     "pos": "BB",
+     "pot": 40,
+     "toCall": 0,
+     "eq": 0.692,
+     "need": 0,
+     "act": "raise",
+     "to": 40,
+     "rec": "check",
+     "grade": "fine",
+     "cat": "loose_pre"
+    },
+    {
+     "st": 1,
+     "pos": "BB",
+     "pot": 80,
+     "toCall": 0,
+     "eq": 0.917,
+     "need": 0,
+     "act": "check",
+     "to": 0,
+     "rec": "bet",
+     "grade": "fine",
+     "cat": "missed_value"
+    },
+    {
+     "st": 2,
+     "pos": "BB",
+     "pot": 160,
+     "toCall": 80,
+     "eq": 0.892,
+     "need": 0.333,
+     "act": "fold",
+     "to": 0,
+     "rec": "raise",
+     "grade": "blunder",
+     "cat": "overfold"
+    }
+   ],
+   "money": true,
+   "game": "Poker + 3 Patti",
+   "gameDesc": "5 cards each. Pick 2 for normal poker with the table cards and 3 for a 3 Patti hand. Half the pot goes to the best poker hand, half to the best 3 Patti hand."
+  },
+  "expected": {
+   "grade": "blunder",
+   "hasMistake": true,
+   "street": 2,
+   "cat": "overfold"
+  }
+ },
+ {
+  "id": "home-std-c1",
+  "request": {
+   "hand": "Home Game Hand #16: Dealer's choice No Limit ($0.10/$0.20 USD)\nTable 7225 5-max. Seat #1 is the button\nSeat 1: Sumer ($19.90 in chips)\nSeat 2: Nikhil ($9.20 in chips)\nSeat 3: Rohit ($14.20 in chips)\nSeat 5: Krish ($15.30 in chips)\nSeat 6: Venky ($1.40 in chips)\nGame: Poker + 3 Patti (Sumer's choice)\nNikhil: posts small blind $0.10\nRohit: posts big blind $0.20\n*** HOLE CARDS ***\nDealt to Sumer [9c 6d 8s Td Qc]\nKrish: folds\nVenky: calls $0.20\nSumer: calls $0.20\nNikhil: calls $0.10\nRohit: checks\n*** FLOP *** [3d Jh Qs]\nNikhil: checks\nRohit: checks\nVenky: checks\nSumer: bets $0.20\nNikhil: calls $0.20\nRohit: folds\nVenky: calls $0.20\n*** TURN *** [3d Jh Qs] [3c]\nNikhil: checks\nVenky: bets $1.00 and is all-in\nSumer: raises $18.50 to $19.50 and is all-in\nNikhil: calls $8.80 and is all-in\nUncalled bet ($10.70) returned to Sumer\n*** ALL-IN *** Sumer [9c 6d 8s Td Qc], Nikhil [3s 4s 4h As 2s], Venky [Kh Ad 8d Qd Kd]\n*** RIVER *** [3d Jh Qs 3c] [9s]\nSumer splits: Poker [6d Qc] | 3 Patti [9c 8s Td]\n*** SHOW DOWN ***\nNikhil: shows Poker [3s 4h] (Three of a Kind, Threes) | 3 Patti [4s As 2s] (Color, Ace high)\nVenky: shows Poker [Kh Kd] (Two Pair, Kings and Threes) | 3 Patti [Ad 8d Qd] (Color, Ace high)\nSumer: shows Poker [6d Qc] (Two Pair, Queens and Threes) | 3 Patti [9c 8s Td] (Sequence 10-9-8)\nNikhil collected $7.80 from side pot 1 (Poker: Three of a Kind, Threes)\nSumer collected $7.80 from side pot 1 (3 Patti: Sequence 10-9-8)\nNikhil collected $2.20 from main pot (Poker: Three of a Kind, Threes)\nSumer collected $2.20 from main pot (3 Patti: Sequence 10-9-8)\n*** ALL CARDS (practice view) ***\nSumer: Poker [6d Qc] | 3 Patti [9c 8s Td]\nNikhil: Poker [3s 4h] | 3 Patti [4s As 2s]\nRohit: Poker [Jd Th] | 3 Patti [Ac Tc 5c] (folded)\nKrish: Poker [9d 5d] | 3 Patti [Ah 6h 5h] (folded)\nVenky: Poker [Kh Kd] | 3 Patti [Ad 8d Qd]\n*** SUMMARY ***\nTotal pot $20.00 | Board [3d Jh Qs 3c 9s]\nVenky rebuys for $10.00",
+   "decisions": [
+    {
+     "st": 0,
+     "pos": "BTN",
+     "pot": 50,
+     "toCall": 20,
+     "eq": 0.365,
+     "need": 0.286,
+     "act": "call",
+     "to": 0,
+     "rec": "call",
+     "grade": "good",
+     "cat": ""
+    },
+    {
+     "st": 1,
+     "pos": "BTN",
+     "pot": 80,
+     "toCall": 0,
+     "eq": 0.43,
+     "need": 0,
+     "act": "raise",
+     "to": 20,
+     "rec": "bet",
+     "grade": "good",
+     "cat": ""
+    },
+    {
+     "st": 2,
+     "pos": "BTN",
+     "pot": 240,
+     "toCall": 100,
+     "eq": 0.555,
+     "need": 0.294,
+     "act": "raise",
+     "to": 1950,
+     "rec": "raise",
+     "grade": "great",
+     "cat": ""
+    }
+   ],
+   "money": true,
+   "game": "Poker + 3 Patti",
+   "gameDesc": "5 cards each. Pick 2 for normal poker with the table cards and 3 for a 3 Patti hand. Half the pot goes to the best poker hand, half to the best 3 Patti hand."
+  },
+  "expected": {
+   "grade": "good",
+   "hasMistake": false,
+   "street": null,
+   "cat": null
+  }
+ },
+ {
+  "id": "home-std-c2",
+  "request": {
+   "hand": "Home Game Hand #19: Dealer's choice No Limit ($0.10/$0.20 USD)\nTable 7225 5-max. Seat #5 is the button\nSeat 1: Sumer ($22.80 in chips)\nSeat 2: Nikhil ($18.70 in chips)\nSeat 3: Rohit ($13.50 in chips)\nSeat 5: Krish ($15.00 in chips)\nSeat 6: Venky ($10.00 in chips)\nGame: Poker + 3 Patti (Krish's choice)\nVenky: posts small blind $0.10\nSumer: posts big blind $0.20\n*** HOLE CARDS ***\nDealt to Sumer [7s 5d Qs Ks Qh]\nNikhil: folds\nRohit: folds\nKrish: folds\nVenky: calls $0.10\nSumer: checks\n*** FLOP *** [Kc 4h Qd]\nVenky: bets $0.30\nSumer: calls $0.30\n*** TURN *** [Kc 4h Qd] [2d]\nVenky: bets $1.70\nSumer: raises $2.00 to $3.70\nVenky: folds\nUncalled bet ($2.00) returned to Sumer\nSumer collected $4.40 from pot\nSumer: doesn't show hand\n*** ALL CARDS (practice view) ***\nSumer: Poker [7s 5d] | 3 Patti [Qs Ks Qh]\nNikhil: Poker [8d 3h] | 3 Patti [Ts 4s As] (folded)\nRohit: Poker [4d 4c] | 3 Patti [3c 8c Ah] (folded)\nKrish: Poker [Kd 2s] | 3 Patti [7c 6h 6c] (folded)\nVenky: Poker [Jh 5h] | 3 Patti [Tc 8h 9h] (folded)\n*** SUMMARY ***\nTotal pot $4.40 | Board [Kc 4h Qd 2d]",
+   "decisions": [
+    {
+     "st": 0,
+     "pos": "BB",
+     "pot": 40,
+     "toCall": 0,
+     "eq": 0.6,
+     "need": 0,
+     "act": "check",
+     "to": 0,
+     "rec": "check",
+     "grade": "good",
+     "cat": ""
+    },
+    {
+     "st": 1,
+     "pos": "BB",
+     "pot": 70,
+     "toCall": 30,
+     "eq": 0.583,
+     "need": 0.3,
+     "act": "call",
+     "to": 0,
+     "rec": "call",
+     "grade": "good",
+     "cat": ""
+    },
+    {
+     "st": 2,
+     "pos": "BB",
+     "pot": 270,
+     "toCall": 170,
+     "eq": 0.545,
+     "need": 0.386,
+     "act": "raise",
+     "to": 370,
+     "rec": "call",
+     "grade": "good",
+     "cat": ""
+    }
+   ],
+   "money": true,
+   "game": "Poker + 3 Patti",
+   "gameDesc": "5 cards each. Pick 2 for normal poker with the table cards and 3 for a 3 Patti hand. Half the pot goes to the best poker hand, half to the best 3 Patti hand."
+  },
+  "expected": {
+   "grade": "good",
+   "hasMistake": false,
+   "street": null,
+   "cat": null
+  }
+ },
+ {
+  "id": "home-two-m1",
+  "request": {
+   "hand": "Home Game Hand #3: Dealer's choice No Limit ($0.10/$0.20 USD)\nTable 6369 5-max. Seat #5 is the button\nSeat 1: Sumer ($10.50 in chips)\nSeat 2: Venky ($8.90 in chips)\nSeat 3: Rohit ($9.00 in chips)\nSeat 5: Krish ($11.80 in chips)\nSeat 6: Nikhil ($9.80 in chips)\nGame: Two boards (Krish's choice)\nNikhil: posts small blind $0.10\nSumer: posts big blind $0.20\n*** HOLE CARDS ***\nDealt to Sumer [Kh Jc Js Ad Jd]\nVenky: raises $1.80 to $2.00\nRohit: folds\nKrish: folds\nNikhil: calls $1.90\nSumer: raises $1.80 to $3.80\nVenky: calls $1.80\nNikhil: calls $1.80\n*** FLOP *** [6d 5d 5h]\n*** BOARD 2 *** [Ts 7d]\nNikhil: bets $4.00\nSumer: calls $4.00\nVenky: calls $4.00\n*** TURN *** [6d 5d 5h] [9h]\nNikhil: bets $2.00 and is all-in\nSumer: folds\nVenky: folds\nUncalled bet ($2.00) returned to Nikhil\nNikhil collected $23.40 from pot\nNikhil: doesn't show hand\n*** ALL CARDS (practice view) ***\nSumer: Board 1 [Kh Jc] | Board 2 [Js Ad Jd] (folded)\nVenky: Board 1 [Ac 8s] | Board 2 [3s Jh 4s] (folded)\nRohit: Board 1 [9c Ah] | Board 2 [7c Kd 7h] (folded)\nKrish: Board 1 [6s Kc] | Board 2 [2c 2d Qd] (folded)\nNikhil: Board 1 [8h 7s] | Board 2 [6c Td Th]\n*** SUMMARY ***\nTotal pot $23.40 | Board [6d 5d 5h 9h]",
+   "decisions": [
+    {
+     "st": 0,
+     "pos": "BB",
+     "pot": 420,
+     "toCall": 180,
+     "eq": 0.568,
+     "need": 0.3,
+     "act": "raise",
+     "to": 380,
+     "rec": "raise",
+     "grade": "great",
+     "cat": ""
+    },
+    {
+     "st": 1,
+     "pos": "BB",
+     "pot": 1540,
+     "toCall": 400,
+     "eq": 0.415,
+     "need": 0.206,
+     "act": "call",
+     "to": 0,
+     "rec": "call",
+     "grade": "good",
+     "cat": ""
+    },
+    {
+     "st": 2,
+     "pos": "BB",
+     "pot": 2540,
+     "toCall": 200,
+     "eq": 0.398,
+     "need": 0.073,
+     "act": "fold",
+     "to": 0,
+     "rec": "call",
+     "grade": "mistake",
+     "cat": "overfold"
+    }
+   ],
+   "money": true,
+   "game": "Two boards",
+   "gameDesc": "5 cards each and 7 table cards: the normal 5 plus a second board of 2. Pick 2 cards for board 1 (normal poker) and 3 cards that must play with board 2's two cards. Both board 2 cards open together with the flop. Half the pot for each board."
+  },
+  "expected": {
+   "grade": "mistake",
+   "hasMistake": true,
+   "street": 2,
+   "cat": "overfold"
+  }
+ },
+ {
+  "id": "home-two-c1",
+  "request": {
+   "hand": "Home Game Hand #14: Dealer's choice No Limit ($0.10/$0.20 USD)\nTable 6369 5-max. Seat #6 is the button\nSeat 1: Sumer ($18.10 in chips)\nSeat 2: Venky ($19.00 in chips)\nSeat 3: Rohit ($7.50 in chips)\nSeat 5: Krish ($4.70 in chips)\nSeat 6: Nikhil ($30.70 in chips)\nGame: Two boards (Nikhil's choice)\nSumer: posts small blind $0.10\nVenky: posts big blind $0.20\n*** HOLE CARDS ***\nDealt to Sumer [3h 9c 8d 7c 4c]\nRohit: folds\nKrish: folds\nNikhil: calls $0.20\nSumer: calls $0.10\nVenky: checks\n*** FLOP *** [5s Jd 6c]\n*** BOARD 2 *** [Th 5h]\nSumer: checks\nVenky: bets $0.80\nNikhil: folds\nSumer: raises $17.10 to $17.90 and is all-in\nVenky: folds\nUncalled bet ($17.10) returned to Sumer\nSumer collected $2.20 from pot\nSumer: doesn't show hand\n*** ALL CARDS (practice view) ***\nSumer: Board 1 [3h 9c] | Board 2 [8d 7c 4c]\nVenky: Board 1 [As Ah] | Board 2 [5d 9s 2d] (folded)\nRohit: Board 1 [8s 7d] | Board 2 [3d Kh Td] (folded)\nKrish: Board 1 [7h 7s] | Board 2 [3s 2c Ts] (folded)\nNikhil: Board 1 [Kc Ks] | Board 2 [2h 5c Qh] (folded)\n*** SUMMARY ***\nTotal pot $2.20 | Board [5s Jd 6c]",
+   "decisions": [
+    {
+     "st": 0,
+     "pos": "SB",
+     "pot": 50,
+     "toCall": 10,
+     "eq": 0.241,
+     "need": 0.167,
+     "act": "call",
+     "to": 0,
+     "rec": "call",
+     "grade": "good",
+     "cat": ""
+    },
+    {
+     "st": 1,
+     "pos": "SB",
+     "pot": 60,
+     "toCall": 0,
+     "eq": 0.246,
+     "need": 0,
+     "act": "check",
+     "to": 0,
+     "rec": "bet",
+     "grade": "good",
+     "cat": ""
+    },
+    {
+     "st": 1,
+     "pos": "SB",
+     "pot": 140,
+     "toCall": 80,
+     "eq": 0.308,
+     "need": 0.364,
+     "act": "raise",
+     "to": 1790,
+     "rec": "call",
+     "grade": "good",
+     "cat": ""
+    }
+   ],
+   "money": true,
+   "game": "Two boards",
+   "gameDesc": "5 cards each and 7 table cards: the normal 5 plus a second board of 2. Pick 2 cards for board 1 (normal poker) and 3 cards that must play with board 2's two cards. Both board 2 cards open together with the flop. Half the pot for each board."
+  },
+  "expected": {
+   "grade": "good",
+   "hasMistake": false,
+   "street": null,
+   "cat": null
+  }
+ }
+]

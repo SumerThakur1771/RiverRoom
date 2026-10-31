@@ -262,6 +262,17 @@ intervals are in the output file. How to read them:
 - **Throughput.** The split games run 13–44x slower per hand than Hold'em, because every bot
   decision plays the whole hand out many times (the reason for the Web Worker in the app).
 
+## AI hand review eval
+
+Commands: `npx tsx tools/review/eval.ts --mock` and `--mock-lazy` (mock models, no network);
+`--live https://sumer-riverroom.vercel.app/api/review` for the real model.
+
+| Run | Score | What it shows |
+|---|---|---|
+| Perfect mock (answers built from the reference) | 100.0% (20/20 valid, 20/20 grade, 20/20 mistake, 10/10 street) | The scoring pipeline works end to end |
+| Lazy mock ("good, no mistake" every time) | 57.1% (20/20 valid, 10/20 grade, 10/20 mistake, 0/10 street) | The scorer separates good answers from bad ones |
+| Real model (Claude Haiku 5.5) | **not measured yet**: waiting for `ANTHROPIC_API_KEY` in Vercel | |
+
 ## Not measured yet
 
 - Lighthouse scores (performance, accessibility).

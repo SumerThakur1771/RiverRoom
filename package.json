@@ -16,7 +16,9 @@
     "test": "vitest run",
     "smoke": "node tools/ui/smoke.mjs",
     "golden:record": "node tools/golden/record.mjs",
-    "parity": "tsx tools/sim/parity.ts"
+    "parity": "tsx tools/sim/parity.ts",
+    "review:eval": "tsx tools/review/eval.ts",
+    "review:eval-set": "tsx tools/review/make-eval-set.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
@@ -31,5 +33,9 @@
     "typescript-eslint": "8.72.1",
     "vite": "8.3.5",
     "vitest": "5.0.5"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "0.135.0",
+    "zod": "4.6.7"
   }
 }

@@ -5,7 +5,7 @@ import globals from 'globals';
 export default tseslint.config(
   { ignores: ['dist/**', 'coverage/**', 'legacy/**', 'node_modules/**', 'tools/golden/.diff/**'] },
   {
-    files: ['src/**/*.ts', 'test/**/*.ts', 'tools/**/*.ts'],
+    files: ['src/**/*.ts', 'test/**/*.ts', 'tools/**/*.ts', 'api/**/*.ts'],
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     languageOptions: { globals: { ...globals.node, ...globals.browser } },
     rules: { 'no-empty': ['error', { allowEmptyCatch: true }] },
