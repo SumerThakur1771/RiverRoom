@@ -154,6 +154,17 @@ export class Tables {
     return res;
   }
 
+  /** Tables built elsewhere (the compute worker), so this thread never has to build them. */
+  exportBuilt(): { opp: Partial<Record<VariantKey, Float64Array[]>>; h5: Float64Array | null } {
+    return { opp: { ...this.opp }, h5: this.h5 };
+  }
+  adopt(data: { opp: Partial<Record<VariantKey, Float64Array[]>>; h5: Float64Array | null }): void {
+    for (const [k, v] of Object.entries(data.opp) as Array<[VariantKey, Float64Array[]]>) if (!this.opp[k]) this.opp[k] = v;
+    if (data.h5 && !this.h5) this.h5 = data.h5;
+  }
+  /** Whether the opponent model for a variant is already built (no work needed). */
+  has(key: VariantKey): boolean { return !!this.opp[key]; }
+
   oppCdf(key: VariantKey, j: number, str: number): number {
     return sortedPct(this.oppDist(key)[j]!, str);
   }

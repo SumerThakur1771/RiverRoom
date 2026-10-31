@@ -29,3 +29,6 @@ npm-debug.log*
 Thumbs.db
 tools/golden/.diff/
 screenshots/
+dist-measure/
+dist-measure-before/
+dist-measure-after/

@@ -8,7 +8,11 @@
 //     a coach hint (showHintInner), and the deal-time card planning for split games (initPlans).
 // Separately, a PerformanceObserver records every browser "longtask" (>50 ms on the main thread).
 //
-// Usage: node tools/measure/longtasks.mjs [secondsPerVariant=60] [cpuThrottle=1]
+// With --app=<url> it measures the new app instead: a `vite build --mode measure` build, which
+// has the same shortcuts and timers built in (src/ui/legacy.js, MEASURE). Everything else
+// (settings, the click loop, the long-task observer, attribution and the report) is identical.
+//
+// Usage: node tools/measure/longtasks.mjs [secondsPerVariant=60] [cpuThrottle=1] [--app=<url>]
 import { readFileSync, writeFileSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -18,10 +22,15 @@ const require = createRequire(import.meta.url);
 let chromium;
 try { ({ chromium } = require('playwright')); } catch { ({ chromium } = require('/opt/node-tools/node_modules/playwright')); }
 
-const SECS = +(process.argv[2] || 60);
-const THROTTLE = +(process.argv[3] || 1);
+const APP = (process.argv.find(a => a.startsWith('--app=')) || '').slice(6);
+const ARGS = process.argv.slice(2).filter(a => !a.startsWith('--'));
+const SECS = +(ARGS[0] || 60);
+const THROTTLE = +(ARGS[1] || 1);
 const VARIANTS = ['holdem', 'std', 'two', 'k8', 'n7'];
 
+let file = null;
+if (!APP) file = buildInstrumentedLegacy();
+function buildInstrumentedLegacy() {
 let s = readFileSync(new URL('../../legacy/river-room.html', import.meta.url), 'utf8');
 function r(a, b) { if (s.split(a).length !== 2) throw new Error('anchor not unique: ' + a.slice(0, 60)); s = s.replace(a, b); }
 // The artifact host wraps the page in a skeleton that includes [hidden]{display:none}; recreate it.
@@ -51,8 +60,10 @@ r("async function aiAction(p){\n", "async function aiAction(p){\n  const __t0 = 
 r("  const tt = thinkTime(p, a, o, p._eq == null ? 0.5 : p._eq);\n", "  __rec('aiAction(sync)', performance.now() - __t0);\n  const tt = thinkTime(p, a, o, p._eq == null ? 0.5 : p._eq);\n");
 
 const dir = mkdtempSync(join(tmpdir(), 'rr-measure-'));
-const file = join(dir, 'instrumented.html');
-writeFileSync(file, s);
+const out = join(dir, 'instrumented.html');
+writeFileSync(out, s);
+return out;
+}
 
 const stats = a => {
   if (!a.length) return { n: 0 };
@@ -73,13 +84,13 @@ for (const v of VARIANTS) {
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
   if (THROTTLE > 1) { const cdp = await ctx.newCDPSession(page); await cdp.send('Emulation.setCPUThrottlingRate', { rate: THROTTLE }); }
-  await page.goto('file://' + file);
+  await page.goto(APP || 'file://' + file);
   await page.evaluate(variant => { window.__force = variant; }, v);
   await page.waitForTimeout(300);
   await page.click('#startBtn');
   await page.waitForTimeout(500);
   // ignore anything that happened during page load / table setup
-  await page.evaluate(() => { window.__long.length = 0; window.__LT = []; window.__C = []; window.__T = {}; window.__on = true; });
+  await page.evaluate(() => { window.__long.length = 0; window.__LT = []; window.__C = []; window.__T = {}; window.__on = true; if (window.__W) for (const k of Object.keys(window.__W)) window.__W[k].length = 0; });
   const t0 = Date.now();
   while (Date.now() - t0 < SECS * 1000) {
     if (await page.isVisible('#dealOv')) await page.locator(`#dealOpts button[data-k="${v}"]`).click();
@@ -92,7 +103,7 @@ for (const v of VARIANTS) {
     }
     await page.waitForTimeout(25);
   }
-  const d = await page.evaluate(() => ({ long: window.__long.slice(), T: window.__T, hands: window.__rr().handNo, LT: window.__LT || [], C: window.__C || [] }));
+  const d = await page.evaluate(() => ({ long: window.__long.slice(), T: window.__T, W: window.__W || {}, hands: window.__rr().handNo, LT: window.__LT || [], C: window.__C || [] }));
   // attribute each long task to the timed calls that ran inside it (outermost-first is fine for a report)
   const attrib = {};
   for (const [ls, ld] of d.LT) {
@@ -102,13 +113,14 @@ for (const v of VARIANTS) {
     (attrib[key] ||= []).push(ld);
   }
   const fn = {}; for (const [k, arr] of Object.entries(d.T)) fn[k] = stats(arr);
-  results.push({ variant: v, hands: d.hands, fn, longtasks: stats(d.long), attrib: Object.fromEntries(Object.entries(attrib).map(([k, a]) => [k, stats(a)])), errors: errors.length });
+  const worker = {}; for (const [k, arr] of Object.entries(d.W)) if (arr.length) worker[k] = stats(arr);
+  results.push({ variant: v, hands: d.hands, fn, worker, longtasks: stats(d.long), attrib: Object.fromEntries(Object.entries(attrib).map(([k, a]) => [k, stats(a)])), errors: errors.length });
   await ctx.close();
 }
 await browser.close();
 
 const ua = `Chromium ${browser.version()}`;
-console.log(`Main-thread measurements, ${SECS}s per variant, CPU throttle ${THROTTLE}x, ${ua}`);
+console.log(`Main-thread measurements of ${APP ? 'the new app at ' + APP : 'legacy/river-room.html'}, ${SECS}s per variant, CPU throttle ${THROTTLE}x, ${ua}`);
 console.log('ms values: median / p95 / max  (n = samples, >50 = samples over 50 ms)');
 const row = (o) => o.n ? `${String(o.median).padStart(6)} /${String(o.p95).padStart(7)} /${String(o.max).padStart(7)}  n=${String(o.n).padStart(4)} >50=${o.over50}` : '   (no samples)';
 for (const x of results) {
@@ -117,5 +129,6 @@ for (const x of results) {
   for (const [k, o] of Object.entries(x.attrib).sort((p, q) => q[1].max - p[1].max)) console.log(`    longtask in ${k.padEnd(20)}: count=${o.n} max=${o.max}`);
   const rows = Object.entries(x.fn).filter(([, o]) => o.max >= 5).sort((p, q) => q[1].max - p[1].max);
   for (const [k, o] of rows) console.log(`  ${k.padEnd(14)}: ${row(o)}`);
+  for (const [k, o] of Object.entries(x.worker || {})) console.log(`  worker:${k.padEnd(7)}: ${row(o)}  (off the main thread)`);
 }
 console.log('\nJSON ' + JSON.stringify(results));

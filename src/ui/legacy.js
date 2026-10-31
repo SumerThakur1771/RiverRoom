@@ -4,6 +4,9 @@
 // shared helpers live in src/coach/coach.js. Typing this file is planned work (plain JS for now).
 import * as B from '../ai/bots';
 import * as E from '../engine/engine';
+import { Tables } from '../engine/strength';
+import { toPlain } from '../coach/compute.js';
+import { compute, workerMs } from './compute-client.js';
 import { bindGame,
   CONCEPTS, GRADE_LABEL, GRADE_SCORE, HOME_BUY, HOME_FRIENDS, LESSONS, LEVELS, LOGR, PCT, RANKCH,
   SEATSHORT, SUITCLS, SUITS, TYPES, VAR, VARIANTS, VAR_ORDER, actWords, cardTxt, catOf,
@@ -14,6 +17,23 @@ import { bindGame,
 } from '../coach/coach.js';
 import './styles.css';
 const SEED = new URLSearchParams(location.search).get('seed');
+// Measurement build only (`vite build --mode measure`, see tools/measure/longtasks.mjs): the same
+// shortcuts and timers the Phase 1 harness patched into the original. Production builds drop it.
+const MEASURE = import.meta.env.MODE === 'measure';
+function timed(name, fn){
+  if (!MEASURE) return fn();
+  const t0 = performance.now();
+  try { return fn(); } finally {
+    const ms = performance.now() - t0;
+    if (window.__on){ (window.__T[name] ||= []).push(ms); if (ms >= 2) window.__C.push([name, performance.now() - ms, ms]); }
+  }
+}
+if (MEASURE){
+  Object.assign(window, {__T: {}, __C: [], __W: workerMs, __rr: () => S});
+  // time the split-game opponent model only when it is really computed (not cache hits)
+  const orig = Tables.prototype.oppDist;
+  Tables.prototype.oppDist = function(key){ return this.has(key) ? orig.call(this, key) : timed('oppDist', () => orig.call(this, key)); };
+}
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
@@ -148,7 +168,7 @@ const DENOMS = [[5000,'#d97a2b'],[1000,'#e0bd45'],[500,'#7b52b8'],[100,'#26282c'
 // home game chips, in cents: black $1, green 50c, red 20c, blue 10c
 const DENOMS_HOME = [[100,'#1d1e22'],[50,'#2c8a4d'],[20,'#c23a2e'],[10,'#2f6fd0']];
 const BUYIN = 10;
-const PACE = {learn: 1, normal: 0.55, fast: 0.3};
+const PACE = {learn: 1, normal: 0.55, fast: MEASURE ? 0.02 : 0.3};
 const LAY = {
   land: { ratio: 1.72, felt: [12, 7, 14, 7],
     seats: [[50,89],[11,72],[11,30],[50,12.5],[89,30],[89,72]],
@@ -372,7 +392,7 @@ const panOf = p => p ? (L.seats[p.seat][0] - 50) / 50 : 0;
 function fly(html, from, to, dur = 400, cls = '', fade = false){
   const el = document.createElement('div'); el.className = 'flyer ' + cls; el.innerHTML = html;
   el.style.left = from.x + 'px'; el.style.top = from.y + 'px'; arena.appendChild(el);
-  const d = REDUCED ? 40 : dur * Math.min(1, SPEED() * 0.8 + 0.35);
+  const d = MEASURE ? 5 : REDUCED ? 40 : dur * Math.min(1, SPEED() * 0.8 + 0.35);
   const dx = to.x - from.x, dy = to.y - from.y;
   let anim;
   try {
@@ -417,7 +437,7 @@ function humanAction(p, ctx){
     if (pre === 'check' && o.toCall === 0){ res({type: 'check'}); return; }
     if (pre === 'callany'){ res(o.toCall === 0 ? {type: 'check'} : {type: 'call'}); return; }
     pending = {res, o, p, ctx};
-    if (settings.showEq){ S.heroEq = ctx.eq; renderSeat(p); }
+    if (settings.showEq){ const dp = S.decPre; hintFor(dp).then(r => { if (pending && S.decPre === dp){ S.heroEq = r.ctx.eq; renderSeat(p); } }).catch(() => {}); }
     setupActionUI(o, ctx); Snd.turn();
   });
 }
@@ -451,12 +471,20 @@ function setupActionUI(o, ctx){
   if (S.street === 0 && S.streetRaises === 0) def = MONEY ? 40 : 2.5 * S.bb; else if (o.isBet) def = MONEY ? [0, 30, 50, 100][S.street] : 0.6 * potT; else def = o.minTo;
   setAmt(canSize ? def : o.maxTo);
 }
-function showHint(){
-  if (!pending) return;
-  try { showHintInner(); } catch (err) { console.error(err); const h = $('#hint'); h.textContent = 'The coach could not work this one out. Use your own read here.'; h.hidden = false; }
+/** The coach's read and recommendation for the current decision, computed once in the worker. */
+function hintFor(dp){
+  if (!dp.hint) dp.hint = compute({type: 'hint', snap: dp.snap, seed: S.rs.seed, pi: dp.pi, label: dp.label, recLabel: S.rs.label(S.handNo, 'hint'), money: MONEY, settings});
+  return dp.hint;
 }
-function showHintInner(){
-  const c = pending.ctx, r = coachRec(c), h = $('#hint');
+function showHint(){
+  if (!pending || !S.decPre) return;
+  const dp = S.decPre, h = $('#hint');
+  h.innerHTML = '<strong>The coach is thinking…</strong>'; h.hidden = false;
+  hintFor(dp).then(r => { if (pending && S.decPre === dp && !h.hidden) timed('showHintInner', () => showHintInner(r.ctx, r.rec)); })
+    .catch(err => { console.error(err); h.textContent = 'The coach could not work this one out. Use your own read here.'; h.hidden = false; });
+}
+function showHintInner(c, r){
+  const h = $('#hint');
   const shove = (r.act === 'raise' || r.act === 'bet') && r.size && roundChips(r.size) >= c.o.maxTo;
   const word = r.act === 'allin' || shove ? 'Go all-in' : r.act === 'raise' ? (c.currentBet === 0 && c.st > 0 ? 'Bet' : 'Raise') : r.act[0].toUpperCase() + r.act.slice(1);
   const size = r.size && !shove && (r.act === 'raise' || r.act === 'bet') ? (c.currentBet === 0 ? ' about ' : ' to about ') + fmt(roundChips(r.size)) : '';
@@ -603,6 +631,9 @@ function setupTable(snap){
   const g = E.newGame({mode, settings, seed: SEED ? SEED + ':' + GID : null, snap: snap || null});
   S = Object.assign(g, {gid: GID, history: [], dec: [], paused: false, pre: null, heroEq: null, snap: null, feed: [], running: false, splitDec: null, hintBest: null});
   bindGame(S, MONEY, settings);
+  // the split-game opponent model is built by the compute worker, never on this thread
+  const myGid = GID;
+  S.tablesReady = MONEY ? compute({type: 'tables', seed: S.rs.seed}).then(t => { if (S && S.gid === myGid) S.tables.adopt(t); }).catch(err => console.error(err)) : Promise.resolve();
   if (snap) S.history = Array.isArray(snap.history) ? snap.history.map(h => { const x = Object.assign({}, h); if (x.review){ x.review = Object.assign({}, x.review); if (!x.review.text) x.review.text = x.text; } return x; }) : [];
   $$('.flyer', arena).forEach(e => e.remove());
   buildSeats(); layout(); render(); renderInfo(); renderHistory(); renderControls(); renderFeed();
@@ -612,11 +643,16 @@ function setupTable(snap){
 
 /* ================= running a hand: the engine decides, this code animates ================= */
 async function aiAction(p){
-  const a = B.botAction(S, p), o = options(p);
+  // the decision is worked out in the compute worker while the bot "thinks"
+  const gid = S.gid, t0 = performance.now(), label = S.rs.label(S.handNo, 'ai');
+  const r = await compute({type: 'bot', snap: toPlain(S), seed: S.rs.seed, pi: p.i, label, money: MONEY, settings});
+  guard(gid);
+  Object.assign(p, r.patch);
+  const a = r.action, o = options(p);
   const tt = thinkTime(p, a, o, p._eq == null ? 0.5 : p._eq);
   if (p.persona.slow && tt > 4000 && Math.random() < 0.3) say(p, homeLine(p, 'think', 'hmm...'));
   if (p.persona.quickFold && a.type === 'fold' && o.toCall > S.bb * 2 && Math.random() < 0.15) setTimeout(() => say(p, homeLine(p, 'fold', 'fold')), 300);
-  await wait(tt);
+  await wait(Math.max(0, tt * SPEED() - (performance.now() - t0)), true);
   return a;
 }
 // sounds, chips and the feed line for an action the engine has just applied
@@ -675,6 +711,7 @@ function chatAfterHand(totalPot){
   }
 }
 function pickVariant(d){
+  if (MEASURE && window.__force) return Promise.resolve(window.__force);
   if (!d.isHuman) return Promise.resolve(B.pickVariantFor(S, d));
   $('#dealOpts').innerHTML = VAR_ORDER.map(k => `<button type="button" data-k="${k}"${k === 'std' ? ' class="usual"' : ''}><b>${VARIANTS[k].name}${k === 'std' ? ' · your usual' : ''}</b><small>${VARIANTS[k].desc}</small></button>`).join('');
   $('#dealOv').hidden = false;
@@ -684,9 +721,9 @@ function pickVariant(d){
 
 async function playHand(){
   const gid = S.gid, hero = heroP(), prevLevel = S.level;
-  Object.assign(S, {dec: [], splitDec: null, hintBest: null, heroEq: null, pre: null});
+  Object.assign(S, {dec: [], decPending: [], decPre: null, splitDec: null, hintBest: null, heroEq: null, pre: null});
   const flow = E.playHand(S);
-  let answer, heroCtx = null, summary;
+  let answer, summary;
   for (;;){
     const r = flow.next(answer); answer = undefined;
     if (r.done){ summary = r.value; break; }
@@ -695,18 +732,24 @@ async function playHand(){
       const p = s.p;
       S.turnStart = performance.now(); S.turnLen = p.isHuman ? (settings.timer > 0 ? settings.timer * 1000 : 1e12) : 30000; S.warned = false;
       render(); renderControls();
-      if (p.isHuman){ try { heroCtx = coachContext(p); } catch (err){ console.error(err); heroCtx = null; } answer = await humanAction(p, heroCtx || {need: 0, pos: posInfo(p), eq: 0.5}); }
+      if (p.isHuman){
+        // the coach's full read runs later in the worker (on a Hint, or for the end-of-hand grade)
+        const o = options(p), pot = potTotal();
+        S.decPre = {snap: toPlain(S), pi: p.i, label: S.rs.label(S.handNo, 'coach'), hint: null};
+        answer = await humanAction(p, {need: o.toCall > 0 ? o.toCall / (pot + o.toCall) : 0, pos: posInfo(p), eq: null});
+      }
       else answer = await aiAction(p);
-    } else if (s.kind === 'variant') answer = await pickVariant(s.p);
+    } else if (s.kind === 'variant'){ answer = await pickVariant(s.p); if (answer !== 'holdem') await S.tablesReady; }
     else if (s.kind === 'plans'){
       B.initPlans(S, s.order); render();
       if (!S.tipArr && !hero.out){ S.tipArr = true; toast('Your cards are in the order they were dealt. Tap them to arrange them your way; tap Hint for ideas. Your final split happens at the showdown.', 6000); }
     } else if (s.kind === 'split'){
-      if (s.p.isHuman){ const sp = await heroSplit(s.p, s.k, 'final'); if (!sp) throw new Abort(); gradeSplit(s.p, sp, s.k); answer = sp; }
+      if (s.p.isHuman && MEASURE){ const sp = planSplit(s.p, s.k); gradeSplit(s.p, sp, s.k); answer = sp; }
+      else if (s.p.isHuman){ const sp = await heroSplit(s.p, s.k, 'final'); if (!sp) throw new Abort(); gradeSplit(s.p, sp, s.k); answer = sp; }
       else answer = B.botFinalSplit(S, s.p, s.k);
     } else if (s.kind === 'practiceView') B.practiceSplits(S);
     else if (s.kind === 'rebuy'){ answer = await askRebuy(); guard(gid); if (answer === 'yes') toast(`You rebought for ${fmt(HOME_BUY)}`); }
-    else await pauseFx(s, {get heroCtx(){ return heroCtx; }, clearCtx(){ heroCtx = null; }, hero, prevLevel});
+    else await pauseFx(s, {hero, prevLevel});
     guard(gid);
   }
   // after the hand: rebuys, busts and new reads
@@ -751,9 +794,10 @@ async function pauseFx(s, h){
     case 'deal': await dealHoleCards(d.order, d.nDeal); renderControls(); await wait(500); return;
     case 'action': {
       await actionFx(d.p, d.res); guard(gid);
-      if (d.p.isHuman && h.heroCtx){
-        try { const ctx = h.heroCtx, rr = coachRec(ctx); S.dec.push({ctx, act: d.res, rec: rr, g: gradeDecision(ctx, d.res, rr)}); } catch (err){ console.error(err); }
-        S.heroEq = null; h.clearCtx();
+      if (d.p.isHuman && S.decPre){
+        // keep what the coach needs to grade this decision at the end of the hand
+        S.decPending.push({pre: S.decPre.snap, post: toPlain(S), pi: d.p.i, label: S.decPre.label, recLabel: S.rs.label(S.handNo, 'rec'), act: d.res});
+        S.decPre = null; S.heroEq = null;
       }
       render(); renderControls(); await wait(s.ms); return;
     }
@@ -794,6 +838,10 @@ async function pauseFx(s, h){
       if (S.msg) feedPush(S.msg);
       chatAfterHand(d.totalPot);
       const hero = h.hero;
+      if (S.decPending.length){
+        try { S.dec = await compute({type: 'grade', seed: S.rs.seed, money: MONEY, settings, items: S.decPending}); } catch (err){ console.error(err); S.dec = []; }
+        guard(gid);
+      }
       let review = null; try { review = hero.out && !S.dec.length ? null : buildReview(d.totalPot); } catch (err){ console.error(err); }
       S.history.unshift({no: S.handNo, blinds: `${fmt(S.sb)}/${fmt(S.bb)}`, text: S.hist.join('\n'), net: hero.out && !S.dec.length ? null : hero.stack - hero.start, review});
       if (S.history.length > 80) S.history.length = 80;
@@ -810,9 +858,6 @@ async function pauseFx(s, h){
 
 async function runLoop(){
   const gid = S.gid; S.running = true;
-  // work out the split-game odds early so the first deal of each game is instant
-  // (this still runs on the main thread: see METRICS.md, fixed in the Web Worker step)
-  if (MONEY) ['std', 'two', 'n7', 'k8'].forEach((k, i) => setTimeout(() => { try { if (S && S.gid === gid) oppDist(k); } catch (e) {} }, 2500 + i * 700));
   renderControls();
   try {
     for (;;){

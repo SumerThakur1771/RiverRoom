@@ -218,8 +218,8 @@ function botPost(g: Game, p: Player, o: Options): Action {
 }
 
 /** A bot's decision (the original aiAction, without the thinking-time delay and chat). */
-export function botAction(g: Game, p: Player): Action {
-  return g.rs.seg(g.rs.label(g.handNo, 'ai'), () => {
+export function botAction(g: Game, p: Player, label?: string): Action {
+  return g.rs.seg(label ?? g.rs.label(g.handNo, 'ai'), () => {
     if (VAR(g) && !p.splitDone) useSplit(p, planSplit(g, p, liveList(g).length - 1));
     const o = options(g, p);
     let a = g.street === 0 ? botPre(g, p, o) : botPost(g, p, o);
