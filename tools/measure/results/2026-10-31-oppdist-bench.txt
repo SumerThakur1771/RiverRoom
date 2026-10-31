@@ -1,0 +1,10 @@
+tpPct first call (builds 3 Patti table, 22,100 hands): 39 ms
+h5Pct first call (builds 30,000-hand 5-card table):   73 ms
+oppDist('std') with tables built: 74 ms
+oppDist('two') with tables built: 66 ms
+oppDist('n7') with tables built: 79 ms
+oppDist('k8') with tables built: 749 ms
+oppDist('std') cold, fresh copy: 87 ms
+oppDist('two') cold, fresh copy: 101 ms
+oppDist('n7') cold, fresh copy: 163 ms
+oppDist('k8') cold, fresh copy: 743 ms

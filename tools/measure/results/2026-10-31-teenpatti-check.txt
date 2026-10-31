@@ -1,0 +1,9 @@
+  Trail              52  expected     52  OK
+  Pure sequence      48  expected     48  OK
+  Sequence          720  expected    720  OK
+  Color            1096  expected   1096  OK
+  Pair             3744  expected   3744  OK
+  High card       16440  expected  16440  OK
+  sequence order A-K-Q > A-2-3 > K-Q-J: OK
+  hands: 22100, distinct scores: 741
+RESULT: all 3 Patti checks pass

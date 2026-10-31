@@ -1,0 +1,157 @@
+Main-thread measurements, 60s per variant, CPU throttle 4x, Chromium 141.0.7390.37
+ms values: median / p95 / max  (n = samples, >50 = samples over 50 ms)
+
+holdem  (hands played: 10, page errors: 0)
+  longtasks     : count=77 median=62 p95=259 max=3132
+    longtask in oppDist             : count=4 max=3132
+    longtask in (no timed function) : count=48 max=135
+    longtask in buildReview         : count=1 max=83
+    longtask in showHintInner       : count=3 max=82
+    longtask in saveAfterHand       : count=5 max=80
+    longtask in coachPost           : count=6 max=72
+    longtask in coachRec            : count=4 max=67
+    longtask in persistTable        : count=1 max=67
+    longtask in render              : count=2 max=65
+    longtask in coachContext        : count=2 max=53
+    longtask in showdown            : count=1 max=51
+  oppDist       :  410.6 / 3132.5 / 3132.5  n=   4 >50=4
+  showHintInner :    6.2 /     46 /   50.1  n=  38 >50=1
+  coachRec      :    8.1 /   28.1 /   47.4  n=  76 >50=0
+  coachPost     :   11.1 /   29.2 /   47.4  n=  56 >50=0
+  coachContext  :    9.3 /   43.1 /   45.6  n=  38 >50=0
+  endStreet     :    0.1 /    4.1 /   32.3  n=  38 >50=0
+  bettingRound  :    6.1 /   17.1 /   18.7  n=  35 >50=0
+  aiAction(sync):      1 /   12.3 /   18.2  n= 100 >50=0
+  applyAction   :    2.1 /    6.6 /     18  n= 138 >50=0
+  revealAll     :    8.3 /   17.8 /   17.8  n=   3 >50=0
+  render        :    1.7 /    8.8 /   16.6  n= 505 >50=0
+  saveAfterHand :    5.8 /   11.3 /   11.3  n=   9 >50=0
+  persistTable  :    4.9 /   11.2 /   11.2  n=  18 >50=0
+  humanAction   :    1.9 /    4.2 /    7.8  n=  38 >50=0
+  setupActionUI :    1.9 /      4 /    7.5  n=  38 >50=0
+  buildReview   :    1.1 /    6.9 /    6.9  n=   9 >50=0
+  showdown      :    3.1 /    5.7 /    5.7  n=   9 >50=0
+
+std  (hands played: 7, page errors: 0)
+  longtasks     : count=132 median=119 p95=457 max=2480
+    longtask in oppDist             : count=3 max=2480
+    longtask in coachContext        : count=23 max=804
+    longtask in bettingRound        : count=18 max=457
+    longtask in aiAction(sync)      : count=32 max=297
+    longtask in (no timed function) : count=40 max=152
+    longtask in render              : count=9 max=125
+    longtask in showdownMulti       : count=3 max=95
+    longtask in showHintInner       : count=3 max=83
+    longtask in coachPost           : count=1 max=71
+  oppDist       :  459.6 / 2478.6 / 2478.6  n=   3 >50=3
+  coachContext  :  342.3 /  463.6 /  796.8  n=  28 >50=28
+  bettingRound  :  132.8 /  377.3 /    456  n=  23 >50=18
+  aiAction(sync):  107.6 /  204.1 /  292.1  n=  72 >50=45
+  showdownMulti :   44.5 /   72.4 /   72.4  n=   6 >50=2
+  render        :    1.9 /   14.4 /   67.1  n= 354 >50=2
+  showHintInner :    4.9 /   24.6 /   25.7  n=  28 >50=0
+  coachRec      :    2.7 /   20.7 /   22.9  n=  56 >50=0
+  buildReview   :    1.3 /   22.2 /   22.2  n=   6 >50=0
+  coachPost     :    3.3 /   18.2 /   21.1  n=  42 >50=0
+  storyLines    :    0.6 /     19 /     19  n=   6 >50=0
+  persistTable  :      4 /    9.1 /    9.1  n=  12 >50=0
+  saveAfterHand :    5.3 /    9.1 /    9.1  n=   6 >50=0
+  coachPre      :    0.2 /    8.3 /    8.3  n=  14 >50=0
+  applyAction   :    2.8 /    5.8 /    8.1  n=  99 >50=0
+  endStreet     :    0.1 /    5.4 /    7.8  n=  25 >50=0
+  humanAction   :      2 /      4 /    7.7  n=  28 >50=0
+  initPlans     :    2.6 /    6.9 /    6.9  n=   7 >50=0
+  setupActionUI :      2 /    3.5 /    5.8  n=  28 >50=0
+  finalSplits   :      4 /    5.3 /    5.3  n=   6 >50=0
+
+two  (hands played: 7, page errors: 0)
+  longtasks     : count=155 median=90 p95=264 max=3476
+    longtask in oppDist             : count=3 max=3476
+    longtask in bettingRound        : count=21 max=433
+    longtask in coachContext        : count=25 max=326
+    longtask in aiAction(sync)      : count=37 max=172
+    longtask in (no timed function) : count=51 max=146
+    longtask in render              : count=10 max=116
+    longtask in showdownMulti       : count=3 max=110
+    longtask in showHintInner       : count=3 max=71
+    longtask in coachRec            : count=1 max=70
+    longtask in coachPost           : count=1 max=67
+  oppDist       :  370.7 / 3476.2 / 3476.2  n=   3 >50=3
+  bettingRound  :  110.9 /  213.6 /    432  n=  26 >50=21
+  coachContext  :  200.4 /  318.1 /  418.3  n=  30 >50=30
+  aiAction(sync):   69.7 /  139.8 /    172  n=  82 >50=53
+  showdownMulti :   60.4 /   86.6 /   86.6  n=   6 >50=3
+  render        :      2 /   12.7 /   81.2  n= 385 >50=3
+  showHintInner :    4.7 /   19.1 /   25.4  n=  30 >50=0
+  coachRec      :    2.7 /   18.8 /   24.1  n=  60 >50=0
+  coachPost     :    2.9 /   18.8 /   23.5  n=  46 >50=0
+  buildReview   :    2.1 /   14.4 /   14.4  n=   6 >50=0
+  applyAction   :    1.8 /    5.7 /   12.5  n= 112 >50=0
+  persistTable  :    5.6 /   11.4 /   11.4  n=  12 >50=0
+  saveAfterHand :    7.7 /     11 /     11  n=   6 >50=0
+  humanAction   :    2.1 /    3.3 /     10  n=  30 >50=0
+  setupActionUI :      2 /    3.3 /    9.8  n=  30 >50=0
+  storyLines    :    0.9 /    8.9 /    8.9  n=   6 >50=0
+  initPlans     :    2.8 /    6.4 /    6.4  n=   7 >50=0
+  coachPre      :    0.8 /    5.7 /    5.7  n=  14 >50=0
+
+k8  (hands played: 3, page errors: 0)
+  longtasks     : count=97 median=107 p95=2109 max=2509
+    longtask in coachContext        : count=12 max=2509
+    longtask in bettingRound        : count=8 max=2109
+    longtask in aiAction(sync)      : count=25 max=599
+    longtask in oppDist             : count=1 max=499
+    longtask in (no timed function) : count=28 max=134
+    longtask in showdownMulti       : count=2 max=122
+    longtask in coachPost           : count=5 max=107
+    longtask in render              : count=2 max=100
+    longtask in coachRec            : count=6 max=89
+    longtask in initPlans           : count=3 max=78
+    longtask in showHintInner       : count=5 max=75
+  coachContext  : 2078.3 / 2504.6 / 2504.6  n=  14 >50=14
+  bettingRound  :  421.2 / 2107.5 / 2107.5  n=  10 >50=8
+  aiAction(sync):  378.2 /    530 /  594.4  n=  43 >50=31
+  oppDist       :  499.4 /  499.4 /  499.4  n=   1 >50=1
+  showdownMulti :     84 /     84 /     84  n=   2 >50=2
+  render        :    2.1 /   13.7 /   77.3  n= 168 >50=2
+  initPlans     :   42.8 /   42.8 /   42.8  n=   3 >50=0
+  coachRec      :   18.2 /     31 /   35.9  n=  28 >50=0
+  coachPost     :   18.2 /   28.3 /   35.8  n=  22 >50=0
+  showHintInner :   19.5 /   30.2 /   30.2  n=  14 >50=0
+  finalSplits   :   24.3 /   24.3 /   24.3  n=   2 >50=0
+  applyAction   :      2 /    6.6 /    7.4  n=  57 >50=0
+  humanAction   :    2.2 /    7.3 /    7.3  n=  14 >50=0
+  buildReview   :    6.6 /    6.6 /    6.6  n=   2 >50=0
+  setupActionUI :    2.1 /    6.5 /    6.5  n=  14 >50=0
+  persistTable  :    2.5 /    5.6 /    5.6  n=   4 >50=0
+
+n7  (hands played: 6, page errors: 0)
+  longtasks     : count=127 median=140 p95=489 max=3022
+    longtask in oppDist             : count=3 max=3022
+    longtask in coachContext        : count=20 max=705
+    longtask in bettingRound        : count=19 max=672
+    longtask in aiAction(sync)      : count=28 max=377
+    longtask in (no timed function) : count=44 max=148
+    longtask in render              : count=10 max=96
+    longtask in showdownMulti       : count=1 max=86
+    longtask in coachRec            : count=1 max=58
+    longtask in showHintInner       : count=1 max=56
+  oppDist       :  334.6 / 3022.2 / 3022.2  n=   3 >50=3
+  coachContext  :  353.6 /  667.4 /    699  n=  29 >50=29
+  bettingRound  :  191.4 /  565.6 /  671.4  n=  24 >50=19
+  aiAction(sync):  136.3 /  297.6 /  374.6  n=  63 >50=38
+  showdownMulti :    8.3 /   61.1 /   61.1  n=   5 >50=1
+  render        :      2 /   12.6 /     61  n= 312 >50=1
+  showHintInner :    4.8 /   23.1 /     24  n=  29 >50=0
+  coachRec      :      3 /     16 /   22.5  n=  58 >50=0
+  coachPost     :    3.8 /   15.9 /     22  n=  46 >50=0
+  persistTable  :    4.4 /   16.7 /   16.7  n=  10 >50=0
+  initPlans     :    3.7 /     10 /     10  n=   6 >50=0
+  applyAction   :    1.8 /    6.6 /    9.1  n=  92 >50=0
+  saveAfterHand :    3.3 /    8.5 /    8.5  n=   5 >50=0
+  humanAction   :      2 /    2.7 /    8.1  n=  29 >50=0
+  buildReview   :    1.5 /    8.1 /    8.1  n=   5 >50=0
+  setupActionUI :      2 /    2.7 /    6.7  n=  29 >50=0
+  storyLines    :    0.8 /    5.1 /    5.1  n=   5 >50=0
+
+JSON [{"variant":"holdem","hands":10,"fn":{"render":{"n":505,"median":1.7,"p95":8.8,"max":16.6,"over50":0},"aiAction(sync)":{"n":100,"median":1,"p95":12.3,"max":18.2,"over50":0},"applyAction":{"n":138,"median":2.1,"p95":6.6,"max":18,"over50":0},"coachContext":{"n":38,"median":9.3,"p95":43.1,"max":45.6,"over50":0},"setupActionUI":{"n":38,"median":1.9,"p95":4,"max":7.5,"over50":0},"humanAction":{"n":38,"median":1.9,"p95":4.2,"max":7.8,"over50":0},"coachPre":{"n":20,"median":0.1,"p95":0.8,"max":0.8,"over50":0},"coachRec":{"n":76,"median":8.1,"p95":28.1,"max":47.4,"over50":0},"showHintInner":{"n":38,"median":6.2,"p95":46,"max":50.1,"over50":1},"gradeDecision":{"n":38,"median":0,"p95":1,"max":2.8,"over50":0},"endStreet":{"n":38,"median":0.1,"p95":4.1,"max":32.3,"over50":0},"bettingRound":{"n":35,"median":6.1,"p95":17.1,"max":18.7,"over50":0},"oppDist":{"n":4,"median":410.6,"p95":3132.5,"max":3132.5,"over50":4},"coachPost":{"n":56,"median":11.1,"p95":29.2,"max":47.4,"over50":0},"showdown":{"n":9,"median":3.1,"p95":5.7,"max":5.7,"over50":0},"buildPots":{"n":16,"median":0,"p95":0.7,"max":0.7,"over50":0},"storyLines":{"n":9,"median":0.4,"p95":4.2,"max":4.2,"over50":0},"buildReview":{"n":9,"median":1.1,"p95":6.9,"max":6.9,"over50":0},"recordProgress":{"n":9,"median":1.1,"p95":1.7,"max":1.7,"over50":0},"makeSnap":{"n":18,"median":0.1,"p95":3.1,"max":3.1,"over50":0},"persistTable":{"n":18,"median":4.9,"p95":11.2,"max":11.2,"over50":0},"saveAfterHand":{"n":9,"median":5.8,"p95":11.3,"max":11.3,"over50":0},"endOfHand":{"n":9,"median":0.1,"p95":0.7,"max":0.7,"over50":0},"playHand":{"n":9,"median":2.6,"p95":4.9,"max":4.9,"over50":0},"pickVariant":{"n":9,"median":0,"p95":0.1,"max":0.1,"over50":0},"revealAll":{"n":3,"median":8.3,"p95":17.8,"max":17.8,"over50":0}},"longtasks":{"n":77,"median":62,"p95":259,"max":3132,"over50":75},"attrib":{"(no timed function)":{"n":48,"median":61,"p95":103,"max":135,"over50":47},"coachContext":{"n":2,"median":53,"p95":53,"max":53,"over50":1},"oppDist":{"n":4,"median":410,"p95":3132,"max":3132,"over50":4},"coachRec":{"n":4,"median":64,"p95":67,"max":67,"over50":4},"showdown":{"n":1,"median":51,"p95":51,"max":51,"over50":1},"buildReview":{"n":1,"median":83,"p95":83,"max":83,"over50":1},"coachPost":{"n":6,"median":65,"p95":72,"max":72,"over50":6},"saveAfterHand":{"n":5,"median":62,"p95":80,"max":80,"over50":5},"render":{"n":2,"median":65,"p95":65,"max":65,"over50":2},"showHintInner":{"n":3,"median":62,"p95":82,"max":82,"over50":3},"persistTable":{"n":1,"median":67,"p95":67,"max":67,"over50":1}},"errors":0},{"variant":"std","hands":7,"fn":{"render":{"n":354,"median":1.9,"p95":14.4,"max":67.1,"over50":2},"initPlans":{"n":7,"median":2.6,"p95":6.9,"max":6.9,"over50":0},"coachContext":{"n":28,"median":342.3,"p95":463.6,"max":796.8,"over50":28},"setupActionUI":{"n":28,"median":2,"p95":3.5,"max":5.8,"over50":0},"humanAction":{"n":28,"median":2,"p95":4,"max":7.7,"over50":0},"bettingRound":{"n":23,"median":132.8,"p95":377.3,"max":456,"over50":18},"coachPre":{"n":14,"median":0.2,"p95":8.3,"max":8.3,"over50":0},"coachRec":{"n":56,"median":2.7,"p95":20.7,"max":22.9,"over50":0},"showHintInner":{"n":28,"median":4.9,"p95":24.6,"max":25.7,"over50":0},"applyAction":{"n":99,"median":2.8,"p95":5.8,"max":8.1,"over50":0},"gradeDecision":{"n":28,"median":0,"p95":1.2,"max":2.7,"over50":0},"aiAction(sync)":{"n":72,"median":107.6,"p95":204.1,"max":292.1,"over50":45},"endStreet":{"n":25,"median":0.1,"p95":5.4,"max":7.8,"over50":0},"oppDist":{"n":3,"median":459.6,"p95":2478.6,"max":2478.6,"over50":3},"coachPost":{"n":42,"median":3.3,"p95":18.2,"max":21.1,"over50":0},"finalSplits":{"n":6,"median":4,"p95":5.3,"max":5.3,"over50":0},"showdownMulti":{"n":6,"median":44.5,"p95":72.4,"max":72.4,"over50":2},"buildPots":{"n":18,"median":0.1,"p95":1.1,"max":1.1,"over50":0},"storyLines":{"n":6,"median":0.6,"p95":19,"max":19,"over50":0},"buildReview":{"n":6,"median":1.3,"p95":22.2,"max":22.2,"over50":0},"recordProgress":{"n":6,"median":1.1,"p95":1.6,"max":1.6,"over50":0},"makeSnap":{"n":12,"median":0,"p95":0.9,"max":0.9,"over50":0},"persistTable":{"n":12,"median":4,"p95":9.1,"max":9.1,"over50":0},"saveAfterHand":{"n":6,"median":5.3,"p95":9.1,"max":9.1,"over50":0},"endOfHand":{"n":6,"median":0,"p95":1.2,"max":1.2,"over50":0},"playHand":{"n":6,"median":2.2,"p95":2.6,"max":2.6,"over50":0},"pickVariant":{"n":6,"median":0,"p95":0,"max":0,"over50":0},"revealAll":{"n":3,"median":2.5,"p95":3.7,"max":3.7,"over50":0}},"longtasks":{"n":132,"median":119,"p95":457,"max":2480,"over50":131},"attrib":{"bettingRound":{"n":18,"median":157,"p95":457,"max":457,"over50":18},"(no timed function)":{"n":40,"median":68,"p95":144,"max":152,"over50":39},"showHintInner":{"n":3,"median":73,"p95":83,"max":83,"over50":3},"oppDist":{"n":3,"median":459,"p95":2480,"max":2480,"over50":3},"aiAction(sync)":{"n":32,"median":149,"p95":232,"max":297,"over50":32},"coachContext":{"n":23,"median":268,"p95":466,"max":804,"over50":23},"coachPost":{"n":1,"median":71,"p95":71,"max":71,"over50":1},"render":{"n":9,"median":61,"p95":125,"max":125,"over50":9},"showdownMulti":{"n":3,"median":75,"p95":95,"max":95,"over50":3}},"errors":0},{"variant":"two","hands":7,"fn":{"render":{"n":385,"median":2,"p95":12.7,"max":81.2,"over50":3},"initPlans":{"n":7,"median":2.8,"p95":6.4,"max":6.4,"over50":0},"coachContext":{"n":30,"median":200.4,"p95":318.1,"max":418.3,"over50":30},"setupActionUI":{"n":30,"median":2,"p95":3.3,"max":9.8,"over50":0},"humanAction":{"n":30,"median":2.1,"p95":3.3,"max":10,"over50":0},"bettingRound":{"n":26,"median":110.9,"p95":213.6,"max":432,"over50":21},"coachPre":{"n":14,"median":0.8,"p95":5.7,"max":5.7,"over50":0},"coachRec":{"n":60,"median":2.7,"p95":18.8,"max":24.1,"over50":0},"showHintInner":{"n":30,"median":4.7,"p95":19.1,"max":25.4,"over50":0},"applyAction":{"n":112,"median":1.8,"p95":5.7,"max":12.5,"over50":0},"gradeDecision":{"n":30,"median":0,"p95":1,"max":2.7,"over50":0},"aiAction(sync)":{"n":82,"median":69.7,"p95":139.8,"max":172,"over50":53},"oppDist":{"n":3,"median":370.7,"p95":3476.2,"max":3476.2,"over50":3},"endStreet":{"n":25,"median":0.1,"p95":3.1,"max":3.4,"over50":0},"coachPost":{"n":46,"median":2.9,"p95":18.8,"max":23.5,"over50":0},"finalSplits":{"n":6,"median":0,"p95":0.7,"max":0.7,"over50":0},"showdownMulti":{"n":6,"median":60.4,"p95":86.6,"max":86.6,"over50":3},"buildPots":{"n":6,"median":0.9,"p95":3.5,"max":3.5,"over50":0},"storyLines":{"n":6,"median":0.9,"p95":8.9,"max":8.9,"over50":0},"buildReview":{"n":6,"median":2.1,"p95":14.4,"max":14.4,"over50":0},"recordProgress":{"n":6,"median":1.6,"p95":3.3,"max":3.3,"over50":0},"makeSnap":{"n":12,"median":0.1,"p95":1.6,"max":1.6,"over50":0},"persistTable":{"n":12,"median":5.6,"p95":11.4,"max":11.4,"over50":0},"saveAfterHand":{"n":6,"median":7.7,"p95":11,"max":11,"over50":0},"endOfHand":{"n":6,"median":0,"p95":0,"max":0,"over50":0},"playHand":{"n":6,"median":2.9,"p95":3.6,"max":3.6,"over50":0},"pickVariant":{"n":6,"median":0,"p95":0.1,"max":0.1,"over50":0}},"longtasks":{"n":155,"median":90,"p95":264,"max":3476,"over50":153},"attrib":{"bettingRound":{"n":21,"median":123,"p95":215,"max":433,"over50":21},"(no timed function)":{"n":51,"median":69,"p95":125,"max":146,"over50":50},"showHintInner":{"n":3,"median":62,"p95":71,"max":71,"over50":3},"oppDist":{"n":3,"median":370,"p95":3476,"max":3476,"over50":3},"coachContext":{"n":25,"median":192,"p95":301,"max":326,"over50":25},"coachPost":{"n":1,"median":67,"p95":67,"max":67,"over50":1},"aiAction(sync)":{"n":37,"median":91,"p95":170,"max":172,"over50":37},"showdownMulti":{"n":3,"median":83,"p95":110,"max":110,"over50":3},"render":{"n":10,"median":82,"p95":116,"max":116,"over50":9},"coachRec":{"n":1,"median":70,"p95":70,"max":70,"over50":1}},"errors":0},{"variant":"k8","hands":3,"fn":{"render":{"n":168,"median":2.1,"p95":13.7,"max":77.3,"over50":2},"oppDist":{"n":1,"median":499.4,"p95":499.4,"max":499.4,"over50":1},"initPlans":{"n":3,"median":42.8,"p95":42.8,"max":42.8,"over50":0},"coachContext":{"n":14,"median":2078.3,"p95":2504.6,"max":2504.6,"over50":14},"setupActionUI":{"n":14,"median":2.1,"p95":6.5,"max":6.5,"over50":0},"humanAction":{"n":14,"median":2.2,"p95":7.3,"max":7.3,"over50":0},"bettingRound":{"n":10,"median":421.2,"p95":2107.5,"max":2107.5,"over50":8},"coachPre":{"n":6,"median":0.8,"p95":3.7,"max":3.7,"over50":0},"coachRec":{"n":28,"median":18.2,"p95":31,"max":35.9,"over50":0},"showHintInner":{"n":14,"median":19.5,"p95":30.2,"max":30.2,"over50":0},"applyAction":{"n":57,"median":2,"p95":6.6,"max":7.4,"over50":0},"gradeDecision":{"n":14,"median":0.1,"p95":4,"max":4,"over50":0},"aiAction(sync)":{"n":43,"median":378.2,"p95":530,"max":594.4,"over50":31},"endStreet":{"n":9,"median":0.2,"p95":2.6,"max":2.6,"over50":0},"coachPost":{"n":22,"median":18.2,"p95":28.3,"max":35.8,"over50":0},"finalSplits":{"n":2,"median":24.3,"p95":24.3,"max":24.3,"over50":0},"showdownMulti":{"n":2,"median":84,"p95":84,"max":84,"over50":2},"buildPots":{"n":2,"median":3.7,"p95":3.7,"max":3.7,"over50":0},"storyLines":{"n":2,"median":2.7,"p95":2.7,"max":2.7,"over50":0},"buildReview":{"n":2,"median":6.6,"p95":6.6,"max":6.6,"over50":0},"recordProgress":{"n":2,"median":0.5,"p95":0.5,"max":0.5,"over50":0},"makeSnap":{"n":4,"median":0,"p95":0.2,"max":0.2,"over50":0},"persistTable":{"n":4,"median":2.5,"p95":5.6,"max":5.6,"over50":0},"saveAfterHand":{"n":2,"median":0.8,"p95":0.8,"max":0.8,"over50":0},"endOfHand":{"n":2,"median":0.1,"p95":0.1,"max":0.1,"over50":0},"playHand":{"n":2,"median":4.5,"p95":4.5,"max":4.5,"over50":0},"pickVariant":{"n":2,"median":0,"p95":0,"max":0,"over50":0}},"longtasks":{"n":97,"median":107,"p95":2109,"max":2509,"over50":94},"attrib":{"(no timed function)":{"n":28,"median":70,"p95":101,"max":134,"over50":26},"oppDist":{"n":1,"median":499,"p95":499,"max":499,"over50":1},"initPlans":{"n":3,"median":71,"p95":78,"max":78,"over50":3},"bettingRound":{"n":8,"median":467,"p95":2109,"max":2109,"over50":8},"showHintInner":{"n":5,"median":63,"p95":75,"max":75,"over50":4},"coachRec":{"n":6,"median":66,"p95":89,"max":89,"over50":6},"aiAction(sync)":{"n":25,"median":421,"p95":582,"max":599,"over50":25},"coachContext":{"n":12,"median":2083,"p95":2509,"max":2509,"over50":12},"coachPost":{"n":5,"median":64,"p95":107,"max":107,"over50":5},"showdownMulti":{"n":2,"median":122,"p95":122,"max":122,"over50":2},"render":{"n":2,"median":100,"p95":100,"max":100,"over50":2}},"errors":0},{"variant":"n7","hands":6,"fn":{"render":{"n":312,"median":2,"p95":12.6,"max":61,"over50":1},"initPlans":{"n":6,"median":3.7,"p95":10,"max":10,"over50":0},"aiAction(sync)":{"n":63,"median":136.3,"p95":297.6,"max":374.6,"over50":38},"bettingRound":{"n":24,"median":191.4,"p95":565.6,"max":671.4,"over50":19},"applyAction":{"n":92,"median":1.8,"p95":6.6,"max":9.1,"over50":0},"coachContext":{"n":29,"median":353.6,"p95":667.4,"max":699,"over50":29},"setupActionUI":{"n":29,"median":2,"p95":2.7,"max":6.7,"over50":0},"humanAction":{"n":29,"median":2,"p95":2.7,"max":8.1,"over50":0},"oppDist":{"n":3,"median":334.6,"p95":3022.2,"max":3022.2,"over50":3},"coachPre":{"n":12,"median":0.7,"p95":3.5,"max":3.5,"over50":0},"coachRec":{"n":58,"median":3,"p95":16,"max":22.5,"over50":0},"showHintInner":{"n":29,"median":4.8,"p95":23.1,"max":24,"over50":0},"gradeDecision":{"n":29,"median":0,"p95":1.1,"max":2.2,"over50":0},"endStreet":{"n":23,"median":0.1,"p95":2.9,"max":3.1,"over50":0},"coachPost":{"n":46,"median":3.8,"p95":15.9,"max":22,"over50":0},"finalSplits":{"n":5,"median":0.1,"p95":3.4,"max":3.4,"over50":0},"showdownMulti":{"n":5,"median":8.3,"p95":61.1,"max":61.1,"over50":1},"buildPots":{"n":5,"median":0.2,"p95":1.1,"max":1.1,"over50":0},"storyLines":{"n":5,"median":0.8,"p95":5.1,"max":5.1,"over50":0},"buildReview":{"n":5,"median":1.5,"p95":8.1,"max":8.1,"over50":0},"recordProgress":{"n":5,"median":1.2,"p95":4.3,"max":4.3,"over50":0},"makeSnap":{"n":10,"median":0,"p95":0.9,"max":0.9,"over50":0},"persistTable":{"n":10,"median":4.4,"p95":16.7,"max":16.7,"over50":0},"saveAfterHand":{"n":5,"median":3.3,"p95":8.5,"max":8.5,"over50":0},"endOfHand":{"n":5,"median":0.1,"p95":1,"max":1,"over50":0},"playHand":{"n":5,"median":2.7,"p95":4.8,"max":4.8,"over50":0},"pickVariant":{"n":5,"median":0,"p95":0.9,"max":0.9,"over50":0}},"longtasks":{"n":127,"median":140,"p95":489,"max":3022,"over50":123},"attrib":{"render":{"n":10,"median":60,"p95":96,"max":96,"over50":9},"coachContext":{"n":20,"median":391,"p95":705,"max":705,"over50":20},"(no timed function)":{"n":44,"median":65,"p95":129,"max":148,"over50":41},"oppDist":{"n":3,"median":334,"p95":3022,"max":3022,"over50":3},"bettingRound":{"n":19,"median":244,"p95":672,"max":672,"over50":19},"aiAction(sync)":{"n":28,"median":218,"p95":312,"max":377,"over50":28},"showHintInner":{"n":1,"median":56,"p95":56,"max":56,"over50":1},"coachRec":{"n":1,"median":58,"p95":58,"max":58,"over50":1},"showdownMulti":{"n":1,"median":86,"p95":86,"max":86,"over50":1}},"errors":0}]

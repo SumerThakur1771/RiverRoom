@@ -1,0 +1,43 @@
+Line numbers are in the wrapped page (legacy line + 0; the wrapper adds no lines before the script).
+INCLUSIVE
+ 15246 ms  (root):0
+  7579 ms  (idle):0
+  4638 ms  (program):0
+   937 ms  (anonymous):3237
+   933 ms  (anonymous):1
+   932 ms  oppDist:1109
+   884 ms  evaluate:284
+   663 ms  querySelectorAll:6615
+   650 ms  _queryEngineAll:6663
+   646 ms  queryAll:6684
+   645 ms  query:4934
+   643 ms  querySelector:6575
+   637 ms  _cached:4900
+   629 ms  (anonymous):4938
+   627 ms  _queryEngine:5096
+   627 ms  _callQuery:5108
+   625 ms  query:5147
+   625 ms  (anonymous):5109
+   615 ms  _querySimple:4995
+   615 ms  _queryCSS:5116
+SELF
+  7579 ms  (idle):0
+  4638 ms  (program):0
+   497 ms  query:5119
+   353 ms  splitsOf:1095
+   186 ms  renderSeat:1557
+   175 ms  (anonymous):1092
+   165 ms  (garbage collector):0
+    96 ms  oppDist:1109
+    87 ms  go:1093
+    84 ms  computeBox:2616
+    82 ms  querySelectorAll:0
+    82 ms  getBoundingClientRect:0
+    67 ms  evaluate:703
+    64 ms  (anonymous):1
+    62 ms  pct:1685
+    61 ms  tpScore:1053
+    47 ms  showReview:3435
+    44 ms  equityVs:854
+    43 ms  init:1236
+    40 ms  sortedPct:1076

@@ -1,0 +1,48 @@
+=== run 1
+Exhaustive 5-card enumeration
+  Straight flush         40  expected       40  OK
+  Four of a kind        624  expected      624  OK
+  Full house           3744  expected     3744  OK
+  Flush                5108  expected     5108  OK
+  Straight            10200  expected    10200  OK
+  Three of a kind     54912  expected    54912  OK
+  Two pair           123552  expected   123552  OK
+  One pair          1098240  expected  1098240  OK
+  High card         1302540  expected  1302540  OK
+  distinct hand values: 7462  expected 7462  OK
+  total hands: 2598960  time: 1134 ms  => 2,291,606 hands/sec
+Random 7-card hands (seed 12345)
+  hands: 1,000,000  time: 523 ms  => 1,911,342 hands/sec  (sink 104061)
+RESULT: all category counts match
+=== run 2
+Exhaustive 5-card enumeration
+  Straight flush         40  expected       40  OK
+  Four of a kind        624  expected      624  OK
+  Full house           3744  expected     3744  OK
+  Flush                5108  expected     5108  OK
+  Straight            10200  expected    10200  OK
+  Three of a kind     54912  expected    54912  OK
+  Two pair           123552  expected   123552  OK
+  One pair          1098240  expected  1098240  OK
+  High card         1302540  expected  1302540  OK
+  distinct hand values: 7462  expected 7462  OK
+  total hands: 2598960  time: 1204 ms  => 2,157,809 hands/sec
+Random 7-card hands (seed 12345)
+  hands: 1,000,000  time: 617 ms  => 1,621,677 hands/sec  (sink 104061)
+RESULT: all category counts match
+=== run 3
+Exhaustive 5-card enumeration
+  Straight flush         40  expected       40  OK
+  Four of a kind        624  expected      624  OK
+  Full house           3744  expected     3744  OK
+  Flush                5108  expected     5108  OK
+  Straight            10200  expected    10200  OK
+  Three of a kind     54912  expected    54912  OK
+  Two pair           123552  expected   123552  OK
+  One pair          1098240  expected  1098240  OK
+  High card         1302540  expected  1302540  OK
+  distinct hand values: 7462  expected 7462  OK
+  total hands: 2598960  time: 1208 ms  => 2,151,208 hands/sec
+Random 7-card hands (seed 12345)
+  hands: 1,000,000  time: 514 ms  => 1,944,327 hands/sec  (sink 104061)
+RESULT: all category counts match
