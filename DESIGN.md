@@ -67,11 +67,27 @@ decision of hand 12). Each segment gets its own generator (mulberry32) seeded by
 - A computation can move between threads, or to later in time, and still draw exactly the
   same numbers. The Web Worker relies on this (section 7).
 
-In live play the seed is null and every segment uses the browser's crypto RNG.
+In live play the seed is null. The deck comes straight from the crypto RNG, and every other
+segment uses a fast generator seeded from crypto.
 
-**Deck shuffle.** Fisher-Yates over 32-bit values with `% (i + 1)`, as in the original.
-The modulo bias is at most about 1.2e-8 per draw. A real-money server should use
-rejection sampling.
+**Deck shuffle.**
+- *Live play* is exactly uniform: Fisher-Yates, where each position's swap index comes from
+  `uniformInt(i + 1)`. That function uses rejection sampling on 32-bit crypto values, so
+  every one of the 52! deck orders is equally likely.
+  - Taking `x % n` alone is biased whenever n does not divide 2^32: the first `2^32 % n`
+    results get one extra input each.
+  - `uniformInt` discards the top `2^32 % n` inputs and draws again. At n = 52 that is 48
+    of 2^32 values, so a redraw happens with probability 1.1e-8.
+  - The old method was biased for 46 of the 51 sizes from 2 to 52, by up to 1.2e-8
+    relative (n = 52).
+- *Seeded play* keeps the original `% (i + 1)` shuffle, so recorded sessions and the 272
+  golden hands still replay card for card.
+- `test/shuffle.test.ts` checks this.
+  - Exhaustive on an 8-bit source: for every n up to 52, each result gets the same number
+    of inputs, and exactly `range % n` inputs are rejected. Putting plain `% n` back fails
+    these tests.
+  - Chi-square tests on 208,000 crypto draws, and on the top and bottom card of 52,000 live
+    shuffles. The threshold is set so a correct shuffle fails about once in a million runs.
 
 ## 4. Hand evaluation (`src/engine/cards.ts`, `src/engine/teenpatti.ts`)
 

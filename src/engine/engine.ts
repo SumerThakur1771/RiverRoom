@@ -7,7 +7,7 @@
 // No DOM, no timers: the same code runs in the browser, in Node and in a Web Worker.
 import { drawInfo, equityKnown, madeInfo } from '../ai/equity';
 import { partName, partScore } from '../ai/split';
-import { bestFive, cardTxt, catOf, cr, describe, evaluate, holeName, kAt, PNAME, RNAME, shuffled, type Card } from './cards';
+import { bestFive, cardTxt, catOf, cr, describe, evaluate, holeName, kAt, PNAME, RNAME, shuffled, shuffledUniform, type Card } from './cards';
 import { HOME_FRIENDS, jitter, NAMES, TYPES, type Friend } from './personas';
 import { updateRange } from './reads';
 import { Streams } from './rng';
@@ -571,7 +571,8 @@ export function* playHand(g: Game): Generator<Step, HandSummary, unknown> {
     g.button = g.button < 0 ? alive[Math.floor(rs.rand() * alive.length)]!.i : nextAlive(g, g.button);
     g.sbIdx = alive.length === 2 ? g.button : nextAlive(g, g.button);
     g.bbIdx = nextAlive(g, g.sbIdx);
-    g.deck = g.nextDeck ? g.nextDeck.slice() : rs.seg('h' + g.handNo + ':deck', () => shuffled(rs.rand));
+    // live play: exactly uniform crypto shuffle; seeded play: the original shuffle, for replay
+    g.deck = g.nextDeck ? g.nextDeck.slice() : rs.seg('h' + g.handNo + ':deck', () => rs.deckInt ? shuffledUniform(rs.deckInt) : shuffled(rs.rand));
     g.nextDeck = null;
   });
   const hero = heroP(g);

@@ -6,11 +6,12 @@ the freeze fix) are in [ANALYSIS.md](ANALYSIS.md#8-technical-interviewer-questio
 
 ## 1. How do you guarantee a player never sees another player's hole cards?
 
-- **Only the server has the deck.** It shuffles and deals with the platform CSPRNG
+- **Only the server has the deck.** It shuffles with Fisher-Yates and the platform CSPRNG
   (`crypto.getRandomValues`).
-  - Each draw scales a 32-bit value to the deck size, so the bias is below 52 / 2³² per
-    draw.
-  - Rejection sampling would remove even that. It is a known, documented gap.
+  - Each swap index comes from rejection sampling (`uniformInt` in `src/engine/rng.ts`), so
+    every deck order is exactly equally likely, not just close.
+  - Plain `x % n` would favour some cards by about 1 in 10⁸; the test suite shows that
+    bias and fails if it comes back.
 - **Each player gets their own view.** After every engine step, `buildView` in
   `server/src/view.ts` builds one view per seat. A seat's cards go into a view only if
   `canSee(p, viewer)`: it is the viewer's own seat, or the cards were turned face up and not

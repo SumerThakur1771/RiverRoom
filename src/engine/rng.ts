@@ -51,9 +51,18 @@ export class Streams {
   constructor(
     readonly seed: string | null,
     private readonly entropy: Rng = cryptoRandom,
+    entropy32: () => number = cryptoUint32,
   ) {
     this.cur = seed === null ? mulberry32(u32(entropy)) : mulberry32(hash32('ui'));
+    this.deckInt = seed === null ? n => uniformInt(n, entropy32) : null;
   }
+
+  /**
+   * Live play only (no seed): an exactly uniform integer in [0, n) from the crypto RNG, by
+   * rejection sampling. Seeded games keep the original `% (i + 1)` shuffle, so recorded
+   * sessions still replay card for card.
+   */
+  readonly deckInt: ((n: number) => number) | null;
 
   /** The current stream. Pass this to helpers that need randomness. */
   readonly rand: Rng = () => this.cur();
@@ -83,6 +92,30 @@ export class Streams {
   /** Deterministic integer for a label without consuming any stream (used by scripted players). */
   hashOf(label: string): number {
     return hash32((this.seed ?? 'live') + '|' + label);
+  }
+}
+
+/** A uniform 32-bit unsigned integer from the platform CSPRNG. */
+export function cryptoUint32(): number {
+  const b = new Uint32Array(1);
+  globalThis.crypto.getRandomValues(b);
+  return b[0] as number;
+}
+
+/**
+ * An exactly uniform integer in [0, n), from a source of uniform integers in [0, range).
+ *
+ * `x % n` alone is biased whenever n does not divide `range`: the first `range % n` results
+ * get one extra input each. Rejection sampling throws away the top `range % n` inputs, so
+ * every result has exactly `floor(range / n)` inputs. For a deck (n <= 52, range 2^32) a draw
+ * is rejected with probability below 52 / 2^32, so it almost never loops.
+ */
+export function uniformInt(n: number, next: () => number, range = 4294967296): number {
+  if (!Number.isInteger(n) || n < 1 || n > range) throw new RangeError(`uniformInt: bad n ${n}`);
+  const limit = range - (range % n); // largest multiple of n that is <= range
+  for (;;) {
+    const x = next();
+    if (x < limit) return x % n;
   }
 }
 

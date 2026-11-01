@@ -1,0 +1,16 @@
+# node tools/measure/shuffle-bias.mjs; npx vitest run test/shuffle.test.ts --reporter=verbose (2026-11-01, Node v22.22.0)
+old method: biased for 46 of 51 step sizes; worst relative bias 1.211e-8 at n = 52
+n = 52: 48 results get 82595525 inputs, the other 4 get 82595524
+new method: rejects 48 of 2^32 inputs at n = 52 (probability 1.118e-8 per draw); every result gets 82595524 inputs
+ ✓ test/shuffle.test.ts > uniformInt (rejection sampling) > maps the accepted inputs onto every result equally often, for every n up to 52 (exhaustive, 8-bit source) 10ms
+ ✓ test/shuffle.test.ts > uniformInt (rejection sampling) > rejects exactly the top range % n inputs and draws again 3ms
+ ✓ test/shuffle.test.ts > uniformInt (rejection sampling) > with a 32-bit source every deck size has an exact multiple of n accepted inputs 1ms
+ ✓ test/shuffle.test.ts > uniformInt (rejection sampling) > the old `% n` method is biased (why this change): with an 8-bit source and n = 52, 48 results get 5 inputs and 4 get 4 1ms
+ ✓ test/shuffle.test.ts > uniformInt (rejection sampling) > rejects bad n 1ms
+ ✓ test/shuffle.test.ts > uniformInt (rejection sampling) > crypto draws are uniform over 52 values (chi-square, 208,000 draws) 496ms
+ ✓ test/shuffle.test.ts > live deck shuffle > live play uses the uniform shuffle; seeded play keeps the original one 0ms
+ ✓ test/shuffle.test.ts > live deck shuffle > Fisher-Yates asks for one uniform integer per position, from 52 down to 2, and returns a permutation 1ms
+ ✓ test/shuffle.test.ts > live deck shuffle > the live deck draws only from the crypto source, through rejection sampling 1ms
+ ✓ test/shuffle.test.ts > live deck shuffle > every card is equally likely in the top position (chi-square, 52,000 live shuffles) 6044ms
+ ✓ test/shuffle.test.ts > live deck shuffle > seeded decks are reproducible: the same seed deals the same deck 1ms
+      Tests  11 passed (11)

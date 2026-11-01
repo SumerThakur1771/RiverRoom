@@ -155,6 +155,21 @@ export function shuffled(rand: Rng): Card[] {
   return d;
 }
 
+/**
+ * Fisher-Yates shuffle of a fresh deck with an exactly uniform integer source (live play:
+ * crypto with rejection sampling), so every one of the 52! orders is equally likely.
+ */
+export function shuffledUniform(int: (n: number) => number): Card[] {
+  const d = Array.from({ length: 52 }, (_, i) => i);
+  for (let i = 51; i > 0; i--) {
+    const j = int(i + 1);
+    const t = d[i]!;
+    d[i] = d[j]!;
+    d[j] = t;
+  }
+  return d;
+}
+
 /** n distinct random cards avoiding `dead`. */
 export function randCards(rand: Rng, n: number, dead?: Set<Card>): Card[] {
   const out: Card[] = [];

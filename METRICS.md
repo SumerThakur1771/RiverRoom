@@ -374,6 +374,21 @@ On a phone-sized page:
 - With the network cut, the page reloads and plays to hand #3 in 60 s, with 0 page errors.
 - The multiplayer page also opens offline (it needs the network to play).
 
+## Deck shuffle: exact uniformity (live play)
+
+Commands: `node tools/measure/shuffle-bias.mjs` (exact arithmetic) and
+`npx vitest run test/shuffle.test.ts --reporter=verbose`. Output:
+[`results/2026-11-01-shuffle.txt`](tools/measure/results/2026-11-01-shuffle.txt).
+
+| | Old: `x % n` on 32-bit crypto values | New: rejection sampling |
+|---|---|---|
+| Step sizes (2..52) with any bias | 46 of 51 | 0 |
+| n = 52 | 48 results get 82,595,525 inputs, 4 get 82,595,524 (relative bias 1.211e-8) | every result gets 82,595,524 inputs; 48 of 2^32 inputs are redrawn (probability 1.118e-8) |
+| Exhaustive check on an 8-bit source, every n up to 52 | fails (2 tests fail when `% n` is put back) | passes |
+| Chi-square, 208,000 draws of 0..51; top and bottom card of 52,000 live shuffles | | below the 1-in-a-million threshold (114.5 at 51 degrees of freedom) |
+
+Seeded play keeps the original shuffle; the 272-hand golden replay still passes unchanged.
+
 ## Not measured yet
 
 - Vercel Web Analytics numbers (needs the toggle in Vercel, then real visitors).
