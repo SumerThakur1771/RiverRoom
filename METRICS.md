@@ -264,14 +264,86 @@ intervals are in the output file. How to read them:
 
 ## AI hand review eval
 
-Commands: `npx tsx tools/review/eval.ts --mock` and `--mock-lazy` (mock models, no network);
-`--live https://sumer-riverroom.vercel.app/api/review` for the real model.
+Commands:
+- mocks, no network: `npx tsx tools/review/eval.ts --mock`, `--mock-lazy` and `--mock-chain`;
+- live: the "AI review eval (live)" workflow, which runs
+  `npx tsx tools/review/eval.ts --live https://sumer-riverroom.vercel.app/api/review [--model <id>]`.
+
+The 20-hand eval set has 10 hands where the app's coach found a mistake and 10 played well.
+The score is the mean of four checks:
+- the answer is schema-valid;
+- the grade is within one step of the coach's;
+- a mistake is reported if and only if the coach found one;
+- the mistake's street is named.
+
+The reference is the app's own coach, so the score measures agreement with it, not poker
+truth.
+
+### Mock models (pipeline checks, in CI)
 
 | Run | Score | What it shows |
 |---|---|---|
-| Perfect mock (answers built from the reference) | 100.0% (20/20 valid, 20/20 grade, 20/20 mistake, 10/10 street) | The scoring pipeline works end to end |
+| Perfect mock | 100.0% (20/20 valid, 20/20 grade, 20/20 mistake, 10/10 street) | The scoring pipeline works end to end |
 | Lazy mock ("good, no mistake" every time) | 57.1% (20/20 valid, 10/20 grade, 10/20 mistake, 0/10 street) | The scorer separates good answers from bad ones |
-| Real model (Claude Haiku 5.5) | **not measured yet**: waiting for `ANTHROPIC_API_KEY` in Vercel | |
+| Mock chain (free models fail on some hands) | 100.0%; answered by free 15, paid 5 | The chain falls through to the next model on a rate limit or invalid output |
+
+### Live: OpenRouter, deployed endpoint, 2026-11-01
+
+Outputs (each line per hand, plus which models were tried and how each attempt ended):
+[run 1](tools/measure/results/2026-11-01-review-eval-live-run1.txt) and
+[run 2](tools/measure/results/2026-11-01-review-eval-live-run2.txt).
+
+**The chain as shipped (run 2, after the Nemotron fix):** Gemma 4 26B (free) > Nemotron 3.5
+Super (free) > Gemini 2.5 Flash Lite (paid).
+
+| | Value |
+|---|---|
+| Score | **87.1%** (20/20 valid, 16/20 grade, 16/20 mistake, 9/10 street) |
+| Who answered | **free 20, paid 0, built-in fallback 0** (all by Nemotron) |
+| Paid-model calls | 0 |
+| Response time, full request | median 5,139 ms, max 14,711 ms |
+
+Latency per model, from each attempt as the server timed it:
+
+| Model | Run | Attempts | Outcome | Valid answers: median / max |
+|---|---|---|---|---|
+| `google/gemma-4-26b-a4b-it:free` | 2, chain | 20 | 429 from the provider on all 20 | (none) |
+| `nvidia/nemotron-3.5-super-vl:free` | 2, chain | 20 | 20 valid | 4,734 ms / 14,342 ms |
+| `nvidia/nemotron-3.5-super-vl:free` | 2, alone | 20 | 20 valid (score 80.0%) | 4,644 ms / 7,259 ms |
+| `google/gemma-4-31b-it:free` | 2, alone | 20 | 429 from the provider on all 20 (score 0%) | (none) |
+| `google/gemini-2.5-flash-lite` (paid) | 1, chain | 20 | 16 valid, 4 rate-limited | 678 ms / 1,309 ms |
+
+**What the runs showed, and what changed.**
+- *Run 1* (before the fix): Gemma 26B and Gemma 31B were rate-limited on every request (429
+  "Provider returned error"). Nemotron, on the same OpenRouter account, was not, so the
+  limit was Google's free Gemma capacity, not the account.
+  - Nemotron was cut off on all 20 hands: its thinking used up the 500-token limit.
+  - So the paid model answered 16 hands and the built-in review covered 4. Score 71.4%,
+    median response 3,746 ms.
+- *Fix:* reasoning models get an 800-token thinking budget on top of the 500 for the answer.
+  It is free, because only free models reason in this chain.
+- *Run 2:* every hand was answered for free.
+- *Second free model:* Nemotron (another provider) beat Gemma 4 31B, which could not answer
+  at all, so Nemotron stays second.
+- *Same model, two scores:* Nemotron scored 80.0% alone and 87.1% in the chain, on the same
+  20 hands. These are sampled answers (temperature 0.2), so a single 20-hand run moves by
+  several points.
+
+**Not measured here:** the cost of the paid calls in run 1 (16 calls). OpenRouter reports the
+cost per call in the function logs, which this environment cannot read.
+
+### Prompt size
+
+Command: `npx tsx tools/review/prompt-size.ts` (the "before" number used the same method on
+the previous prompt code). Output:
+[`results/2026-11-01-review-prompt-size.txt`](tools/measure/results/2026-11-01-review-prompt-size.txt).
+
+| | Characters sent per review (system + user), 20 eval hands |
+|---|---|
+| Before (Anthropic version) | mean 2,833 (min 2,278, max 3,947); system prompt 988 |
+| After (compact prompt) | mean 1,683 (min 1,233, max 2,699); system prompt 486; 40.6% fewer |
+
+Tokens depend on each model's tokenizer and are not converted here.
 
 ## Tests with Postgres (current suite)
 
@@ -350,7 +422,7 @@ after each production deploy, on a GitHub-hosted runner. Each score is also post
 | `/mp.html` | 100, 100, 100 | 100, 100, 100 | 96, 96, 96 | 100, 100, 100 |
 
 Best practices 96 on `/mp.html` has the same cause as locally. The live page has no
-multiplayer server to connect to yet (Railway is not set up), so it logs a connection error.
+multiplayer server to connect to yet (the Render service is not set up), so it logs a connection error.
 
 ## Accessibility of in-game screens (axe-core)
 

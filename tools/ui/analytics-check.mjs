@@ -4,17 +4,20 @@
 import { chromium } from 'playwright';
 
 const SITE = (process.argv[2] || 'https://sumer-riverroom.vercel.app').replace(/\/$/, '');
-const browser = await chromium.launch();
+// The analytics script ignores automated browsers (navigator.webdriver), so this check
+// presents itself as a normal browser to see what a real visitor's page sends.
+const browser = await chromium.launch({ args: ['--disable-blink-features=AutomationControlled'] });
 const results = [];
 for (const path of ['/?seed=analytics-check', '/mp.html?code=ABCDEF']) {
   const page = await browser.newPage();
+  await page.addInitScript(() => Object.defineProperty(navigator, 'webdriver', { get: () => false }));
   const seen = [];
   page.on('response', async r => {
     if (!r.url().includes('/_vercel/insights/')) return;
     seen.push({ url: r.url().replace(SITE, ''), status: r.status(), body: r.request().postData() ?? '' });
   });
   await page.goto(SITE + path, { waitUntil: 'load' });
-  await page.waitForTimeout(5000);
+  await page.waitForTimeout(8000);
   const script = seen.find(s => s.url.includes('script.js'));
   const views = seen.filter(s => s.url.includes('/view'));
   const leaked = views.some(v => v.body.includes('?') || v.body.includes('ABCDEF') || v.body.includes('analytics-check'));

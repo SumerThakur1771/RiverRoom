@@ -90,6 +90,15 @@ npm run db:migrate   # apply migrations (skipped when DATABASE_URL is unset)
 npm run server:dev
 ```
 
+## Deploy it (free tiers)
+
+- **Web app and AI review:** Vercel. Set `OPENROUTER_API_KEY` (server only) and
+  `VITE_MP_SERVER_URL` (the game server's URL).
+- **Game server:** a Render free web service from `render.yaml` (Blueprint). It sleeps
+  when idle; the page says "waking up the server" for the first minute.
+- **Database:** Neon free Postgres. On Render, set `DATABASE_URL` to Neon's pooled
+  connection string and `DIRECT_DATABASE_URL` to the direct one (used for migrations).
+
 ## Test it
 
 ```bash

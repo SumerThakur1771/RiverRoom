@@ -57,6 +57,8 @@ proof. Nothing here is an estimate. Dates are when the measurement was taken.
 | Storage: the settlement read from Postgres matches the in-memory ledger; a leaver's stored cash-out equals buy-ins plus stored hand results; tokens are stored only as SHA-256 hashes | [test/store.test.ts](test/store.test.ts), [METRICS.md](METRICS.md#tests-with-postgres-current-suite) |
 | Settlement uses the fewest possible payments: equal to a brute-force minimum on 400 random cases; exact for up to 16 people in 10.65 ms mean (20.7 ms worst) | [test/settle.test.ts](test/settle.test.ts), [METRICS.md](METRICS.md#settlement-fewest-payments) |
 | AI review scoring pipeline: a perfect mock scores 100%, an "always fine" mock 57.1%, on the 20-hand eval set | [METRICS.md](METRICS.md#ai-hand-review-eval) |
+| Live AI review eval (deployed endpoint, real models): 87.1% agreement with the app's coach on 20 hands, every hand answered by a free model (0 paid calls, 0 fallbacks), median response 5.1 s | [tools/measure/results/2026-11-01-review-eval-live-run2.txt](tools/measure/results/2026-11-01-review-eval-live-run2.txt), [METRICS.md](METRICS.md#live-openrouter-deployed-endpoint-2026-11-01) |
+| Found with the live eval and fixed: one free model was cut off on all 20 hands (its thinking used the whole 500-token budget). A separate thinking budget took it from 0 to 20 valid answers, and the free share from 0/20 to 20/20 | [run 1](tools/measure/results/2026-11-01-review-eval-live-run1.txt), [run 2](tools/measure/results/2026-11-01-review-eval-live-run2.txt) |
 
 ## Installable and accessible (measured, 2026-10-31)
 
@@ -80,8 +82,9 @@ proof. Nothing here is an estimate. Dates are when the measurement was taken.
 ## Not claimed
 
 - No user numbers yet.
-- No real-model score for the AI review yet (waiting for the API key in Vercel).
-- Multiplayer and storage are built and tested, but not yet deployed (waiting for the Railway
-  service).
+- No cost figure for the AI review's paid calls (OpenRouter reports it in the function logs,
+  which were not read here).
+- Multiplayer and storage are built and tested, but not yet deployed. The setup is ready
+  for Render (free web service) and Neon (free Postgres), and waits on those accounts.
 - No real-device phone measurements.
 - No analytics numbers yet: Vercel Web Analytics is wired in, and needs its toggle in Vercel plus real visitors.

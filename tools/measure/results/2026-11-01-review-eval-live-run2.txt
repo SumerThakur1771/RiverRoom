@@ -1,0 +1,91 @@
+# Live review eval, run 2: https://github.com/SumerThakur1771/RiverRoom/actions/runs/41347707947 (commit 4b6cc63, 2026-11-01)
+# Single-model runs (Nemotron, Gemma 4 31B), then the full chain: Gemma 4 26B (free) > Nemotron 3.5 Super (free) > Gemini 2.5 Flash Lite (paid).
+# Command (per job): npx tsx tools/review/eval.ts --live https://sumer-riverroom.vercel.app/api/review [--model <id>]
+# Nemotron now has an 800-token thinking budget on top of max_tokens 500.
+=== Only google/gemma-4-31b-it:free (success)
+home-std-m1      expected blunder  got -        valid=false grade±1=false mistake=false street=false 362ms fallback: rate_limited (gemma-4-31b-it:free: HTTP 429: Provider returned error) 
+home-std-m2      expected blunder  got -        valid=false grade±1=false mistake=false street=false 437ms fallback: rate_limited (gemma-4-31b-it:free: HTTP 429: Provider returned error) 
+home-std-c1      expected good     got -        valid=false grade±1=false mistake=false street=n/a 366ms fallback: rate_limited (gemma-4-31b-it:free: HTTP 429: Provider returned error) 
+home-std-c2      expected good     got -        valid=false grade±1=false mistake=false street=n/a 348ms fallback: rate_limited (gemma-4-31b-it:free: HTTP 429: Provider returned error) 
+home-two-m1      expected mistake  got -        valid=false grade±1=false mistake=false street=false 320ms fallback: rate_limited (gemma-4-31b-it:free: HTTP 429: Provider returned error) 
+home-two-c1      expected good     got -        valid=false grade±1=false mistake=false street=n/a 322ms fallback: rate_limited (gemma-4-31b-it:free: HTTP 429: Provider returned error) 
+
+home-holdem-c4   expected good     got -        valid=false grade±1=false mistake=false street=n/a 429ms fallback: rate_limited (gemma-4-31b-it:free: HTTP 429: Provider returned error) 
+tourney-m1       expected mistake  got -        valid=false grade±1=false mistake=false street=false 341ms fallback: rate_limited (gemma-4-31b-it:free: HTTP 429: Provider returned error) 
+tourney-m2       expected mistake  got -        valid=false grade±1=false mistake=false street=false 335ms fallback: rate_limited (gemma-4-31b-it:free: HTTP 429: Provider returned error) 
+tourney-m3       expected mistake  got -        valid=false grade±1=false mistake=false street=false 348ms fallback: rate_limited (gemma-4-31b-it:free: HTTP 429: Provider returned error) 
+tourney-c1       expected good     got -        valid=false grade±1=false mistake=false street=n/a 391ms fallback: rate_limited (gemma-4-31b-it:free: HTTP 429: Provider returned error) 
+tourney-c2       expected good     got -        valid=false grade±1=false mistake=false street=n/a 383ms fallback: rate_limited (gemma-4-31b-it:free: HTTP 429: Provider returned error) 
+tourney-c3       expected good     got -        valid=false grade±1=false mistake=false street=n/a 377ms fallback: rate_limited (gemma-4-31b-it:free: HTTP 429: Provider returned error)
+home-holdem-m1   expected mistake  got -        valid=false grade±1=false mistake=false street=false 592ms fallback: rate_limited (gemma-4-31b-it:free: HTTP 429: Provider returned error) 
+home-holdem-m2   expected mistake  got -        valid=false grade±1=false mistake=false street=false 423ms fallback: rate_limited (gemma-4-31b-it:free: HTTP 429: Provider returned error) 
+home-holdem-m3   expected mistake  got -        valid=false grade±1=false mistake=false street=false 324ms fallback: rate_limited (gemma-4-31b-it:free: HTTP 429: Provider returned error) 
+home-holdem-m4   expected blunder  got -        valid=false grade±1=false mistake=false street=false 650ms fallback: rate_limited (gemma-4-31b-it:free: HTTP 429: Provider returned error) 
+home-holdem-c1   expected good     got -        valid=false grade±1=false mistake=false street=n/a 460ms fallback: rate_limited (gemma-4-31b-it:free: HTTP 429: Provider returned error) 
+home-holdem-c2   expected good     got -        valid=false grade±1=false mistake=false street=n/a 384ms fallback: rate_limited (gemma-4-31b-it:free: HTTP 429: Provider returned error) 
+home-holdem-c3   expected good     got -        valid=false grade±1=false mistake=false street=n/a 359ms fallback: rate_limited (gemma-4-31b-it:free: HTTP 429: Provider returned error)
+model google/gemma-4-31b-it:free: 20 attempts (rate_limited 20)
+response time (full stream) median 377 ms, max 650 ms
+answered by: free models 0, paid model 0, built-in fallback 20; no model
+overall score (mean of all applicable checks): 0.0%
+schema-valid 0/20 · grade within one step 0/20 · mistake flagged iff the coach found one 0/20 · street named 0/10
+=== Only nvidia/nemotron-3.5-super-vl:free (success)
+home-std-m1      expected blunder  got blunder  valid=true grade±1=true mistake=true street=true 4763ms by nvidia/nemotron-3.5-super-vl:free (free) 
+home-std-m2      expected blunder  got blunder  valid=true grade±1=true mistake=true street=true 6348ms by nvidia/nemotron-3.5-super-vl:free (free) 
+home-std-c1      expected good     got blunder  valid=true grade±1=false mistake=false street=n/a 6424ms by nvidia/nemotron-3.5-super-vl:free (free) 
+home-std-c2      expected good     got blunder  valid=true grade±1=false mistake=false street=n/a 5379ms by nvidia/nemotron-3.5-super-vl:free (free) 
+home-two-m1      expected mistake  got good     valid=true grade±1=false mistake=false street=false 5293ms by nvidia/nemotron-3.5-super-vl:free (free) 
+home-two-c1      expected good     got blunder  valid=true grade±1=false mistake=false street=n/a 4838ms by nvidia/nemotron-3.5-super-vl:free (free) 
+
+home-holdem-c4   expected good     got fine     valid=true grade±1=true mistake=true street=n/a 4406ms by nvidia/nemotron-3.5-super-vl:free (free) 
+tourney-m1       expected mistake  got mistake  valid=true grade±1=true mistake=true street=true 3758ms by nvidia/nemotron-3.5-super-vl:free (free) 
+tourney-m2       expected mistake  got mistake  valid=true grade±1=true mistake=true street=true 4983ms by nvidia/nemotron-3.5-super-vl:free (free) 
+tourney-m3       expected mistake  got mistake  valid=true grade±1=true mistake=true street=true 4161ms by nvidia/nemotron-3.5-super-vl:free (free) 
+tourney-c1       expected good     got mistake  valid=true grade±1=false mistake=false street=n/a 3915ms by nvidia/nemotron-3.5-super-vl:free (free) 
+tourney-c2       expected good     got fine     valid=true grade±1=true mistake=true street=n/a 3882ms by nvidia/nemotron-3.5-super-vl:free (free) 
+tourney-c3       expected good     got blunder  valid=true grade±1=false mistake=false street=n/a 6995ms by nvidia/nemotron-3.5-super-vl:free (free)
+home-holdem-m1   expected mistake  got mistake  valid=true grade±1=true mistake=true street=true 7880ms by nvidia/nemotron-3.5-super-vl:free (free) 
+home-holdem-m2   expected mistake  got blunder  valid=true grade±1=true mistake=true street=false 4339ms by nvidia/nemotron-3.5-super-vl:free (free) 
+home-holdem-m3   expected mistake  got blunder  valid=true grade±1=true mistake=true street=true 4964ms by nvidia/nemotron-3.5-super-vl:free (free) 
+home-holdem-m4   expected blunder  got blunder  valid=true grade±1=true mistake=true street=true 4048ms by nvidia/nemotron-3.5-super-vl:free (free) 
+home-holdem-c1   expected good     got fine     valid=true grade±1=true mistake=true street=n/a 5678ms by nvidia/nemotron-3.5-super-vl:free (free) 
+home-holdem-c2   expected good     got good     valid=true grade±1=true mistake=true street=n/a 5517ms by nvidia/nemotron-3.5-super-vl:free (free) 
+home-holdem-c3   expected good     got good     valid=true grade±1=true mistake=true street=n/a 4176ms by nvidia/nemotron-3.5-super-vl:free (free)
+model nvidia/nemotron-3.5-super-vl:free: 20 attempts (ok 20); valid answers in median 4644 ms, max 7259 ms
+response time (full stream) median 4964 ms, max 7880 ms
+answered by: free models 20, paid model 0, built-in fallback 0; nvidia/nemotron-3.5-super-vl:free 20
+overall score (mean of all applicable checks): 80.0%
+schema-valid 20/20 · grade within one step 14/20 · mistake flagged iff the coach found one 14/20 · street named 8/10
+=== Full chain (free first, paid last) (success)
+home-std-m1      expected blunder  got blunder  valid=true grade±1=true mistake=true street=true 5144ms by nvidia/nemotron-3.5-super-vl:free (free) (gemma-4-26b-a4b-it:free: HTTP 429: Provider returned error) [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:ok] 
+home-std-m2      expected blunder  got blunder  valid=true grade±1=true mistake=true street=true 5107ms by nvidia/nemotron-3.5-super-vl:free (free) (gemma-4-26b-a4b-it:free: HTTP 429: Provider returned error) [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:ok] 
+home-std-c1      expected good     got blunder  valid=true grade±1=false mistake=false street=n/a 4923ms by nvidia/nemotron-3.5-super-vl:free (free) (gemma-4-26b-a4b-it:free: HTTP 429: Provider returned error) [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:ok] 
+home-std-c2      expected good     got mistake  valid=true grade±1=false mistake=false street=n/a 5307ms by nvidia/nemotron-3.5-super-vl:free (free) (gemma-4-26b-a4b-it:free: HTTP 429: Provider returned error) [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:ok] 
+home-two-m1      expected mistake  got mistake  valid=true grade±1=true mistake=true street=true 7598ms by nvidia/nemotron-3.5-super-vl:free (free) (gemma-4-26b-a4b-it:free: HTTP 429: Provider returned error) [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:ok] 
+home-two-c1      expected good     got blunder  valid=true grade±1=false mistake=false street=n/a 5377ms by nvidia/nemotron-3.5-super-vl:free (free) (gemma-4-26b-a4b-it:free: HTTP 429: Provider returned error) [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:ok] 
+
+home-holdem-c4   expected good     got good     valid=true grade±1=true mistake=true street=n/a 4821ms by nvidia/nemotron-3.5-super-vl:free (free) (gemma-4-26b-a4b-it:free: HTTP 429: Provider returned error) [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:ok] 
+tourney-m1       expected mistake  got mistake  valid=true grade±1=true mistake=true street=true 5139ms by nvidia/nemotron-3.5-super-vl:free (free) (gemma-4-26b-a4b-it:free: HTTP 429: Provider returned error) [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:ok] 
+tourney-m2       expected mistake  got mistake  valid=true grade±1=true mistake=true street=true 5102ms by nvidia/nemotron-3.5-super-vl:free (free) (gemma-4-26b-a4b-it:free: HTTP 429: Provider returned error) [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:ok] 
+tourney-m3       expected mistake  got mistake  valid=true grade±1=true mistake=true street=true 5079ms by nvidia/nemotron-3.5-super-vl:free (free) (gemma-4-26b-a4b-it:free: HTTP 429: Provider returned error) [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:ok] 
+tourney-c1       expected good     got fine     valid=true grade±1=true mistake=true street=n/a 4680ms by nvidia/nemotron-3.5-super-vl:free (free) (gemma-4-26b-a4b-it:free: HTTP 429: Provider returned error) [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:ok] 
+tourney-c2       expected good     got good     valid=true grade±1=true mistake=true street=n/a 6751ms by nvidia/nemotron-3.5-super-vl:free (free) (gemma-4-26b-a4b-it:free: HTTP 429: Provider returned error) [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:ok] 
+tourney-c3       expected good     got blunder  valid=true grade±1=false mistake=false street=n/a 5459ms by nvidia/nemotron-3.5-super-vl:free (free) (gemma-4-26b-a4b-it:free: HTTP 429: Provider returned error) [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:ok]
+home-holdem-m1   expected mistake  got mistake  valid=true grade±1=true mistake=true street=true 5928ms by nvidia/nemotron-3.5-super-vl:free (free) (gemma-4-26b-a4b-it:free: HTTP 429: Provider returned error) [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:ok] 
+home-holdem-m2   expected mistake  got blunder  valid=true grade±1=true mistake=true street=false 7189ms by nvidia/nemotron-3.5-super-vl:free (free) (gemma-4-26b-a4b-it:free: HTTP 429: Provider returned error) [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:ok] 
+home-holdem-m3   expected mistake  got mistake  valid=true grade±1=true mistake=true street=true 4571ms by nvidia/nemotron-3.5-super-vl:free (free) (gemma-4-26b-a4b-it:free: HTTP 429: Provider returned error) [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:ok] 
+home-holdem-m4   expected blunder  got blunder  valid=true grade±1=true mistake=true street=true 4592ms by nvidia/nemotron-3.5-super-vl:free (free) (gemma-4-26b-a4b-it:free: HTTP 429: Provider returned error) [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:ok] 
+home-holdem-c1   expected good     got good     valid=true grade±1=true mistake=true street=n/a 14711ms by nvidia/nemotron-3.5-super-vl:free (free) (gemma-4-26b-a4b-it:free: HTTP 429: Provider returned error) [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:ok] 
+home-holdem-c2   expected good     got good     valid=true grade±1=true mistake=true street=n/a 4327ms by nvidia/nemotron-3.5-super-vl:free (free) (gemma-4-26b-a4b-it:free: HTTP 429: Provider returned error) [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:ok] 
+home-holdem-c3   expected good     got good     valid=true grade±1=true mistake=true street=n/a 4563ms by nvidia/nemotron-3.5-super-vl:free (free) (gemma-4-26b-a4b-it:free: HTTP 429: Provider returned error) [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:ok]
+model nvidia/nemotron-3.5-super-vl:free: 20 attempts (ok 20); valid answers in median 4734 ms, max 14342 ms
+model google/gemma-4-26b-a4b-it:free: 20 attempts (rate_limited 20)
+response time (full stream) median 5139 ms, max 14711 ms
+answered by: free models 20, paid model 0, built-in fallback 0; nvidia/nemotron-3.5-super-vl:free 20
+overall score (mean of all applicable checks): 87.1%
+schema-valid 20/20 · grade within one step 16/20 · mistake flagged iff the coach found one 16/20 · street named 9/10
+recursive/flint-v1.0:free (json), xingchen-agi/xing4.0-29b-a4b:free (schema), nvidia/nemotron-3.5-super-vl:free (schema), dots-studio/dots-3-note-preview:free (schema), liquid/lfm-2.5-2.6b:free (schema), google/gemma-4-26b-a4b-it:free (json), google/gemma-4-31b-it:free (json)
+google/gemma-4-31b-it:free: $0.000 / $0.000 per million input/output tokens; context 262144; structured_outputs no, response_format yes, reasoning yes, max_tokens yes
+google/gemini-2.5-flash-lite: $0.100 / $0.400 per million input/output tokens; context 1048576; structured_outputs yes, response_format yes, reasoning yes, max_tokens yes
+nvidia/nemotron-3.5-super-vl:free: $0.000 / $0.000 per million input/output tokens; context 1000000; structured_outputs yes, response_format yes, reasoning yes, max_tokens yes
+google/gemma-4-26b-a4b-it:free: $0.000 / $0.000 per million input/output tokens; context 262144; structured_outputs no, response_format yes, reasoning yes, max_tokens yes

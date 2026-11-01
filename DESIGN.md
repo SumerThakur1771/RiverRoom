@@ -191,9 +191,13 @@ a review.
 is called with plain `fetch`; there is no SDK. The chain:
 1. `google/gemma-4-26b-a4b-it:free`: free.
 2. `nvidia/nemotron-3.5-super-vl:free`: free, and from a different provider than the first,
-   so one provider's outage or rate limit does not take out both free options. The original
-   choice, `openai/gpt-oss-20b:free`, no longer exists on OpenRouter; only paid gpt-oss
-   variants are listed. `google/gemma-4-31b-it:free` remains a candidate.
+   so one provider's outage or rate limit does not take out both free options.
+   - The original choice, `openai/gpt-oss-20b:free`, no longer exists on OpenRouter; only
+     paid gpt-oss variants are listed.
+   - In the live eval (METRICS.md), Google's free Gemma models were rate-limited on every
+     request, while Nemotron answered all 20 hands. That is exactly the case the second
+     provider is for.
+   - It also beat `google/gemma-4-31b-it:free`, which could not answer at all.
 3. `google/gemini-2.5-flash-lite`: paid ($0.10 / $0.40 per million input / output tokens),
    used only when both free models fail.
 
@@ -221,8 +225,11 @@ That check is how the missing gpt-oss model was found.
   out without seat headers, table chat, the practice-view dump of folded players' cards and
   the summary. Each decision becomes one short line. That cut the prompt from 2,833 to 1,683
   characters per hand on the eval set.
-- *Output cap.* `max_tokens` is 500 and temperature 0.2. A reasoning model is asked for low
-  effort, with its reasoning left out of the reply.
+- *Output cap.* `max_tokens` is 500 and temperature 0.2. A reasoning model (Nemotron) gets
+  an 800-token thinking budget on top, with the reasoning left out of the reply.
+  - With 500 tokens in total, Nemotron was cut off on all 20 eval hands.
+  - With the budget, it gave 20 valid answers.
+  - Only free models reason here, so the budget costs nothing.
 - *Caching.* The cache key is a SHA-256 of the prompt version plus the exact prompt text
   (`src/review/key.ts`). The browser and the server compute it the same way.
   - The browser keeps up to 100 reviews in localStorage, so reopening a reviewed hand makes
@@ -371,9 +378,29 @@ Chips won from or lost to the computer players mean the humans' balances don't a
 zero. That difference becomes a "Computer players" balance. The settle-up screen lists it,
 but nobody pays it or gets paid by it.
 
-**Deploying.** `railway.json` runs `npm run db:migrate` before each deploy. That is
-`prisma migrate deploy`, skipped when `DATABASE_URL` is not set. CI runs the storage test
-and the two-browser test against a Postgres 16 service container.
+**Hosting (free tiers).** The game server is a Render free web service (`render.yaml`), and
+Postgres is on Neon's free plan.
+- Render builds with dev dependencies (esbuild bundles the server, Prisma generates its
+  client).
+- Render's free instances have no pre-deploy step, so the start command is
+  `npm run db:migrate && npm run server:start`. Migrations run just before the server
+  starts; if they fail, the new version never goes live, and the health check on `/health`
+  keeps the old one.
+- Neon gives two connection strings. The server uses the pooled one (`DATABASE_URL`, host
+  with `-pooler`), which is PgBouncer in transaction mode and suits many short queries.
+  `prisma migrate` takes session-level locks that a transaction-mode pooler cannot hold, so
+  migrations use the direct one (`DIRECT_DATABASE_URL`, read by `prisma.config.ts`).
+- I checked this locally: with the pooled URL pointing nowhere and the direct one valid,
+  migrations still applied.
+- Render free services sleep after 15 minutes without traffic and take about a minute to
+  wake. While the first connection is pending, the multiplayer page says "Waking up the
+  server, about a minute", and a "Start a table" click waits for the server instead of
+  failing. `tools/ui/mp-wake.mjs` tests this in CI against a server that starts 8 s late.
+- A sleeping server also ends any game in memory. Rooms already close after 15 idle
+  minutes, and buy-ins, hands and settlements are in Postgres.
+
+CI runs the storage test and the two-browser test against a Postgres 16 service
+container.
 
 **Tradeoffs.**
 - Each hand and its results are one nested Prisma create, so a hand is never half written.
