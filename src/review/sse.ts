@@ -8,6 +8,8 @@ export interface ReviewEvents {
   /** Answered from the server's cache (no model call). */
   cached?: boolean;
   fallback?: string;
+  /** Models tried for this answer, in order, with how each attempt ended. */
+  attempts?: Array<{ model: string; outcome: string; ms: number }>;
 }
 
 /** Read the handler's server-sent events (used by the page, the eval and tests). */
@@ -25,11 +27,11 @@ export async function readReviewEvents(res: Response, onDelta?: (text: string) =
       buf = buf.slice(i + 2);
       const ev = /^event: (.+)$/m.exec(chunk)?.[1], data = /^data: (.+)$/m.exec(chunk)?.[1];
       if (!ev || !data) continue;
-      const d = JSON.parse(data) as { text?: string; review?: unknown; reason?: string; model?: string; paid?: boolean; cached?: boolean };
+      const d = JSON.parse(data) as { text?: string; review?: unknown; reason?: string; model?: string; paid?: boolean; cached?: boolean; attempts?: ReviewEvents['attempts'] };
       if (ev === 'delta' && d.text) onDelta?.(d.text);
       else if (ev === 'attempt' && d.model) onAttempt?.(d.model, !!d.paid);
-      else if (ev === 'result') Object.assign(out, { review: d.review, model: d.model, paid: d.paid, cached: d.cached });
-      else if (ev === 'fallback') out.fallback = d.reason;
+      else if (ev === 'result') Object.assign(out, { review: d.review, model: d.model, paid: d.paid, cached: d.cached }, d.attempts ? { attempts: d.attempts } : {});
+      else if (ev === 'fallback') Object.assign(out, { fallback: d.reason }, d.attempts ? { attempts: d.attempts } : {});
     }
     if (done) break;
   }

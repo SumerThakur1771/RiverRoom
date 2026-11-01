@@ -32,14 +32,15 @@ jobs:
           # 503 = no API key configured yet, 400 = key present and the empty body was rejected
           [ "$code" = 400 ] || [ "$code" = 503 ]
           grep -q '"fallback":true' body.json
-      - name: The review's model chain matches OpenRouter's model list
-        run: npx tsx tools/review/check-models.ts
       - name: Desktop and phone, home game and tournament
         run: |
           node tools/ui/smoke.mjs https://sumer-riverroom.vercel.app/ 40 home
           node tools/ui/smoke.mjs https://sumer-riverroom.vercel.app/ 25 tourney
       - name: Lighthouse on the live site (3 runs per page; fails below 95 accessibility)
         run: node tools/measure/lighthouse.mjs https://sumer-riverroom.vercel.app/ lighthouse 3 95
+      - name: The review's model chain matches OpenRouter's model list
+        if: always()
+        run: npx tsx tools/review/check-models.ts
       - uses: actions/upload-artifact@v6
         if: always()
         with:

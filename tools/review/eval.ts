@@ -34,7 +34,9 @@ function mockCall(item: EvalItem, index: number, mode: string): CallFn {
   };
 }
 
-interface Row { answer: unknown; ms: number; note: string; model?: string; paid?: boolean; cached?: boolean }
+interface Row { answer: unknown; ms: number; note: string; model?: string; paid?: boolean; cached?: boolean; tried?: string }
+const triedText = (a?: Array<{ model: string; outcome: string; ms: number }>): string | undefined =>
+  a && a.length > 1 ? a.map(x => `${x.model.split('/')[1]}:${x.outcome}`).join(' > ') : undefined;
 
 async function live(url: string, item: EvalItem): Promise<Row> {
   for (let attempt = 0; attempt < 4; attempt++) {
@@ -43,7 +45,8 @@ async function live(url: string, item: EvalItem): Promise<Row> {
     if (res.status === 429) { const wait = Number(res.headers.get('retry-after') || 30); console.log(`  rate limited, waiting ${wait}s`); await new Promise(r => setTimeout(r, (wait + 1) * 1000)); continue; }
     if (!res.ok) return { answer: null, ms: Date.now() - t0, note: `HTTP ${res.status} ${(await res.text()).slice(0, 120)}` };
     const out = await readReviewEvents(res);
-    return { answer: out.review ?? null, ms: Date.now() - t0, note: out.fallback ? `fallback: ${out.fallback}` : '', ...(out.model ? { model: out.model, paid: !!out.paid, cached: !!out.cached } : {}) };
+    const tried = triedText(out.attempts);
+    return { answer: out.review ?? null, ms: Date.now() - t0, note: out.fallback ? `fallback: ${out.fallback}` : '', ...(out.model ? { model: out.model, paid: !!out.paid, cached: !!out.cached } : {}), ...(tried ? { tried } : {}) };
   }
   return { answer: null, ms: 0, note: 'gave up after repeated rate limits' };
 }
@@ -62,12 +65,13 @@ for (const [i, item] of items.entries()) {
     times.push(row.ms);
   } else {
     const out = await runChain(mockCall(item, i, mode), item.request, { paidCap: cap });
-    row = out.ok ? { answer: out.review, ms: 0, note: '', model: out.model, paid: out.paid } : { answer: null, ms: 0, note: 'fallback: ' + out.reason };
+    const tried = triedText(out.attempts);
+    row = out.ok ? { answer: out.review, ms: 0, note: '', model: out.model, paid: out.paid, ...(tried ? { tried } : {}) } : { answer: null, ms: 0, note: 'fallback: ' + out.reason, ...(tried ? { tried } : {}) };
   }
   if (row.model) { byModel.set(row.model, (byModel.get(row.model) ?? 0) + 1); if (row.paid) paid++; else free++; if (row.cached) cached++; } else fallback++;
   const c = scoreOne(row.answer, item.expected);
   all.push(c);
-  lines.push(`${item.id.padEnd(16)} expected ${item.expected.grade.padEnd(8)} got ${String((row.answer as { grade?: string } | null)?.grade ?? '-').padEnd(8)} valid=${c.valid} grade±1=${c.gradeClose} mistake=${c.mistakeAgrees} street=${c.streetNamed ?? 'n/a'}${row.ms ? ` ${row.ms}ms` : ''}${row.model ? ` by ${row.model} (${row.paid ? 'paid' : 'free'}${row.cached ? ', cached' : ''})` : ''}${row.note ? ' ' + row.note : ''}`);
+  lines.push(`${item.id.padEnd(16)} expected ${item.expected.grade.padEnd(8)} got ${String((row.answer as { grade?: string } | null)?.grade ?? '-').padEnd(8)} valid=${c.valid} grade±1=${c.gradeClose} mistake=${c.mistakeAgrees} street=${c.streetNamed ?? 'n/a'}${row.ms ? ` ${row.ms}ms` : ''}${row.model ? ` by ${row.model} (${row.paid ? 'paid' : 'free'}${row.cached ? ', cached' : ''})` : ''}${row.note ? ' ' + row.note : ''}${row.tried ? ` [tried ${row.tried}]` : ''}`);
 }
 const s = summarize(all);
 lines.push('', `schema-valid ${s.valid}/${s.n} · grade within one step ${s.gradeClose}/${s.n} · mistake flagged iff the coach found one ${s.mistakeAgrees}/${s.n} · street named ${s.streetNamed}/${s.streetN}`);

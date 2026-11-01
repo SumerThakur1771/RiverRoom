@@ -107,9 +107,9 @@ describe('openRouterCall (plain fetch, streaming)', () => {
     expect(body).toMatchObject({ model: FREE_A.id, max_tokens: REVIEW_MAX_TOKENS, stream: true });
     expect(body.messages.map((m: { role: string }) => m.role)).toEqual(['system', 'user']);
   });
-  it('sends response_format json_schema only to models that support it, and low reasoning effort to reasoning models', async () => {
+  it('asks each model for JSON in the strongest way it supports, and low reasoning effort from reasoning models', async () => {
     const bodies: Array<Record<string, unknown>> = [];
-    for (const spec of [{ id: 'a', paid: false, jsonSchema: true }, { id: 'b', paid: false, jsonSchema: false, reasoning: true }] as ModelSpec[]) {
+    for (const spec of [{ id: 'a', paid: false, json: 'schema' }, { id: 'b', paid: false, json: 'none', reasoning: true }, { id: 'c', paid: false, json: 'object' }] as ModelSpec[]) {
       const seen: Array<{ url: string; init: RequestInit }> = [];
       await openRouterCall({ apiKey: 'k', fetch: fakeFetch({ lines }, seen) })(spec, { system: 's', user: 'u', onText: () => {} });
       bodies.push(JSON.parse(seen[0]!.init.body as string));
@@ -118,6 +118,7 @@ describe('openRouterCall (plain fetch, streaming)', () => {
     expect(bodies[0]!.reasoning).toBeUndefined();
     expect(bodies[1]!.response_format).toBeUndefined();
     expect(bodies[1]!.reasoning).toEqual({ effort: 'low', exclude: true });
+    expect(bodies[2]!.response_format).toEqual({ type: 'json_object' });
   });
   it.each([
     ['HTTP 429', { status: 429 }, 'rate_limited'],
@@ -225,7 +226,8 @@ describe('POST /api/review handler', () => {
     let streamed = '';
     const tried: string[] = [];
     const out = await readReviewEvents(res, t => (streamed += t), m => tried.push(m));
-    expect(out).toEqual({ review: GOOD, model: FREE_A.id, paid: false, cached: false });
+    expect(out).toMatchObject({ review: GOOD, model: FREE_A.id, paid: false, cached: false });
+    expect(out.attempts).toEqual([{ model: FREE_A.id, outcome: 'ok', ms: expect.any(Number) }]);
     expect(streamed).toBe(JSON.stringify(GOOD));
     expect(tried).toEqual([FREE_A.id]);
     expect(logs[0]).toMatchObject({ event: 'ai_review', outcome: 'ok', model: FREE_A.id, tier: 'free' });
@@ -252,7 +254,7 @@ describe('POST /api/review handler', () => {
   });
   it('sends a fallback event when no model gives a valid answer (and caches nothing)', async () => {
     const calls: string[] = [], h = make({ call: () => mockCall({ [FREE_A.id]: 'nope' }, calls) });
-    expect(await readReviewEvents(await h(post(REQ)))).toEqual({ fallback: 'all_failed' });
+    expect(await readReviewEvents(await h(post(REQ)))).toMatchObject({ fallback: 'all_failed' });
     await readReviewEvents(await h(post(REQ)));
     expect(calls.filter(c => c === FREE_A.id)).toHaveLength(2);
   });

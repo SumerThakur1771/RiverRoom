@@ -51,8 +51,10 @@ export function createReviewHandler(deps: HandlerDeps): (request: Request) => Pr
         },
       }), { headers: SSE_HEADERS });
     const finish = (send: (event: string, data: unknown) => void, out: ChainOutcome, shared: boolean): void => {
-      if (out.ok) send('result', { review: out.review, model: out.model, paid: out.paid, cached: shared });
-      else send('fallback', { reason: out.reason });
+      // which models were tried and why the chain moved on (no prompt or key details)
+      const attempts = shared ? [] : out.attempts.map(a => ({ model: a.model, outcome: a.outcome, ms: a.ms }));
+      if (out.ok) send('result', { review: out.review, model: out.model, paid: out.paid, cached: shared, attempts });
+      else send('fallback', { reason: out.reason, attempts });
     };
 
     // 1. already reviewed: no model call

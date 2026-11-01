@@ -14,17 +14,22 @@ export interface ModelSpec {
   id: string;
   /** Paid models count against the daily paid cap. */
   paid: boolean;
-  /** Send response_format json_schema (only to models that support structured outputs). */
-  jsonSchema: boolean;
+  /**
+   * How to ask for JSON: 'schema' = response_format json_schema (models with structured
+   * outputs), 'object' = json_object (valid JSON, shape from the prompt), 'none' = prompt only.
+   * Every answer is validated with zod either way. tools/review/check-models.ts checks these
+   * against OpenRouter's model list.
+   */
+  json: 'schema' | 'object' | 'none';
   /** Reasoning model: ask for low effort and keep the reasoning out of the reply. */
   reasoning?: boolean;
 }
 
 /** Free first; the paid model is the last resort. */
 export const REVIEW_MODELS: readonly ModelSpec[] = [
-  { id: 'google/gemma-4-26b-a4b-it:free', paid: false, jsonSchema: false },
-  { id: 'openai/gpt-oss-20b:free', paid: false, jsonSchema: false, reasoning: true },
-  { id: 'google/gemini-2.5-flash-lite', paid: true, jsonSchema: true },
+  { id: 'google/gemma-4-26b-a4b-it:free', paid: false, json: 'object' },
+  { id: 'openai/gpt-oss-20b:free', paid: false, json: 'none', reasoning: true },
+  { id: 'google/gemini-2.5-flash-lite', paid: true, json: 'schema' },
 ];
 /** A review is three short fields; this leaves room without paying for rambling. */
 export const REVIEW_MAX_TOKENS = 500;
@@ -76,7 +81,8 @@ export function openRouterCall(opts: OpenRouterOptions): CallFn {
         stream: true,
         usage: { include: true },
       };
-      if (spec.jsonSchema) body.response_format = { type: 'json_schema', json_schema: { name: 'hand_review', strict: true, schema: REVIEW_JSON_SCHEMA } };
+      if (spec.json === 'schema') body.response_format = { type: 'json_schema', json_schema: { name: 'hand_review', strict: true, schema: REVIEW_JSON_SCHEMA } };
+      else if (spec.json === 'object') body.response_format = { type: 'json_object' };
       if (spec.reasoning) body.reasoning = { effort: 'low', exclude: true };
       const res = await doFetch(OPENROUTER_URL, {
         method: 'POST',
