@@ -66,9 +66,13 @@ describe.skipIf(!URL_)('Postgres storage (rooms, hands, ledger, settlement)', ()
     await until(() => (a.views[a.views.length - 1]?.handNo ?? 0) >= 8);
 
     expect(dropped).toEqual([]);
-    const fromDb = await emit<{ ok: boolean; stored: boolean; balances: Balance[]; transfers: Transfer[] }>(a, 'settle', {});
+    const fromDb = await emit<{ ok: boolean; stored: boolean; balances: Balance[]; transfers: Transfer[]; saved: { hands: number; handResults: number; buyins: number; cashouts: number }; matchesMemory: boolean }>(a, 'settle', {});
     expect(fromDb.ok).toBe(true);
     expect(fromDb.stored).toBe(true);
+    expect(fromDb.matchesMemory).toBe(true);
+    expect(fromDb.saved.hands).toBeGreaterThanOrEqual(7);
+    expect(fromDb.saved.buyins).toBeGreaterThanOrEqual(3);
+    expect(fromDb.saved.cashouts).toBeLessThanOrEqual(1);
     const room = srv.rooms.get(code)!;
     const fromMemory = room.settlement();
     // same balances (order aside) whether read from Postgres or from memory

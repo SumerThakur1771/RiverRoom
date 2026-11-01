@@ -75,5 +75,18 @@ export class Store {
     const balances = balancesFrom(await this.ledgerRows(code, onTable));
     return { balances, transfers: settle(balances) };
   }
+  /** What is saved for a room, read back from the database (counts only). */
+  async saved(code: string): Promise<{ hands: number; handResults: number; buyins: number; cashouts: number }> {
+    await this.flush();
+    const roomId = this.roomIds.get(code);
+    if (!roomId) return { hands: 0, handResults: 0, buyins: 0, cashouts: 0 };
+    const [hands, handResults, buyins, cashouts] = await Promise.all([
+      this.db.hand.count({ where: { roomId } }),
+      this.db.handResult.count({ where: { hand: { roomId } } }),
+      this.db.ledgerEntry.count({ where: { roomId, kind: 'BUYIN' } }),
+      this.db.ledgerEntry.count({ where: { roomId, kind: 'CASHOUT' } }),
+    ]);
+    return { hands, handResults, buyins, cashouts };
+  }
   async close(): Promise<void> { await this.flush(); await this.db.$disconnect(); }
 }

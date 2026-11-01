@@ -52,3 +52,51 @@ jobs:
             screenshots/
             lighthouse/
           retention-days: 14
+
+  multiplayer:
+    name: Multiplayer on production (Vercel page + Render server + Neon)
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.context == 'Vercel' && github.event.state == 'success' && contains(github.event.branches.*.name, 'main'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SERVER: https://riverroom-server.onrender.com
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.sha || github.sha }}
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Wait for Render to run this commit (wakes the free server too)
+        run: |
+          want=$(git rev-parse --short=7 HEAD); t0=$(date +%s)
+          for i in $(seq 90); do
+            got=$(curl -s -m 70 "$SERVER/health" || true)
+            echo "$(( $(date +%s) - t0 ))s: ${got:-no answer}"
+            if echo "$got" | grep -q "\"version\":\"$want\""; then
+              echo "::notice title=Multiplayer server::$SERVER runs $want ($got), answered $(( $(date +%s) - t0 )) s after the first request"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error title=Multiplayer server::$SERVER did not report version $want within 15 minutes"; exit 1
+      - name: Two browsers create and join a table, play, reload, settle up; the settlement comes from Neon
+        run: |
+          node tools/ui/mp-smoke.mjs https://sumer-riverroom.vercel.app/mp.html 2 --expect-stored | tee mp-live.txt
+      - name: Post the results as annotations (readable through the API)
+        if: always()
+        run: |
+          [ -f mp-live.txt ] || exit 0
+          grep -E '^(table |settle up|stored:|RESULT)' mp-live.txt | while IFS= read -r line; do echo "::notice title=Multiplayer on production::$line"; done
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: live-multiplayer-screenshots
+          path: screenshots/
+          retention-days: 14
+

@@ -27,7 +27,8 @@ interface Session { code: string; seat: number; token: string }
 
 export async function startServer(opts: ServerOptions): Promise<RunningServer> {
   const http = createServer((req, res) => {
-    if (req.url === '/health') { res.writeHead(200, { 'content-type': 'application/json' }); res.end(JSON.stringify({ ok: true, rooms: rooms.size })); return; }
+    // version: the deployed commit (Render sets RENDER_GIT_COMMIT), so checks can wait for a deploy
+    if (req.url === '/health') { res.writeHead(200, { 'content-type': 'application/json' }); res.end(JSON.stringify({ ok: true, rooms: rooms.size, storage: !!opts.store, version: (process.env.RENDER_GIT_COMMIT ?? '').slice(0, 7) || null })); return; }
     res.writeHead(404); res.end();
   });
   const io = new Server(http, { cors: { origin: opts.origins }, maxHttpBufferSize: 4096, pingInterval: 10_000, pingTimeout: 8_000 });
@@ -132,7 +133,15 @@ export async function startServer(opts: ServerOptions): Promise<RunningServer> {
       if (!room) return bad(ack, 'room closed');
       try {
         const s = opts.store ? await opts.store.settlement(room.code, room.onTable()) : room.settlement();
-        if (typeof ack === 'function') (ack as (b: unknown) => void)({ ok: true, ...s, stored: !!opts.store });
+        // with storage: what the database holds for this room, and whether its ledger gives the
+        // same balances as the room's own memory
+        let extra = {};
+        if (opts.store) {
+          const mem = new Map(room.settlement().balances.map(b => [b.name, b.net]));
+          const matchesMemory = s.balances.length === mem.size && s.balances.every(b => mem.get(b.name) === b.net);
+          extra = { saved: await opts.store.saved(room.code), matchesMemory };
+        }
+        if (typeof ack === 'function') (ack as (b: unknown) => void)({ ok: true, ...s, stored: !!opts.store, ...extra });
       } catch (err) {
         bad(ack, 'could not compute the settlement');
         console.error(err);

@@ -164,7 +164,7 @@ $('rebuyNo').onclick = () => void call('rebuy', { yes: false });
 $('copy').onclick = () => { if (view) void navigator.clipboard?.writeText(`${location.origin}${location.pathname}?code=${view.code}`); };
 
 /* ---- settle up ---- */
-type SettleAck = { ok: true; balances: Balance[]; transfers: Transfer[]; stored: boolean } | { ok: false; error: string };
+type SettleAck = { ok: true; balances: Balance[]; transfers: Transfer[]; stored: boolean; saved?: { hands: number; buyins: number; cashouts: number }; matchesMemory?: boolean } | { ok: false; error: string };
 const signed = (cents: number): string => (cents > 0 ? '+' : cents < 0 ? '−' : '') + money(Math.abs(cents));
 $('settleBtn').onclick = async () => {
   const r = await call<SettleAck>('settle', {});
@@ -179,7 +179,10 @@ $('settleBtn').onclick = async () => {
   $('settleNote').textContent = [
     ...house.map(t => t.to === HOUSE ? `${t.from} lost ${money(t.amount)} to the computer players (no payment).` : `${t.to} won ${money(t.amount)} from the computer players (nobody pays this).`),
     r.stored ? 'Totals come from the saved buy-in ledger.' : 'Totals come from this table session (the server has no database configured).',
-  ].join(' ');
+    r.saved ? `Saved for this table: ${r.saved.hands} finished hand${r.saved.hands === 1 ? '' : 's'}, ${r.saved.buyins} buy-in${r.saved.buyins === 1 ? '' : 's'} and rebuys, ${r.saved.cashouts} cash-out${r.saved.cashouts === 1 ? '' : 's'}.` : '',
+  ].filter(Boolean).join(' ');
+  // for the live check: whether the database's ledger gave the same balances as the table's memory
+  if (r.matchesMemory !== undefined) box.dataset.matchesMemory = String(r.matchesMemory);
   box.focus();
 };
 $('settleClose').onclick = () => { $('settle').hidden = true; };

@@ -2,12 +2,16 @@
 // against a running server. One creates a table, the other joins with the code, both play by
 // clicking; then the first reloads the page mid-game and must get the same seat back.
 //
-// Usage: node tools/ui/mp-smoke.mjs <page url, e.g. http://localhost:4173/mp.html> [hands=3]
+// Usage: node tools/ui/mp-smoke.mjs <page url, e.g. http://localhost:4173/mp.html> [hands=3] [--expect-stored]
+// --expect-stored (production): the settlement must come from the database, the page must
+// show the saved hands and buy-ins, and timeouts allow for a server that is waking up.
 import { mkdirSync } from 'node:fs';
 import { chromium } from 'playwright';
 
 const URL_ = process.argv[2] || 'http://localhost:4173/mp.html';
 const HANDS = +(process.argv[3] || 3);
+const STORED = process.argv.includes('--expect-stored');
+const WAIT = STORED ? 180_000 : 30_000; // a sleeping free server takes about a minute to wake
 mkdirSync('screenshots', { recursive: true });
 const browser = await chromium.launch();
 const errors = [];
@@ -21,18 +25,20 @@ async function player(label, viewport) {
 const a = await player('desktop', { width: 1100, height: 800 }), b = await player('phone', { width: 390, height: 844 });
 await a.goto(URL_);
 await a.fill('#name', 'Ana');
+const t0 = Date.now();
 await a.click('#create');
-await a.waitForSelector('#table:not([hidden])');
+await a.waitForSelector('#table:not([hidden])', { timeout: WAIT });
+const firstTableMs = Date.now() - t0;
 const code = (await a.textContent('#tcode')).trim();
 await b.goto(URL_ + '?code=' + code);
 await b.fill('#name', 'Ben');
 await b.click('#join');
-await b.waitForSelector('#table:not([hidden])');
+await b.waitForSelector('#table:not([hidden])', { timeout: WAIT });
 
 async function playUntil(n) {
   const t0 = Date.now();
   let seen = 0;
-  while (Date.now() - t0 < 120_000) {
+  while (Date.now() - t0 < (STORED ? 300_000 : 120_000)) {
     for (const p of [a, b]) {
       if (await p.isVisible('#rebuy')) await p.click('#rebuyYes');
       if (await p.isVisible('#actions')) await p.click(Math.random() < 0.7 ? '#call' : '#fold').catch(() => {});
@@ -64,7 +70,16 @@ const payments = await b.$$eval('#transfers li', lis => lis.map(l => l.textConte
 const note = await b.textContent('#settleNote');
 await b.screenshot({ path: 'screenshots/mp-settle-phone.png' });
 console.log(`settle up: balances ${balances.join(' | ')}; payments ${payments.join(' | ')}; note: ${note}`);
-const settled = balances.some(r => r.startsWith('Ana')) && balances.some(r => r.startsWith('Ben')) && payments.length > 0;
+let settled = balances.some(r => r.startsWith('Ana')) && balances.some(r => r.startsWith('Ben')) && payments.length > 0;
+if (STORED) {
+  // the server read the ledger back from Postgres and saved at least the finished hands
+  const m = /Saved for this table: (\d+) finished hands?, (\d+) buy-ins?/.exec(note);
+  const savedHands = m ? +m[1] : 0, savedBuyins = m ? +m[2] : 0;
+  const fromDb = /saved buy-in ledger/.test(note);
+  const matches = await b.getAttribute('#settle', 'data-matches-memory');
+  console.log(`stored: settlement from the database ${fromDb}, same balances as the table's memory ${matches}; saved hands ${savedHands} (hands started ${played}), buy-ins ${savedBuyins}; first table opened ${firstTableMs} ms after the click`);
+  settled = settled && fromDb && matches === 'true' && savedHands >= played - 1 && savedHands >= 1 && savedBuyins >= 2;
+}
 const ok = settled && !errors.length && sameCode && after === before && seatsSeen.some(s => s.startsWith('Ana')) && seatsSeen.some(s => s.startsWith('Ben (you)'));
 console.log(ok ? 'RESULT: ok' : 'RESULT: FAIL ' + errors.slice(0, 5).join(' | '));
 await browser.close();
