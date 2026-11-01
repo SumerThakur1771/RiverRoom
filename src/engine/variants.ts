@@ -21,12 +21,17 @@ export const VARIANTS: Record<VariantKey, Variant> = {
     desc: '7 cards each. Pick 2 for normal poker and make a 5-card poker hand from the other 5 (no table cards). Half the pot for each.' },
 };
 export const VAR_ORDER: VariantKey[] = ['std', 'holdem', 'two', 'k8', 'n7'];
+/** Cards a deal needs: every player's hand, the board (5) and a second board if any. */
+export const cardsNeeded = (key: VariantKey, players: number): number => VARIANTS[key].deal * players + 5 + (VARIANTS[key].board2 ?? 0);
+/** Can this game be dealt to this many players from one deck? (8 cards to 6 players cannot: 53 cards.) */
+export const variantFits = (key: VariantKey, players: number): boolean => cardsNeeded(key, players) <= 52;
 /** What each friend usually deals. */
 export const DEALER_PICKS: Record<string, Array<[VariantKey, number]>> = {
   rohit: [['std', 0.75], ['two', 0.25]],
   krish: [['k8', 0.6], ['std', 0.4]],
   nikhil: [['n7', 0.55], ['holdem', 0.45]],
   venky: [['std', 0.7], ['holdem', 0.3]],
+  sumer: [['std', 0.5], ['holdem', 0.3], ['n7', 0.2]],
 };
 
 /** A split: one card group per part, in part order. */

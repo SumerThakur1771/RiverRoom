@@ -23,6 +23,10 @@ export const TYPES: Record<string, Persona> = {
   casual: { label: 'Casual', open: .8, limp: .6, limpTop: .45, call: 1.5, three: .5, cbet: .5, bluff: .16, aggr: .5, sticky: .6, trap: .15, cr: .05, size: 'odd', noise: .1, tiltProne: .4, adapt: .1, tell: .6, chat: .6, donk: .2,
     desc: 'A recreational player: limps a lot, chases draws and chats.', beat: 'Raise their limps, bet your made hands, and make draws pay.' },
   // Sumer's home game: the friends, as described by Sumer
+  // Sumer himself, for when somebody else plays his seat: strong and balanced, close to what the
+  // app's coach recommends (Nikhil's all-round game, steadier: fewer bluffs, less tilt)
+  sumer: { home: true, raisePre: .3, bigValue: .75, label: 'Balanced', open: .8, limp: .55, limpTop: .5, call: .85, three: .95, cbet: .6, bluff: .14, aggr: .75, sticky: .2, trap: .15, cr: .1, size: 'home', noise: .02, tiltProne: .08, adapt: .9, tell: .05, chat: .15, donk: .04, stab: .6,
+    desc: 'Plays solid, sensible poker: good hands strongly, weak hands rarely, a bluff now and then. Hard to push around and hard to read.', beat: 'Do not expect easy money. Play good hands, pick your spots, and change your bet sizes.' },
   rohit: { home: true, raisePre: .2, label: 'Tight folder', open: .4, limp: .9, limpTop: .45, call: .6, three: .4, cbet: .4, bluff: .04, aggr: .55, sticky: .06, trap: .1, cr: .04, size: 'home', noise: .02, tiltProne: .1, adapt: .3, tell: .3, chat: .2, donk: .05, bigFold: true, quickFold: true, stab: .4,
     desc: 'Plays mostly good hands. If someone bets big and he has nothing decent, he folds fast. He only calls a $1 bet with a strong hand.', beat: 'Bet bigger when you want him out, because he folds weak hands to pressure. When he calls or raises a big bet, believe him.' },
   krish: { home: true, raisePre: .3, label: 'Bluffer', open: .55, limp: .85, limpTop: .62, call: 1, three: .6, cbet: .6, bluff: .26, aggr: .75, sticky: .3, trap: .1, cr: .1, size: 'home', noise: .04, tiltProne: .3, adapt: .4, tell: .3, chat: .35, donk: .1, stab: 1.8, overplay: .4,

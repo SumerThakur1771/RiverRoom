@@ -8,13 +8,14 @@
 import { drawInfo, equityKnown, madeInfo } from '../ai/equity';
 import { partName, partScore } from '../ai/split';
 import { bestFive, cardTxt, catOf, cr, describe, evaluate, holeName, kAt, PNAME, RNAME, shuffled, shuffledUniform, type Card } from './cards';
-import { HOME_FRIENDS, jitter, NAMES, TYPES, type Friend } from './personas';
+import { jitter, NAMES, TYPES, type Friend } from './personas';
+import { DEFAULT_ROSTER, type Character } from './roster';
 import { updateRange } from './reads';
 import { Streams } from './rng';
 import { newHud, type Game, type GameEvent, type Mode, type Persona, type Player, type Pot, type Settings } from './state';
 import { Tables } from './strength';
 import { ableList, ev, fmt, heroP, liveList, lg, needsAction, nextAlive, nm, VAR } from './table';
-import { VARIANTS, type Split, type VariantKey } from './variants';
+import { VARIANTS, variantFits, type Split, type VariantKey } from './variants';
 
 export const LEVELS: Array<[number, number, number]> = [[10, 20, 0], [15, 30, 0], [25, 50, 0], [50, 100, 10], [75, 150, 15], [100, 200, 25], [150, 300, 40], [200, 400, 50], [300, 600, 75], [400, 800, 100], [600, 1200, 150], [800, 1600, 200], [1000, 2000, 250], [1500, 3000, 400], [2000, 4000, 500], [3000, 6000, 750], [5000, 10000, 1000], [8000, 16000, 1600]];
 export const SEATMAP: Record<number, number[]> = { 1: [0, 3], 2: [0, 2, 4], 3: [0, 1, 3, 5], 4: [0, 1, 2, 4, 5], 5: [0, 1, 2, 3, 4, 5] };
@@ -66,7 +67,7 @@ export interface Snapshot {
 }
 
 /** A new table (or a resumed one from a snapshot). `seed` null = production randomness. */
-export function newGame(opts: { mode: Mode; settings: Settings; seed: string | null; snap?: Snapshot | null }): Game {
+export function newGame(opts: { mode: Mode; settings: Settings; seed: string | null; snap?: Snapshot | null; roster?: readonly Character[]; heroId?: string }): Game {
   const rs = new Streams(opts.seed);
   const g = {
     rs, tables: new Tables(rs), settings: opts.settings, mode: opts.mode, money: opts.mode === 'home',
@@ -76,11 +77,11 @@ export function newGame(opts: { mode: Mode; settings: Settings; seed: string | n
     hist: [], ev: [], tableNo: 0, entrants: 0, stats: { hands: 0, won: 0, vpip: 0, pfr: 0, biggest: 0, sd: 0, sdWon: 0 }, handActive: false,
     vpip: false, pfr: false, cashOutReq: false, msg: '', explain: '', sideInfo: '', highlight: null, btab: new Map(), lastThreat: null,
   } as Game;
-  rs.seg('setup', () => setupTable(g, opts.snap ?? null));
+  rs.seg('setup', () => setupTable(g, opts.snap ?? null, opts));
   return g;
 }
 
-function setupTable(g: Game, snap: Snapshot | null): void {
+function setupTable(g: Game, snap: Snapshot | null, opts: { roster?: readonly Character[]; heroId?: string } = {}): void {
   const rs = g.rs, rand = rs.rand, st = g.settings;
   g.tableNo = 4000 + Math.floor(rand() * 5000);
   if (snap) {
@@ -95,10 +96,19 @@ function setupTable(g: Game, snap: Snapshot | null): void {
     });
     Object.assign(g, { handNo: snap.handNo, button: snap.button, tableNo: snap.tableNo, stats: snap.stats, entrants: snap.players.length });
   } else if (g.mode === 'home') {
-    const seats = SEATMAP[HOME_FRIENDS.length]!, friends: Friend[] = shuffle(rand, HOME_FRIENDS.slice());
+    // the person plays one character of the roster (Sumer by default); the computer plays the
+    // rest, in random seats. With the default roster and Sumer this draws exactly the same
+    // random numbers as before rosters existed, so recorded sessions still replay.
+    const roster = opts.roster ?? DEFAULT_ROSTER;
+    const hero = roster.find(c => c.id === (opts.heroId ?? 'sumer')) ?? roster[0]!;
+    const others: Friend[] = roster.filter(c => c !== hero).map(c => ({ name: c.name, type: c.type, color: c.color, avatar: c.avatar ?? '' }));
+    const seats = SEATMAP[others.length]!, friends: Friend[] = shuffle(rand, others);
     g.players = seats.map((seat, k) => (k === 0 ? makePlayer(rs, st, seat, null, HOME_BUY) : makePlayer(rs, st, seat, friends[k - 1]!, HOME_BUY)));
-    g.players[0]!.name = !st.name || st.name === 'You' ? 'Sumer' : st.name;
-    g.players[0]!.avatar = 'sumer';
+    g.players.forEach((p, k) => { if (k > 0 && !p.avatar) p.avatar = null; });
+    const h = g.players[0]!;
+    h.name = opts.roster ? hero.name : !st.name || st.name === 'You' ? 'Sumer' : st.name;
+    h.avatar = hero.avatar;
+    if (opts.roster && hero.id !== 'sumer') h.color = hero.color;
     g.entrants = g.players.length;
   } else {
     const seats = SEATMAP[st.opp] || SEATMAP[5]!;
@@ -583,8 +593,11 @@ export function* playHand(g: Game): Generator<Step, HandSummary, unknown> {
   if (g.money) {
     const d = g.players[g.button]!;
     g.variant = g.settings.games === 'holdem' ? 'holdem' : ((yield { kind: 'variant', p: d }) as VariantKey);
+    // a game the deck cannot deal at this table size (8 cards to 6 players) is played as Poker + 3 Patti
+    const asked = g.variant;
+    if (!VARIANTS[asked] || !variantFits(asked, alive.length)) g.variant = 'std';
     const V0 = VARIANTS[g.variant];
-    lg(g, `Game: ${V0.name} (${d.name}'s choice)`);
+    lg(g, g.variant === asked ? `Game: ${V0.name} (${d.name}'s choice)` : `Game: ${V0.name} (${d.name}'s choice; ${VARIANTS[asked]?.name ?? 'that game'} needs more cards than one deck has at ${alive.length} players)`);
     if (g.settings.games !== 'holdem' && VAR(g)) g.tables.oppDist(g.variant);
     yield { kind: 'pause', what: 'variant', ms: !d.isHuman && g.settings.games !== 'holdem' ? 900 : 0, data: { d } };
   }

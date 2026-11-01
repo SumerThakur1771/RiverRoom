@@ -19,6 +19,7 @@ import { bindGame,
 } from '../coach/coach';
 import './styles.css';
 import { initSite } from '../pwa/site';
+import { addCharacter, DEFAULT_ROSTER, removeCharacter, renameCharacter, ROSTER_MAX, ROSTER_MIN, STYLES, styleLabel, validRoster } from '../engine/roster';
 
 initSite();
 const SEED = new URLSearchParams(location.search).get('seed');
@@ -637,7 +638,8 @@ function setupTable(snap){
   GID++;
   const mode = snap ? (snap.mode || 'tourney') : settings.mode; MONEY = mode === 'home';
   // the engine reads `settings` live (name, opponents, stack, blind level length, practice view, games)
-  const g = E.newGame({mode, settings, seed: SEED ? SEED + ':' + GID : null, snap: snap || null});
+  const r = rosterNow();
+  const g = E.newGame({mode, settings, seed: SEED ? SEED + ':' + GID : null, snap: snap || null, ...(mode === 'home' ? {roster: r, heroId: heroIdNow(r)} : {})});
   S = Object.assign(g, {gid: GID, history: [], dec: [], paused: false, pre: null, heroEq: null, snap: null, feed: [], running: false, splitDec: null, hintBest: null, tablesReady: Promise.resolve()});
   bindGame(S, MONEY, settings);
   // the split-game opponent model is built by the compute worker, never on this thread
@@ -1386,6 +1388,64 @@ function segment(el, items, get, set){
   el.innerHTML = items.map(([v, l, sm]) => `<button type="button" data-v="${v}" aria-pressed="${String(get() === v)}">${l}${sm ? `<small>${sm}</small>` : ''}</button>`).join('');
   el.onclick = e => { const b = e.target.closest('button'); if (!b) return; const v = isNaN(+b.dataset.v) ? b.dataset.v : +b.dataset.v; set(v); $$('button', el).forEach(x => x.setAttribute('aria-pressed', String(x === b))); };
 }
+/* ---- home game roster: who is at the table, and who you play (src/engine/roster.ts) ---- */
+/** The saved roster if it is still valid, else Sumer and the four friends. */
+function rosterNow(){ return validRoster(settings.roster) || DEFAULT_ROSTER.map(c => ({...c})); }
+/** The character you play: the saved pick if it is still at the table, else the first one. */
+function heroIdNow(r){ return r.some(c => c.id === settings.heroId) ? settings.heroId : r[0].id; }
+let rosterEditing = null;
+const faceHTML = c => c.avatar && AV[c.avatar] ? avatarSVG(c.avatar, c.color) : `<span class="ini" style="background:${c.color}">${esc(c.name.charAt(0).toUpperCase())}</span>`;
+function setRoster(r, heroId){
+  settings.roster = r; settings.heroId = r.some(c => c.id === heroId) ? heroId : r[0].id;
+  saveSettings(); setupTable(null); renderHomeRoster();
+}
+function renderHomeRoster(focus){
+  const r = rosterNow(), hero = heroIdNow(r), el = $('#homeRoster');
+  const changed = r.length !== DEFAULT_ROSTER.length || r.some((c, i) => c.id !== DEFAULT_ROSTER[i].id || c.name !== DEFAULT_ROSTER[i].name);
+  el.innerHTML = `<fieldset class="roster-pick"><legend>Who do you play as?</legend>` + r.map(c => {
+    const me = c.id === hero, editing = rosterEditing === c.id;
+    return `<div class="rp${me ? ' me' : ''}" data-id="${c.id}">`
+      + `<label class="rp-main"><input type="radio" name="rpHero" value="${c.id}"${me ? ' checked' : ''}><span class="mini-av">${faceHTML(c)}</span>`
+      + `<span class="rp-text"><span class="rp-line"><b>${esc(c.name)}</b>${me ? '<em class="rp-you">You</em>' : ''}</span><small title="${esc(TYPES[c.type].desc)}">${me ? 'You play this seat' : 'Computer plays: ' + esc(styleLabel(c.type))}</small></span></label>`
+      + (editing
+        ? `<span class="rp-tools"><input type="text" class="rp-name" maxlength="12" value="${esc(c.name)}" aria-label="New name for ${esc(c.name)}"><button type="button" class="rp-btn" data-act="save">Save</button><button type="button" class="rp-btn" data-act="cancel">Cancel</button></span>`
+        : `<span class="rp-tools"><button type="button" class="rp-btn" data-act="rename" aria-label="Rename ${esc(c.name)}">Rename</button><button type="button" class="rp-btn" data-act="remove" aria-label="Remove ${esc(c.name)}"${r.length <= ROSTER_MIN ? ' disabled' : ''}>Remove</button></span>`)
+      + `</div>`;
+  }).join('') + `</fieldset>`
+    + (r.length < ROSTER_MAX ? `<div class="rp-add"><input type="text" id="rpNewName" maxlength="12" placeholder="Add a player" aria-label="New player's name"><select id="rpNewStyle" aria-label="How the computer plays them">${STYLES.map(t => `<option value="${t}">Plays like: ${esc(styleLabel(t))}</option>`).join('')}</select><button type="button" class="rp-btn" id="rpAdd">Add</button></div>` : `<p class="rp-note">The table is full (${ROSTER_MAX} seats).</p>`)
+    + `<p class="rp-err" id="rosterErr" role="alert"></p>`
+    + (changed ? `<button type="button" class="rp-reset" id="rpReset">Reset to the original five</button>` : '');
+  if (focus) { const f = el.querySelector(focus); if (f) f.focus(); }
+}
+function rosterError(msg){ const e = $('#rosterErr'); if (e) e.textContent = msg; }
+function rosterResult(res, heroId, focus){
+  if (!res.ok) { rosterError(res.error); return false; }
+  rosterEditing = null; setRoster(res.roster, heroId); if (focus) renderHomeRoster(focus);
+  return true;
+}
+$('#homeRoster').addEventListener('change', e => {
+  const t = /** @type {HTMLInputElement} */ (e.target);
+  if (t.name === 'rpHero') { const r = rosterNow(); setRoster(r, t.value); renderHomeRoster(`input[value="${t.value}"]`); }
+});
+$('#homeRoster').addEventListener('click', e => {
+  const b = /** @type {HTMLElement} */ (e.target).closest('button');
+  if (!b) return;
+  const r = rosterNow(), hero = heroIdNow(r), row = b.closest('.rp'), id = row && row.getAttribute('data-id');
+  const act = b.getAttribute('data-act');
+  if (act === 'rename') { rosterEditing = id; renderHomeRoster('.rp-name'); }
+  else if (act === 'cancel') { rosterEditing = null; renderHomeRoster(`.rp[data-id="${id}"] [data-act="rename"]`); }
+  else if (act === 'save') rosterResult(renameCharacter(r, id, /** @type {HTMLInputElement} */ (row.querySelector('.rp-name')).value), hero, `.rp[data-id="${id}"] [data-act="rename"]`);
+  else if (act === 'remove') rosterResult(removeCharacter(r, id), id === hero ? null : hero, '#rpNewName');
+  else if (b.id === 'rpAdd') rosterResult(addCharacter(r, /** @type {HTMLInputElement} */ ($('#rpNewName')).value, /** @type {HTMLSelectElement} */ ($('#rpNewStyle')).value), hero, '#rpNewName');
+  else if (b.id === 'rpReset') { rosterEditing = null; setRoster(DEFAULT_ROSTER.map(c => ({...c})), 'sumer'); }
+});
+$('#homeRoster').addEventListener('keydown', e => {
+  const t = /** @type {HTMLElement} */ (e.target);
+  if (t.classList.contains('rp-name')) {
+    if (e.key === 'Enter') { e.preventDefault(); /** @type {HTMLElement} */ (t.closest('.rp').querySelector('[data-act="save"]')).click(); }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); /** @type {HTMLElement} */ (t.closest('.rp').querySelector('[data-act="cancel"]')).click(); }
+  } else if (t.id === 'rpNewName' && e.key === 'Enter') { e.preventDefault(); $('#rpAdd').click(); }
+});
 function renderRoster(){ $('#roster').innerHTML = S.players.map(p => `<span><i style="--pc:${p.color}"></i>${esc(p.isHuman ? (settings.name || 'You') : p.name)}</span>`).join(''); }
 function startModeUI(){
   const home = settings.mode === 'home';
@@ -1393,7 +1453,9 @@ function startModeUI(){
   $('#homeInfo').hidden = !home; $('#tourneyFields').hidden = home; $('#tourneyLede').hidden = home; $('#roster').hidden = home;
   $('#nameIn').value = home ? homeName() : settings.name;
   if (home) segment($('#gamesSeg'), [['dealer', "Dealer's choice", '3 Patti, two boards...'], ['holdem', 'Simple poker', "Just Hold'em"]], () => settings.games, v => { settings.games = v; saveSettings(); });
-  if (home) $('#homeRoster').innerHTML = HOME_FRIENDS.map(f => `<div><span class="mini-av">${avatarSVG(f.avatar, f.color)}</span><b>${f.name}</b>: ${esc(TYPES[f.type].desc)}</div>`).join('');
+  // your name comes from the character you play in the home game
+  $('#nameIn').closest('label').hidden = home;
+  if (home) renderHomeRoster();
 }
 function buildStart(hasSnap){
   segment($('#modeSeg'), [['tourney', 'Tournament', 'Sit & Go vs strangers'], ['home', 'Home game', 'Your friends, real chips']], () => settings.mode, v => { settings.mode = v; saveSettings(); setupTable(null); renderRoster(); startModeUI(); });
@@ -1498,7 +1560,9 @@ document.addEventListener('keydown', e => {
 });
 $('#startBtn').onclick = () => {
   Snd.init();
-  settings.name = ($('#nameIn').value.trim() || (settings.mode === 'home' ? 'Sumer' : 'You')).slice(0, 12); saveSettings();
+  if (settings.mode === 'home'){ const r = rosterNow(); settings.name = r.find(c => c.id === heroIdNow(r)).name; }
+  else settings.name = ($('#nameIn').value.trim() || 'You').slice(0, 12);
+  saveSettings();
   setupTable(null); $('#startOv').hidden = true; runLoop();
 };
 $('#rulesBtn').onclick = () => openLearn('basics');

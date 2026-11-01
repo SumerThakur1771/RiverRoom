@@ -56,6 +56,7 @@ jobs:
           node tools/ui/smoke.mjs http://localhost:4173/ 40 home
           node tools/ui/smoke.mjs http://localhost:4173/ 25 tourney
           node tools/ui/review-ui.mjs http://localhost:4173/
+          node tools/ui/roster-ui.mjs http://localhost:4173/
       - name: Installable app works offline (service worker), accessibility of in-game screens (axe-core)
         run: |
           node tools/ui/offline.mjs http://localhost:4173/ 60

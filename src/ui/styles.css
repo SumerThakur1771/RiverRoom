@@ -471,3 +471,30 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
 }
+
+/* Home game roster on the start screen: who is at the table, and who you play */
+.roster-pick{border:0;margin:0 0 6px;padding:0;display:flex;flex-direction:column;gap:6px}
+.roster-pick legend{font:700 11px var(--f-body);letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;padding:0}
+.rp{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;background:var(--sink);border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+.rp.me{border-color:rgba(211,168,84,.7);background:rgba(211,168,84,.08)}
+.rp-main{display:flex;align-items:center;gap:10px;flex:1 1 180px;min-width:0;cursor:pointer}
+.rp-main input{accent-color:var(--brass);width:18px;height:18px;flex:none;margin:0}
+.rp-main .mini-av{margin:0;flex:none}
+.rp .ini{display:grid;place-items:center;width:100%;height:100%;font:800 14px var(--f-body);color:#fff}
+.rp-text{display:flex;flex-direction:column;min-width:0;line-height:1.25}
+.rp-text b{color:var(--ink);font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rp-text small{color:var(--muted);font-size:12px}
+.rp-line{display:flex;align-items:center;gap:6px;min-width:0}
+.rp-you{flex:none;font:800 10px var(--f-body);font-style:normal;letter-spacing:.12em;text-transform:uppercase;color:#1d1406;background:var(--brass);border-radius:6px;padding:1px 6px}
+.rp-tools{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.rp-btn{height:34px;border-radius:9px;border:1px solid var(--line);background:var(--panel-2);color:var(--ink);font:600 13px var(--f-body);padding:0 10px}
+.rp-btn:disabled{opacity:.45}
+.rp-btn:focus-visible,.rp-name:focus-visible,.rp-add input:focus-visible,.rp-add select:focus-visible,.rp-reset:focus-visible{outline:3px solid var(--brass);outline-offset:2px}
+.rp-name,.rp-add input,.rp-add select{height:34px;border-radius:9px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:500 14px var(--f-body);padding:0 10px;min-width:0}
+.rp-name{width:9.5em}
+.rp-add{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 0}
+.rp-add input{flex:1 1 9em}
+.rp-add select{flex:1 1 11em}
+.rp-err{color:var(--g-blunder);font-size:13px;min-height:1.2em;margin:4px 0}
+.rp-note{color:var(--muted);font-size:13px;margin:6px 0 0}
+.rp-reset{background:none;border:0;color:var(--brass);text-decoration:underline;font:600 13px var(--f-body);padding:4px 0;margin-bottom:10px}
