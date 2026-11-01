@@ -87,6 +87,7 @@ jobs:
           echo "::error title=Multiplayer server::$SERVER did not report version $want within 15 minutes"; exit 1
       - name: Two browsers play online on production; the settlement comes from Neon
         run: |
+          set -o pipefail
           node tools/ui/online-ui.mjs https://sumer-riverroom.vercel.app/ --expect-stored --hands 2 | tee mp-live.txt
       - name: Post the results as annotations (readable through the API)
         if: always()

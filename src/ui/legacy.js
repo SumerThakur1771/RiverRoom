@@ -1863,7 +1863,8 @@ function hydrate(m){
   S.settings = Object.assign({}, settings, {games: m.games, revealAll: false});
   S.mode = 'home'; S.money = true;
   const key = S.players.map(p => [p.seat, p.name, p.avatar, p.color, p.isHuman].join(':')).join('|');
-  if (key !== S.layoutKey) { S.layoutKey = key; buildSeats(); layout(); }
+  // new seats are drawn at once (names, stacks), before any animation of this step runs
+  if (key !== S.layoutKey) { S.layoutKey = key; buildSeats(); layout(); render(); renderInfo(); }
 }
 async function onlineStep(s, m){
   const me = heroP();

@@ -129,6 +129,7 @@ for (const [hostSize, guestSize] of [['desktop', 'phone'], ['phone', 'desktop']]
   // 6. the guest reloads (same seat, no lobby), then leaves (the character is free again)
   await G.reload();
   c.resumed = await G.waitForSelector('#tableBtn:not([hidden])', { timeout: WAIT }).then(() => true, () => false);
+  // the seat shows its name straight away (or the last action's label, which replaces it for a moment)
   await playUntil([H, G], async () => !!(await G.$('.seat.hero')), 30_000);
   c.resumedAs = await G.textContent('.seat.hero .nm').catch(() => '');
   await press(G, '#tableBtn');
