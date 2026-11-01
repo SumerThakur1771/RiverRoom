@@ -17,11 +17,15 @@ proof. Nothing here is an estimate. Dates are when the measurement was taken.
   client is strict TypeScript with per-job result types. Not claimed: a strict TypeScript UI.
 - **Bots and the coach run in a Web Worker:** [src/worker](src/worker),
   [src/coach/compute.ts](src/coach/compute.ts).
-- **AI hand review.** A Vercel serverless route ([api/review.ts](api/review.ts)) streams a
-  review from Claude Haiku 5.5. The output is validated with zod (grade, mistake, lesson).
-  Rate limits are per IP (5 a minute, 20 an hour) plus 300 an hour per instance. Without a
-  key, or when limited, the page falls back to the built-in review. There is a 20-hand eval
-  set with a scoring script ([tools/review](tools/review)).
+- **AI hand review.** A Vercel serverless route ([api/review.ts](api/review.ts)) calls
+  OpenRouter with plain fetch. Two free models from different providers go first, then a
+  paid one as a last resort, capped at 200 paid calls a day. Answers stream back and are
+  validated with zod (grade, mistake, lesson).
+  - Reviews are cached by a hash of the prompt in the browser and on the server.
+  - The prompt is 41% shorter: 2,833 to 1,683 characters per hand on average, on the 20-hand
+    eval set ([proof](tools/measure/results/2026-11-01-review-prompt-size.txt)).
+  - Without a key, or past the limits, the page falls back to the built-in review.
+  - There is a 20-hand eval set with a scoring script ([tools/review](tools/review)).
 - **Multiplayer server.** Node + TypeScript + Socket.IO in [server/](server), running the same
   engine. It is server-authoritative: the server shuffles, and each client receives only its
   own cards. Invite-code rooms, reconnect by session token, bots in empty seats, a turn

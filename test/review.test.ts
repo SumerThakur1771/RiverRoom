@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { ReviewCache } from '../src/review/cache';
 import { createReviewHandler, readReviewEvents } from '../src/review/handler';
 import { reviewKey } from '../src/review/key';
-import { FREE_CANDIDATES, GEMINI_FLASH_LITE, ModelError, NEMOTRON, openRouterCall, OPENROUTER_URL, REVIEW_MAX_TOKENS, REVIEW_MODELS, runChain, type AttemptResult, type CallFn, type ModelSpec } from '../src/review/openrouter';
+import { FREE_CANDIDATES, GEMINI_FLASH_LITE, ModelError, NEMOTRON, openRouterCall, REASONING_BUDGET, OPENROUTER_URL, REVIEW_MAX_TOKENS, REVIEW_MODELS, runChain, type AttemptResult, type CallFn, type ModelSpec } from '../src/review/openrouter';
 import { DailyCap, reviewLimiters, SlidingWindowLimiter } from '../src/review/rate-limit';
 import { buildUserMessage, compactHand, GRADES, parseReview, REVIEW_JSON_SCHEMA, ReviewSchema, SYSTEM_PROMPT, type ReviewRequest } from '../src/review/review';
 
@@ -107,7 +107,7 @@ describe('openRouterCall (plain fetch, streaming)', () => {
     expect(body).toMatchObject({ model: FREE_A.id, max_tokens: REVIEW_MAX_TOKENS, stream: true });
     expect(body.messages.map((m: { role: string }) => m.role)).toEqual(['system', 'user']);
   });
-  it('asks each model for JSON in the strongest way it supports, and low reasoning effort from reasoning models', async () => {
+  it('asks each model for JSON in the strongest way it supports; reasoning models get a bounded thinking budget', async () => {
     const bodies: Array<Record<string, unknown>> = [];
     for (const spec of [{ id: 'a', paid: false, json: 'schema' }, { id: 'b', paid: false, json: 'none', reasoning: true }, { id: 'c', paid: false, json: 'object' }] as ModelSpec[]) {
       const seen: Array<{ url: string; init: RequestInit }> = [];
@@ -117,7 +117,9 @@ describe('openRouterCall (plain fetch, streaming)', () => {
     expect(bodies[0]!.response_format).toMatchObject({ type: 'json_schema', json_schema: { strict: true, schema: REVIEW_JSON_SCHEMA } });
     expect(bodies[0]!.reasoning).toBeUndefined();
     expect(bodies[1]!.response_format).toBeUndefined();
-    expect(bodies[1]!.reasoning).toEqual({ effort: 'low', exclude: true });
+    expect(bodies[1]!.reasoning).toEqual({ max_tokens: REASONING_BUDGET, exclude: true });
+    expect(bodies[1]!.max_tokens).toBe(REVIEW_MAX_TOKENS + REASONING_BUDGET);
+    expect(bodies[0]!.max_tokens).toBe(REVIEW_MAX_TOKENS);
     expect(bodies[2]!.response_format).toEqual({ type: 'json_object' });
   });
   it.each([

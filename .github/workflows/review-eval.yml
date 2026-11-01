@@ -10,16 +10,21 @@ name: AI review eval (live)
 # so a repeat run on the same deployment is answered from the cache; the report marks those.
 on:
   workflow_dispatch:
+    inputs:
+      single_models:
+        description: Free models to also run on their own (a JSON list; [] for none)
+        default: '["google/gemma-4-26b-a4b-it:free", "nvidia/nemotron-3.5-super-vl:free", "google/gemma-4-31b-it:free"]'
 
 jobs:
   single:
     name: Only ${{ matrix.model }}
+    if: inputs.single_models != '[]'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        model: ['google/gemma-4-26b-a4b-it:free', 'nvidia/nemotron-3.5-super-vl:free', 'google/gemma-4-31b-it:free']
+        model: ${{ fromJSON(inputs.single_models) }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5

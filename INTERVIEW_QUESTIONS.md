@@ -57,13 +57,22 @@ the freeze fix) are in [ANALYSIS.md](ANALYSIS.md#8-technical-interviewer-questio
 - A 30-second turn timer means a stalled client can't freeze the table.
 
 **AI review route (`api/review.ts`):**
-- The key is only in a server environment variable.
+- The key (`OPENROUTER_API_KEY`) is only in a server environment variable.
+- Free models are tried first. The paid model is a last resort, capped at 200 calls per UTC
+  day.
+- Reviews are cached by a SHA-256 of the prompt, in the browser and on the server, so the
+  same hand does not call a model again. Identical requests in flight share one call.
+- The prompt is compact: 1,683 characters per hand on average, down from 2,833. Output is
+  capped at 500 tokens.
 - Per-IP sliding windows allow 5 requests a minute and 20 an hour, plus 300 an hour per
-  instance as a spend cap.
-- Output is capped at 4,000 tokens, and the model's answer is validated with zod.
-- **Limitation:** limits live in memory, so each serverless instance counts on its own. For
-  a global limit I'd move the counters to Redis (for example Upstash) with the same
-  sliding-window logic.
+  instance. Every answer is validated with zod.
+- The eval can ask one model on its own, but only a free one. A paid model is refused, so
+  that option can't run up the bill.
+- **Limitation:** limits and caches live in memory, so each serverless instance counts on
+  its own.
+  - For a global limit I'd move the counters to Redis (for example Upstash) with the same
+    sliding-window logic.
+  - Until then, the hard global stop is the credit limit on the OpenRouter key.
 
 ## 4. The game never waits for the database. How do you keep the data correct?
 

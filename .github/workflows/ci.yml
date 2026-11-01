@@ -67,9 +67,13 @@ jobs:
           npm run server:build
           VITE_MP_SERVER_URL=http://localhost:8099 npx vite build --outDir dist-mp
           DATABASE_URL=$TEST_DATABASE_URL PORT=8099 TIMING=fast ALLOWED_ORIGINS=http://localhost:4177 node server/dist/main.js &
+          SERVER_PID=$!
           npx vite preview --outDir dist-mp --port 4177 --strictPort &
           for i in $(seq 30); do curl -sf http://localhost:4177/mp.html > /dev/null && curl -sf http://localhost:8099/health > /dev/null && break; sleep 1; done
           node tools/ui/mp-smoke.mjs http://localhost:4177/mp.html 3
+          # a sleeping server (free hosting): the page says it is waking up and holds the first click
+          kill $SERVER_PID
+          node tools/ui/mp-wake.mjs http://localhost:4177/mp.html 8099 8000
       - name: AI review eval against mock models (checks the eval pipeline and the model chain, not the models)
         run: |
           npx tsx tools/review/eval.ts --mock --min 1

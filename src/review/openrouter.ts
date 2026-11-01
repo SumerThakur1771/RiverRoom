@@ -21,7 +21,7 @@ export interface ModelSpec {
    * against OpenRouter's model list.
    */
   json: 'schema' | 'object' | 'none';
-  /** Reasoning model: ask for low effort and keep the reasoning out of the reply. */
+  /** Reasoning model: a bounded thinking budget, and the reasoning kept out of the reply. */
   reasoning?: boolean;
 }
 
@@ -42,6 +42,12 @@ export const FREE_CANDIDATES: readonly ModelSpec[] = [GEMMA_26B, NEMOTRON, GEMMA
 export const REVIEW_MODELS: readonly ModelSpec[] = [GEMMA_26B, NEMOTRON, GEMINI_FLASH_LITE];
 /** A review is three short fields; this leaves room without paying for rambling. */
 export const REVIEW_MAX_TOKENS = 500;
+/**
+ * Reasoning models think before answering, and the thinking counts against max_tokens: with
+ * 500 in total, Nemotron was cut off on all 20 eval hands. They get this bounded thinking
+ * budget on top. Only free models are reasoning models in the chain, so it costs nothing.
+ */
+export const REASONING_BUDGET = 800;
 /** Per model: after this, move on to the next one. */
 export const ATTEMPT_TIMEOUT_MS = 20_000;
 
@@ -85,14 +91,14 @@ export function openRouterCall(opts: OpenRouterOptions): CallFn {
       const body: Record<string, unknown> = {
         model: spec.id,
         messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
-        max_tokens: REVIEW_MAX_TOKENS,
+        max_tokens: REVIEW_MAX_TOKENS + (spec.reasoning ? REASONING_BUDGET : 0),
         temperature: 0.2,
         stream: true,
         usage: { include: true },
       };
       if (spec.json === 'schema') body.response_format = { type: 'json_schema', json_schema: { name: 'hand_review', strict: true, schema: REVIEW_JSON_SCHEMA } };
       else if (spec.json === 'object') body.response_format = { type: 'json_object' };
-      if (spec.reasoning) body.reasoning = { effort: 'low', exclude: true };
+      if (spec.reasoning) body.reasoning = { max_tokens: REASONING_BUDGET, exclude: true };
       const res = await doFetch(OPENROUTER_URL, {
         method: 'POST',
         headers: {
@@ -184,10 +190,12 @@ export async function runChain(call: CallFn, req: ReviewRequest, opts: ChainOpti
       done(err instanceof ModelError ? err.kind : 'model_error', err instanceof Error ? err.message : undefined);
       continue;
     }
-    if (res.finish === 'length') { done('truncated'); continue; }
+    // what a failed answer looked like (length, tokens, opening), to tell rambling from padding
+    const shape = (): string => `${res.text.length} chars${res.usage?.completion_tokens !== undefined ? `, ${res.usage.completion_tokens} tokens` : ''}, starts ${JSON.stringify(res.text.slice(0, 40))}`;
+    if (res.finish === 'length') { done('truncated', shape()); continue; }
     if (res.finish === 'content_filter') { done('refused'); continue; }
     const parsed = parseReview(res.text);
-    if (!parsed.ok) { done(parsed.reason, parsed.detail); continue; }
+    if (!parsed.ok) { done(parsed.reason, `${parsed.detail ? parsed.detail + '; ' : ''}${shape()}`); continue; }
     done('ok');
     return { ok: true, review: parsed.review, model: spec.id, paid: spec.paid, attempts, ...(res.usage ? { usage: res.usage } : {}) };
   }

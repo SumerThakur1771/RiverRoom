@@ -182,43 +182,112 @@ runnable in a Web Worker and in Node. The screen code is covered in section 13.
 
 ## 9. AI hand review (`api/review.ts`, `src/review`)
 
-After a hand, "Ask Claude" sends the hand history and the app's own read of each decision to
-`POST /api/review`, a Vercel serverless function.
+After a hand, "Ask the AI coach" sends the hand history and the app's own read of each
+decision to `POST /api/review`, a Vercel serverless function. The function asks models on
+OpenRouter, free models first. The design aims at the lowest cost, and the player always gets
+a review.
 
-**Model and output.**
-- It calls Claude Haiku 5.5 (`claude-haiku-5-5`, small and fast), with effort `low`.
-- The response format is constrained to a zod schema `{grade, mistake, lesson}`.
-- The reply streams back as server-sent events (`delta` while it is generated, then `result`).
-- The final JSON is validated with zod again on the server before it is shown.
+**Models (`src/review/openrouter.ts`).** OpenRouter's OpenAI-compatible chat completions API
+is called with plain `fetch`; there is no SDK. The chain:
+1. `google/gemma-4-26b-a4b-it:free`: free.
+2. `nvidia/nemotron-3.5-super-vl:free`: free, and from a different provider than the first,
+   so one provider's outage or rate limit does not take out both free options. The original
+   choice, `openai/gpt-oss-20b:free`, no longer exists on OpenRouter; only paid gpt-oss
+   variants are listed. `google/gemma-4-31b-it:free` remains a candidate.
+3. `google/gemini-2.5-flash-lite`: paid ($0.10 / $0.40 per million input / output tokens),
+   used only when both free models fail.
 
-**Fallbacks.** The player always gets a review: anything other than a valid result means the
-app's built-in review stands. That covers:
-- no API key (503);
+The chain moves to the next model after any of these:
+- an HTTP error, or a rate limit (429, or an error inside the stream);
+- no complete answer within 20 s;
+- a cut-off (`length`) or filtered answer;
+- an answer that is not valid JSON matching the zod schema.
+
+**JSON.** Every model is asked for the strongest JSON mode it supports:
+- `response_format` `json_schema` (strict) where the model has structured outputs;
+- `json_object` where it has only JSON mode (the Gemmas);
+- the prompt itself always says "only this JSON object".
+
+Every answer is validated with zod (`grade`, `mistake`, `lesson`) whatever mode was used.
+`tools/review/check-models.ts` reads OpenRouter's public model list in CI and fails if:
+- a model has disappeared;
+- a "free" model has a price;
+- a model is sent a JSON mode it does not support.
+
+That check is how the missing gpt-oss model was found.
+
+**Cost controls.**
+- *Compact prompt* (`src/review/prompt.ts`). The 486-character system prompt and the hand go
+  out without seat headers, table chat, the practice-view dump of folded players' cards and
+  the summary. Each decision becomes one short line. That cut the prompt from 2,833 to 1,683
+  characters per hand on the eval set.
+- *Output cap.* `max_tokens` is 500 and temperature 0.2. A reasoning model is asked for low
+  effort, with its reasoning left out of the reply.
+- *Caching.* The cache key is a SHA-256 of the prompt version plus the exact prompt text
+  (`src/review/key.ts`). The browser and the server compute it the same way.
+  - The browser keeps up to 100 reviews in localStorage, so reopening a reviewed hand makes
+    no request at all.
+  - The server keeps up to 500 in memory, and two requests for the same hand at the same
+    time share one model call.
+  - A cache hit does not count against the rate limit.
+- *Limits* (`src/review/rate-limit.ts`):
+  - per IP: 5 a minute and 20 an hour;
+  - 300 an hour per instance;
+  - at most 200 paid-model calls per UTC day. After that the chain stops at the free models
+    and falls back to the built-in review.
+
+**Streaming and fallbacks.** The function streams server-sent events:
+- `attempt`: which model is being asked;
+- `delta`: its output as it arrives;
+- `result`: the validated review, with the model, free or paid, and the list of attempts;
+- `fallback`: no model gave a valid answer.
+
+The page shows the model's name in small text under the review. The built-in review stands
+whenever the AI review fails:
+- no key (503);
 - rate limited (429);
 - bad request (400);
-- a refusal, a cut-off answer, invalid JSON or the wrong shape (a `fallback` event).
+- today's paid cap used up;
+- every model failed;
+- offline.
+
+**Logging.** One JSON line per review in the function logs, with:
+- which model answered, and whether it was free or paid;
+- every attempt and how it ended;
+- token usage and cost as OpenRouter reports them;
+- paid calls used today.
 
 **Security.**
-- The key is read from `process.env.ANTHROPIC_API_KEY` on the server only.
+- The key is read from `process.env.OPENROUTER_API_KEY` on the server only.
 - The request body is validated (size and shape) before any model call.
-- Limits per IP: 5 requests a minute and 20 an hour. Each server instance also caps itself at
-  300 an hour, as a spend guard.
+- The eval may ask one model on its own, but only one of the free candidates. A paid or
+  unknown model is refused, so the option cannot be used to run up the bill.
 
-**Tradeoff: the limiter is in memory, so it holds per Vercel instance, not globally.** A
-global limit needs a shared store (Redis), which would be another hosted service. The
-per-instance cap still bounds spend per instance.
+**Tradeoff: the limits and caches live in memory, so they hold per Vercel instance, not
+globally.** A global limit needs a shared store (Redis), which would be another hosted
+service. The hard global stop is the credit limit on the OpenRouter key itself.
 
 **Eval.** `test/review-eval/hands.json` holds 20 hands generated by the simulator:
 - 10 where the app's coach found a mistake, and 10 played well;
 - across home Hold'em, tournaments, Poker + 3 Patti and Two boards.
 
-`tools/review/eval.ts` scores answers on four checks: schema-valid, grade within one step of
-the coach's, mistake reported if and only if the coach found one, and the mistake's street
-named. The reference is the app's own coach, so the score measures agreement with it, not
-poker truth.
+`tools/review/eval.ts` scores answers on four checks:
+- the answer is schema-valid;
+- the grade is within one step of the coach's;
+- a mistake is reported if and only if the coach found one;
+- the mistake's street is named.
 
-In CI it runs against a mock model, which checks the scoring pipeline only. Against the real
-model it runs from the "AI review eval (live)" workflow, through the deployed endpoint.
+The reference is the app's own coach, so the score measures agreement with it, not poker
+truth. It also reports which model answered each hand, the free vs paid split, and each
+model's attempt outcomes and latency.
+
+CI runs it against mock models:
+- a perfect mock;
+- a lazy mock (to show the scorer separates good answers from bad ones);
+- a mock chain where the free models fail on some hands, to exercise the fall-through.
+
+The live run is manual (the "AI review eval (live)" workflow). It runs each free candidate
+on its own, then the real chain, against the deployed endpoint.
 
 ## 10. Multiplayer: a server-authoritative table (`server/`)
 

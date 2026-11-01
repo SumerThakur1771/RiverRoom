@@ -9,7 +9,7 @@ export interface ReviewEvents {
   cached?: boolean;
   fallback?: string;
   /** Models tried for this answer, in order, with how each attempt ended. */
-  attempts?: Array<{ model: string; outcome: string; ms: number }>;
+  attempts?: Array<{ model: string; outcome: string; ms: number; detail?: string }>;
 }
 
 /** Read the handler's server-sent events (used by the page, the eval and tests). */

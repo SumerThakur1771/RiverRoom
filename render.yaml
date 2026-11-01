@@ -1,0 +1,28 @@
+# Render Blueprint for the multiplayer game server (free web service).
+# Postgres is on Neon's free plan; its connection strings are entered in Render when the
+# Blueprint is created (sync: false means Render asks for the value and never stores it here).
+services:
+  - type: web
+    name: riverroom-server
+    runtime: node
+    plan: free
+    # Neon's US East (Ohio) region is AWS us-east-2; keep the server next to the database
+    region: ohio
+    branch: main
+    # dev dependencies are needed to bundle the server (esbuild) and generate the Prisma client
+    buildCommand: npm ci --include=dev && npm run server:build
+    # free instances have no pre-deploy step, so migrations run right before the server starts
+    # (over DIRECT_DATABASE_URL; skipped when no database is configured)
+    startCommand: npm run db:migrate && npm run server:start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: ALLOWED_ORIGINS
+        value: https://sumer-riverroom.vercel.app
+      # Neon pooled connection string (host contains "-pooler"): used by the running server
+      - key: DATABASE_URL
+        sync: false
+      # Neon direct connection string (no "-pooler"): used only by `prisma migrate deploy`
+      - key: DIRECT_DATABASE_URL
+        sync: false

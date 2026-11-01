@@ -35,9 +35,13 @@ coach explains each decision.
   coach) runs with no network, cached by a hand-written service worker.
 - **Accessible:** Lighthouse accessibility 100 on both pages (local build), and no axe-core
   WCAG 2.1 A/AA violations on the in-game screens. Both are checked in CI.
-- **AI hand review (optional):** after a hand, Claude (Haiku 5.5) writes a short review
-  through a server route (`api/review.ts`). It needs `ANTHROPIC_API_KEY` set on the server.
-  Without it, or when rate-limited, the built-in review is used.
+- **AI hand review (optional):** after a hand, "Ask the AI coach" gets a short review
+  (grade, biggest mistake, one lesson) from a server route (`api/review.ts`) that calls
+  OpenRouter: two free models first, a cheap paid one as a last resort. It is capped at 200
+  paid calls a day, and reviews are cached in the browser and on the server, so reopening a
+  reviewed hand does not call a model again. It needs
+  `OPENROUTER_API_KEY` on the server; without it, or when limits are hit, the app's own coach
+  review is shown.
 
 ## How it is built
 

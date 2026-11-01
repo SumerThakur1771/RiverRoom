@@ -35,8 +35,8 @@ function mockCall(item: EvalItem, index: number, mode: string): CallFn {
   };
 }
 
-interface Row { answer: unknown; ms: number; note: string; model?: string; paid?: boolean; cached?: boolean; tried?: string; attempts?: Array<{ model: string; outcome: string; ms: number }> }
-const triedText = (a?: Array<{ model: string; outcome: string; ms: number }>): string | undefined =>
+interface Row { answer: unknown; ms: number; note: string; model?: string; paid?: boolean; cached?: boolean; tried?: string; attempts?: Array<{ model: string; outcome: string; ms: number; detail?: string }> }
+const triedText = (a?: Array<{ model: string; outcome: string; ms: number; detail?: string }>): string | undefined =>
   a && a.length > 1 ? a.map(x => `${x.model.split('/')[1]}:${x.outcome}`).join(' > ') : undefined;
 
 async function live(url: string, item: EvalItem): Promise<Row> {
@@ -47,8 +47,11 @@ async function live(url: string, item: EvalItem): Promise<Row> {
     if (res.status === 429) { const wait = Number(res.headers.get('retry-after') || 30); console.log(`  rate limited, waiting ${wait}s`); await new Promise(r => setTimeout(r, (wait + 1) * 1000)); continue; }
     if (!res.ok) return { answer: null, ms: Date.now() - t0, note: `HTTP ${res.status} ${(await res.text()).slice(0, 120)}` };
     const out = await readReviewEvents(res);
+    let note = out.fallback ? `fallback: ${out.fallback}` : '';
     const tried = triedText(out.attempts);
-    return { answer: out.review ?? null, ms: Date.now() - t0, note: out.fallback ? `fallback: ${out.fallback}` : '', ...(out.model ? { model: out.model, paid: !!out.paid, cached: !!out.cached } : {}), ...(tried ? { tried } : {}), ...(out.attempts ? { attempts: out.attempts } : {}) };
+    const why = out.attempts?.filter(a => a.detail).map(a => `${a.model.split('/')[1]}: ${a.detail}`).join('; ');
+    if (why) note = (note ? note + ' ' : '') + `(${why})`;
+    return { answer: out.review ?? null, ms: Date.now() - t0, note, ...(out.model ? { model: out.model, paid: !!out.paid, cached: !!out.cached } : {}), ...(tried ? { tried } : {}), ...(out.attempts ? { attempts: out.attempts } : {}) };
   }
   return { answer: null, ms: 0, note: 'gave up after repeated rate limits' };
 }

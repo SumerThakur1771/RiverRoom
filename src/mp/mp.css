@@ -50,3 +50,5 @@ button:disabled{opacity:.5;cursor:default}
 .settle td,.settle th{text-align:left;padding:4px 8px;border-bottom:1px solid var(--line)}
 .settle .pos{color:#7fd69a}.settle .neg{color:#ff8f86}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.wake{background:var(--panel);border:1px solid var(--gold);border-radius:12px;padding:10px 14px;margin:0 0 12px}
+button:disabled{opacity:.6;cursor:progress}

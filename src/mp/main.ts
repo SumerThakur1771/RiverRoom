@@ -32,8 +32,33 @@ let view: View | null = null;
 let session = load();
 let countdown: number | undefined;
 
-function call<T extends { ok: true } | { ok: false; error: string } = Ack>(ev: string, msg: unknown): Promise<T> {
-  return new Promise(resolve => sock.timeout(8000).emit(ev, msg, (err: Error | null, ack: T) => resolve(err ? ({ ok: false, error: 'no answer from the server' } as unknown as T) : ack)));
+/*
+ * The game server runs on a free host that sleeps after 15 minutes without players, and
+ * takes about a minute to wake. While the first connection is pending (after a short grace
+ * period, so a server that is already awake shows nothing) the page says so, and lobby
+ * actions wait for the connection instead of failing.
+ */
+const WAKE_NOTICE_MS = 1500, WAKE_LIMIT_MS = 120_000, pageStart = Date.now();
+let everConnected = false;
+const waking = (on: boolean): void => {
+  $('wake').hidden = !on;
+  if (on) $('conn').textContent = 'Waking up the server…';
+};
+const wakeTimer = window.setTimeout(() => { if (!sock.connected) waking(true); }, WAKE_NOTICE_MS);
+/** Resolves true once connected (at once if already), false after `ms`. */
+function connected(ms: number): Promise<boolean> {
+  if (sock.connected) return Promise.resolve(true);
+  return new Promise(resolve => {
+    const on = (): void => { clearTimeout(t); resolve(true); };
+    const t = window.setTimeout(() => { sock.off('connect', on); resolve(false); }, ms);
+    sock.once('connect', on);
+  });
+}
+
+async function call<T extends { ok: true } | { ok: false; error: string } = Ack>(ev: string, msg: unknown): Promise<T> {
+  const noAnswer = { ok: false, error: 'no answer from the server' } as unknown as T;
+  if (!(await connected(everConnected ? 8000 : WAKE_LIMIT_MS))) return noAnswer;
+  return new Promise(resolve => sock.timeout(8000).emit(ev, msg, (err: Error | null, ack: T) => resolve(err ? noAnswer : ack)));
 }
 
 /* ---- lobby ---- */
@@ -45,7 +70,9 @@ async function enter(kind: 'create' | 'join'): Promise<void> {
   const name = $<HTMLInputElement>('name').value.trim(), code = $<HTMLInputElement>('code').value.trim().toUpperCase();
   if (!name) return lobbyError('Type your name first.');
   if (kind === 'join' && !/^[A-Z2-9]{6}$/.test(code)) return lobbyError('A table code has 6 letters and numbers.');
-  const ack = await call(kind, kind === 'create' ? { name } : { code, name });
+  lobbyError('');
+  for (const b of ['create', 'join']) $<HTMLButtonElement>(b).disabled = true;
+  const ack = await call(kind, kind === 'create' ? { name } : { code, name }).finally(() => { for (const b of ['create', 'join']) $<HTMLButtonElement>(b).disabled = false; });
   if (!ack.ok) return lobbyError(ack.error === 'no such room' ? 'No table with that code. Check it with your friend.' : ack.error === 'the table is full' ? 'That table is full.' : 'Could not join: ' + ack.error);
   session = { code: ack.code!, token: ack.token!, name };
   save(session);
@@ -56,6 +83,9 @@ $('join').onclick = () => void enter('join');
 
 /* ---- connection and reconnection ---- */
 sock.on('connect', async () => {
+  everConnected = true;
+  clearTimeout(wakeTimer);
+  waking(false);
   $('conn').textContent = 'Connected';
   if (session && !view) {
     const ack = await call('resume', { code: session.code, token: session.token });
@@ -63,7 +93,12 @@ sock.on('connect', async () => {
   } else if (session && view) await call('resume', { code: session.code, token: session.token });
 });
 sock.on('disconnect', () => { $('conn').textContent = 'Reconnecting…'; });
-sock.on('connect_error', () => { $('conn').textContent = 'Cannot reach the game server'; });
+sock.on('connect_error', () => {
+  // the client keeps retrying; while a sleeping server may still be waking, keep saying so
+  if (!everConnected && Date.now() - pageStart < WAKE_LIMIT_MS) { waking(true); return; }
+  waking(false);
+  $('conn').textContent = 'Cannot reach the game server';
+});
 sock.on('state', (v: View) => { view = v; render(); });
 sock.on('log', (l: LogLine) => {
   const li = document.createElement('li');

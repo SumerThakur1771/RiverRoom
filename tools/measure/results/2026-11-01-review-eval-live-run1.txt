@@ -1,0 +1,119 @@
+# Live review eval, run 1: https://github.com/SumerThakur1771/RiverRoom/actions/runs/41346553334 (commit 5321642, 2026-11-01)
+# Command (per job): npx tsx tools/review/eval.ts --live https://sumer-riverroom.vercel.app/api/review [--model <id>]
+# Read back from the jobs' annotations: gh api repos/SumerThakur1771/RiverRoom/check-runs/<job id>/annotations
+# Nemotron at this point had max_tokens 500 with reasoning effort low (fixed in the next commit).
+=== Only google/gemma-4-26b-a4b-it:free (success)
+home-std-m1      expected blunder  got -        valid=false grade±1=false mistake=false street=false 1283ms fallback: rate_limited 
+home-std-m2      expected blunder  got -        valid=false grade±1=false mistake=false street=false 332ms fallback: rate_limited 
+home-std-c1      expected good     got -        valid=false grade±1=false mistake=false street=n/a 312ms fallback: rate_limited 
+home-std-c2      expected good     got -        valid=false grade±1=false mistake=false street=n/a 325ms fallback: rate_limited 
+home-two-m1      expected mistake  got -        valid=false grade±1=false mistake=false street=false 327ms fallback: rate_limited 
+home-two-c1      expected good     got -        valid=false grade±1=false mistake=false street=n/a 328ms fallback: rate_limited 
+
+home-holdem-c4   expected good     got -        valid=false grade±1=false mistake=false street=n/a 289ms fallback: rate_limited 
+tourney-m1       expected mistake  got -        valid=false grade±1=false mistake=false street=false 288ms fallback: rate_limited 
+tourney-m2       expected mistake  got -        valid=false grade±1=false mistake=false street=false 590ms fallback: rate_limited 
+tourney-m3       expected mistake  got -        valid=false grade±1=false mistake=false street=false 678ms fallback: rate_limited 
+tourney-c1       expected good     got -        valid=false grade±1=false mistake=false street=n/a 277ms fallback: rate_limited 
+tourney-c2       expected good     got -        valid=false grade±1=false mistake=false street=n/a 322ms fallback: rate_limited 
+tourney-c3       expected good     got -        valid=false grade±1=false mistake=false street=n/a 284ms fallback: rate_limited
+home-holdem-m1   expected mistake  got -        valid=false grade±1=false mistake=false street=false 448ms fallback: rate_limited 
+home-holdem-m2   expected mistake  got -        valid=false grade±1=false mistake=false street=false 378ms fallback: rate_limited 
+home-holdem-m3   expected mistake  got -        valid=false grade±1=false mistake=false street=false 289ms fallback: rate_limited 
+home-holdem-m4   expected blunder  got -        valid=false grade±1=false mistake=false street=false 355ms fallback: rate_limited 
+home-holdem-c1   expected good     got -        valid=false grade±1=false mistake=false street=n/a 305ms fallback: rate_limited 
+home-holdem-c2   expected good     got -        valid=false grade±1=false mistake=false street=n/a 373ms fallback: rate_limited 
+home-holdem-c3   expected good     got -        valid=false grade±1=false mistake=false street=n/a 285ms fallback: rate_limited
+model google/gemma-4-26b-a4b-it:free: 20 attempts (rate_limited 20)
+response time (full stream) median 327 ms, max 1283 ms
+answered by: free models 0, paid model 0, built-in fallback 20; no model
+overall score (mean of all applicable checks): 0.0%
+schema-valid 0/20 · grade within one step 0/20 · mistake flagged iff the coach found one 0/20 · street named 0/10
+=== Only nvidia/nemotron-3.5-super-vl:free (success)
+home-std-m1      expected blunder  got -        valid=false grade±1=false mistake=false street=false 2998ms fallback: truncated 
+home-std-m2      expected blunder  got -        valid=false grade±1=false mistake=false street=false 2589ms fallback: truncated 
+home-std-c1      expected good     got -        valid=false grade±1=false mistake=false street=n/a 2483ms fallback: truncated 
+home-std-c2      expected good     got -        valid=false grade±1=false mistake=false street=n/a 2625ms fallback: truncated 
+home-two-m1      expected mistake  got -        valid=false grade±1=false mistake=false street=false 3376ms fallback: truncated 
+home-two-c1      expected good     got -        valid=false grade±1=false mistake=false street=n/a 2714ms fallback: truncated 
+
+home-holdem-c4   expected good     got -        valid=false grade±1=false mistake=false street=n/a 3131ms fallback: truncated 
+tourney-m1       expected mistake  got -        valid=false grade±1=false mistake=false street=false 2883ms fallback: truncated 
+tourney-m2       expected mistake  got -        valid=false grade±1=false mistake=false street=false 3265ms fallback: truncated 
+tourney-m3       expected mistake  got -        valid=false grade±1=false mistake=false street=false 2905ms fallback: truncated 
+tourney-c1       expected good     got -        valid=false grade±1=false mistake=false street=n/a 2564ms fallback: truncated 
+tourney-c2       expected good     got -        valid=false grade±1=false mistake=false street=n/a 3839ms fallback: truncated 
+tourney-c3       expected good     got -        valid=false grade±1=false mistake=false street=n/a 2445ms fallback: truncated
+home-holdem-m1   expected mistake  got -        valid=false grade±1=false mistake=false street=false 3334ms fallback: truncated 
+home-holdem-m2   expected mistake  got -        valid=false grade±1=false mistake=false street=false 2442ms fallback: truncated 
+home-holdem-m3   expected mistake  got -        valid=false grade±1=false mistake=false street=false 2941ms fallback: truncated 
+home-holdem-m4   expected blunder  got -        valid=false grade±1=false mistake=false street=false 2728ms fallback: truncated 
+home-holdem-c1   expected good     got -        valid=false grade±1=false mistake=false street=n/a 2759ms fallback: truncated 
+home-holdem-c2   expected good     got -        valid=false grade±1=false mistake=false street=n/a 2955ms fallback: truncated 
+home-holdem-c3   expected good     got -        valid=false grade±1=false mistake=false street=n/a 2879ms fallback: truncated
+model nvidia/nemotron-3.5-super-vl:free: 20 attempts (truncated 20)
+response time (full stream) median 2883 ms, max 3839 ms
+answered by: free models 0, paid model 0, built-in fallback 20; no model
+overall score (mean of all applicable checks): 0.0%
+schema-valid 0/20 · grade within one step 0/20 · mistake flagged iff the coach found one 0/20 · street named 0/10
+=== Only google/gemma-4-31b-it:free (success)
+home-std-m1      expected blunder  got -        valid=false grade±1=false mistake=false street=false 784ms fallback: rate_limited 
+home-std-m2      expected blunder  got -        valid=false grade±1=false mistake=false street=false 789ms fallback: rate_limited 
+home-std-c1      expected good     got -        valid=false grade±1=false mistake=false street=n/a 402ms fallback: rate_limited 
+home-std-c2      expected good     got -        valid=false grade±1=false mistake=false street=n/a 313ms fallback: rate_limited 
+home-two-m1      expected mistake  got -        valid=false grade±1=false mistake=false street=false 336ms fallback: rate_limited 
+home-two-c1      expected good     got -        valid=false grade±1=false mistake=false street=n/a 345ms fallback: rate_limited 
+
+home-holdem-c4   expected good     got -        valid=false grade±1=false mistake=false street=n/a 375ms fallback: rate_limited 
+tourney-m1       expected mistake  got -        valid=false grade±1=false mistake=false street=false 346ms fallback: rate_limited 
+tourney-m2       expected mistake  got -        valid=false grade±1=false mistake=false street=false 339ms fallback: rate_limited 
+tourney-m3       expected mistake  got -        valid=false grade±1=false mistake=false street=false 306ms fallback: rate_limited 
+tourney-c1       expected good     got -        valid=false grade±1=false mistake=false street=n/a 348ms fallback: rate_limited 
+tourney-c2       expected good     got -        valid=false grade±1=false mistake=false street=n/a 336ms fallback: rate_limited 
+tourney-c3       expected good     got -        valid=false grade±1=false mistake=false street=n/a 352ms fallback: rate_limited
+home-holdem-m1   expected mistake  got -        valid=false grade±1=false mistake=false street=false 510ms fallback: rate_limited 
+home-holdem-m2   expected mistake  got -        valid=false grade±1=false mistake=false street=false 334ms fallback: rate_limited 
+home-holdem-m3   expected mistake  got -        valid=false grade±1=false mistake=false street=false 358ms fallback: rate_limited 
+home-holdem-m4   expected blunder  got -        valid=false grade±1=false mistake=false street=false 780ms fallback: rate_limited 
+home-holdem-c1   expected good     got -        valid=false grade±1=false mistake=false street=n/a 326ms fallback: rate_limited 
+home-holdem-c2   expected good     got -        valid=false grade±1=false mistake=false street=n/a 364ms fallback: rate_limited 
+home-holdem-c3   expected good     got -        valid=false grade±1=false mistake=false street=n/a 388ms fallback: rate_limited
+model google/gemma-4-31b-it:free: 20 attempts (rate_limited 20)
+response time (full stream) median 352 ms, max 789 ms
+answered by: free models 0, paid model 0, built-in fallback 20; no model
+overall score (mean of all applicable checks): 0.0%
+schema-valid 0/20 · grade within one step 0/20 · mistake flagged iff the coach found one 0/20 · street named 0/10
+=== Full chain (free first, paid last) (success)
+home-std-m1      expected blunder  got blunder  valid=true grade±1=true mistake=true street=true 4480ms by google/gemini-2.5-flash-lite (paid) [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:truncated > gemini-2.5-flash-lite:ok] 
+home-std-m2      expected blunder  got blunder  valid=true grade±1=true mistake=true street=true 4200ms by google/gemini-2.5-flash-lite (paid) [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:truncated > gemini-2.5-flash-lite:ok] 
+home-std-c1      expected good     got -        valid=false grade±1=false mistake=false street=n/a 3028ms fallback: all_failed [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:truncated > gemini-2.5-flash-lite:rate_limited] 
+home-std-c2      expected good     got good     valid=true grade±1=true mistake=true street=n/a 3437ms by google/gemini-2.5-flash-lite (paid) [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:truncated > gemini-2.5-flash-lite:ok] 
+home-two-m1      expected mistake  got mistake  valid=true grade±1=true mistake=true street=true 4136ms by google/gemini-2.5-flash-lite (paid) [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:truncated > gemini-2.5-flash-lite:ok] 
+home-two-c1      expected good     got mistake  valid=true grade±1=false mistake=false street=n/a 3567ms by google/gemini-2.5-flash-lite (paid) [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:truncated > gemini-2.5-flash-lite:ok] 
+
+home-holdem-c4   expected good     got good     valid=true grade±1=true mistake=true street=n/a 3738ms by google/gemini-2.5-flash-lite (paid) [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:truncated > gemini-2.5-flash-lite:ok] 
+tourney-m1       expected mistake  got mistake  valid=true grade±1=true mistake=true street=true 3360ms by google/gemini-2.5-flash-lite (paid) [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:truncated > gemini-2.5-flash-lite:ok] 
+tourney-m2       expected mistake  got fine     valid=true grade±1=true mistake=false street=false 4308ms by google/gemini-2.5-flash-lite (paid) [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:truncated > gemini-2.5-flash-lite:ok] 
+tourney-m3       expected mistake  got mistake  valid=true grade±1=true mistake=true street=false 3618ms by google/gemini-2.5-flash-lite (paid) [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:truncated > gemini-2.5-flash-lite:ok] 
+tourney-c1       expected good     got good     valid=true grade±1=true mistake=true street=n/a 3409ms by google/gemini-2.5-flash-lite (paid) [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:truncated > gemini-2.5-flash-lite:ok] 
+tourney-c2       expected good     got good     valid=true grade±1=true mistake=true street=n/a 3007ms by google/gemini-2.5-flash-lite (paid) [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:truncated > gemini-2.5-flash-lite:ok] 
+tourney-c3       expected good     got -        valid=false grade±1=false mistake=false street=n/a 4544ms fallback: all_failed [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:truncated > gemini-2.5-flash-lite:rate_limited]
+home-holdem-m1   expected mistake  got mistake  valid=true grade±1=true mistake=true street=false 3842ms by google/gemini-2.5-flash-lite (paid) [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:truncated > gemini-2.5-flash-lite:ok] 
+home-holdem-m2   expected mistake  got blunder  valid=true grade±1=true mistake=true street=false 3841ms by google/gemini-2.5-flash-lite (paid) [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:truncated > gemini-2.5-flash-lite:ok] 
+home-holdem-m3   expected mistake  got -        valid=false grade±1=false mistake=false street=false 4171ms fallback: all_failed [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:truncated > gemini-2.5-flash-lite:rate_limited] 
+home-holdem-m4   expected blunder  got blunder  valid=true grade±1=true mistake=true street=true 3746ms by google/gemini-2.5-flash-lite (paid) [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:truncated > gemini-2.5-flash-lite:ok] 
+home-holdem-c1   expected good     got good     valid=true grade±1=true mistake=true street=n/a 4303ms by google/gemini-2.5-flash-lite (paid) [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:truncated > gemini-2.5-flash-lite:ok] 
+home-holdem-c2   expected good     got good     valid=true grade±1=true mistake=true street=n/a 3086ms by google/gemini-2.5-flash-lite (paid) [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:truncated > gemini-2.5-flash-lite:ok] 
+home-holdem-c3   expected good     got -        valid=false grade±1=false mistake=false street=n/a 3714ms fallback: all_failed [tried gemma-4-26b-a4b-it:free:rate_limited > nemotron-3.5-super-vl:free:truncated > gemini-2.5-flash-lite:rate_limited]
+model google/gemini-2.5-flash-lite: 20 attempts (ok 16, rate_limited 4); valid answers in median 678 ms, max 1309 ms
+model nvidia/nemotron-3.5-super-vl:free: 20 attempts (truncated 20)
+model google/gemma-4-26b-a4b-it:free: 20 attempts (rate_limited 20)
+response time (full stream) median 3746 ms, max 4544 ms
+answered by: free models 0, paid model 16, built-in fallback 4; google/gemini-2.5-flash-lite 16
+overall score (mean of all applicable checks): 71.4%
+schema-valid 16/20 · grade within one step 15/20 · mistake flagged iff the coach found one 14/20 · street named 5/10
+Free OpenRouter models with JSON output (7): recursive/flint-v1.0:free (json), xingchen-agi/xing4.0-29b-a4b:free (schema), nvidia/nemotron-3.5-super-vl:free (schema), dots-studio/dots-3-note-preview:free (schema), liquid/lfm-2.5-2.6b:free (schema), google/gemma-4-26b-a4b-it:free (json), google/gemma-4-31b-it:free (json)
+OpenRouter model google/gemma-4-31b-it:free: google/gemma-4-31b-it:free: $0.000 / $0.000 per million input/output tokens; context 262144; structured_outputs no, response_format yes, reasoning yes, max_tokens yes
+OpenRouter model google/gemini-2.5-flash-lite: google/gemini-2.5-flash-lite: $0.100 / $0.400 per million input/output tokens; context 1048576; structured_outputs yes, response_format yes, reasoning yes, max_tokens yes
+OpenRouter model nvidia/nemotron-3.5-super-vl:free: nvidia/nemotron-3.5-super-vl:free: $0.000 / $0.000 per million input/output tokens; context 1000000; structured_outputs yes, response_format yes, reasoning yes, max_tokens yes
+OpenRouter model google/gemma-4-26b-a4b-it:free: google/gemma-4-26b-a4b-it:free: $0.000 / $0.000 per million input/output tokens; context 262144; structured_outputs no, response_format yes, reasoning yes, max_tokens yes
