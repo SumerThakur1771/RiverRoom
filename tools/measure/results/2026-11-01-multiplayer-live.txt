@@ -1,0 +1,8 @@
+# Multiplayer on production: "Live smoke test" run https://github.com/SumerThakur1771/RiverRoom/actions/runs/41351661571 (commit 9b7086c, 2026-11-01)
+# Page: https://sumer-riverroom.vercel.app/mp.html (Vercel). Server: https://riverroom-server.onrender.com (Render free, Virginia). Database: Neon free (AWS us-east-1).
+# Commands (in the workflow): poll $SERVER/health until it reports this commit; then node tools/ui/mp-smoke.mjs https://sumer-riverroom.vercel.app/mp.html 2 --expect-stored
+Multiplayer server: https://riverroom-server.onrender.com runs 9b7086c ({"ok":true,"rooms":0,"storage":true,"version":"9b7086c"}), answered 31 s after the first request
+table M2F9CY: 2 hands played; Ana after reload: "Ana (you) · D" (before "Ana (you) · D"), same table: true; Ben sees seats: Ana · D | Ben (you) | Krish | Rohit | Venky; Ben's own cards now: (between hands)
+settle up: balances Ana−$0.10 | Ben$0.00 | Computer players+$0.10; payments Nobody owes anybody.; note: Ana lost $0.10 to the computer players (no payment). Totals come from the saved buy-in ledger. Saved for this table: 1 finished hand, 2 buy-ins and rebuys, 0 cash-outs.
+stored: settlement from the database true, same balances as the table's memory true; saved hands 1 (hands started 2), buy-ins 2; first table opened 224 ms after the click
+RESULT: ok

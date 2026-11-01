@@ -53,6 +53,7 @@ proof. Nothing here is an estimate. Dates are when the measurement was taken.
 | Grading a decision later from snapshots (in the worker) gives exactly the grade computed at the time: 98 decisions across all five games | [test/coach-lazy.test.ts](test/coach-lazy.test.ts) |
 | Multiplayer: no client ever received another player's hidden cards. 1,312–1,445 views checked per run over 12 hands, 5 runs, 0 leaks. Reintroducing a visibility bug makes the test fail 3 of 3 times | [test/server.test.ts](test/server.test.ts), [METRICS.md](METRICS.md#multiplayer-no-card-leak-check) |
 | The live deck shuffle is exactly uniform: Fisher-Yates with rejection sampling on crypto values (the old `% n` method was biased for 46 of 51 step sizes, by up to 1.2e-8). Verified exhaustively on an 8-bit source, by chi-square on 52,000 shuffles, and by a test that fails if the bias comes back | [test/shuffle.test.ts](test/shuffle.test.ts), [METRICS.md](METRICS.md#deck-shuffle-exact-uniformity-live-play) |
+| Multiplayer is live: Vercel page, Render server (free), Neon Postgres (free). After each deploy, two browsers create and join a table on production, play, reload, and settle up. The settlement is read back from Neon and matches the server's memory | [tools/measure/results/2026-11-01-multiplayer-live.txt](tools/measure/results/2026-11-01-multiplayer-live.txt), [METRICS.md](METRICS.md#multiplayer-on-production) |
 | Multiplayer: a disconnected player gets the same seat and the same cards back by session token; a wrong token is refused | [test/server.test.ts](test/server.test.ts) |
 | Storage: the settlement read from Postgres matches the in-memory ledger; a leaver's stored cash-out equals buy-ins plus stored hand results; tokens are stored only as SHA-256 hashes | [test/store.test.ts](test/store.test.ts), [METRICS.md](METRICS.md#tests-with-postgres-current-suite) |
 | Settlement uses the fewest possible payments: equal to a brute-force minimum on 400 random cases; exact for up to 16 people in 10.65 ms mean (20.7 ms worst) | [test/settle.test.ts](test/settle.test.ts), [METRICS.md](METRICS.md#settlement-fewest-payments) |
@@ -84,8 +85,6 @@ proof. Nothing here is an estimate. Dates are when the measurement was taken.
 - No user numbers yet.
 - No cost figure for the AI review's paid calls (OpenRouter reports it in the function logs,
   which were not read here).
-- Multiplayer and storage are built and tested, but not yet deployed. The setup is ready
-  for Render (free web service) and Neon (free Postgres), and waits on those accounts.
 - No real-device phone measurements.
 - No visitor numbers yet. Vercel Web Analytics is live and sends page views without query
   strings ([proof](tools/measure/results/2026-11-01-web-analytics-live.txt)).

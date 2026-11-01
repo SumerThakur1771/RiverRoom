@@ -477,6 +477,25 @@ The tracker sends nothing from automated or headless browsers. The check present
 a normal desktop Chrome; the first two runs, without that, saw the script load and no page
 view. Visitor numbers are not claimed: this only shows that tracking works.
 
+## Multiplayer on production
+
+The "Live smoke test" workflow runs this after each deploy:
+1. It polls the Render server's `/health` until it reports the deployed commit, which also
+   wakes the free server.
+2. It runs `node tools/ui/mp-smoke.mjs https://sumer-riverroom.vercel.app/mp.html 2 --expect-stored`.
+
+Output: [`results/2026-11-01-multiplayer-live.txt`](tools/measure/results/2026-11-01-multiplayer-live.txt)
+([run 41351661571](https://github.com/SumerThakur1771/RiverRoom/actions/runs/41351661571), commit `9b7086c`).
+
+| Check | Result |
+|---|---|
+| Render server (free, Virginia) runs the commit | yes; it answered 31 s after the first request (time to wake and/or finish deploying, not separated) |
+| Two browsers (desktop, phone) create and join table M2F9CY on the live page | yes |
+| Hands played | 2 started, 1 finished |
+| Reload mid-game | same seat and same table, by session token |
+| Settle up | computed from the ledger read back from Neon. Same balances as the server's memory. Saved: 1 finished hand, 2 buy-ins, 0 cash-outs |
+| Table opened after the "Start a table" click (server already awake) | 224 ms |
+
 ## Not measured yet
 
 - Vercel Web Analytics visitor numbers (tracking is verified working; no real-visitor data yet).
