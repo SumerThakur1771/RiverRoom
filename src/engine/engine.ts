@@ -427,8 +427,8 @@ function* finalSplits(g: Game): Generator<Step, void, unknown> {
     if (p.isHuman) continue;
     applySplitTo(p, (yield { kind: 'split', p, k }) as Split);
   }
-  const hero = live.find(p => p.isHuman);
-  if (hero) {
+  // then each person at the table (one in single-player; several online), in seat order
+  for (const hero of live.filter(p => p.isHuman)) {
     const sp = (yield { kind: 'split', p: hero, k }) as Split;
     applySplitTo(hero, sp);
     hero.plan = sp.map(x => x.slice());
@@ -624,6 +624,8 @@ export function* playHand(g: Game): Generator<Step, HandSummary, unknown> {
   // until someone plans a split, a player's poker cards are the first two dealt (as for the hero)
   if (V) order.forEach(p => { let i = 0; p.parts = V.parts.map(pt => { const grp = p.all.slice(i, i + pt.n); i += pt.n; return grp; }); p.cards = p.parts[0]!.slice(); p.extra = p.parts.slice(1).map(x => x.slice()); });
   if (!hero.out) { lg(g, `Dealt to ${hero.name} [${(V ? hero.all : hero.cards).map(cardTxt).join(' ')}]`); g.stats.hands++; ev(g, { t: 'dealt' }); }
+  // other people at the table (online play) get their own line; the server sends each person only theirs
+  for (const p of g.players) if (p.isHuman && p !== hero && !p.out) lg(g, `Dealt to ${p.name} [${(V ? p.all : p.cards).map(cardTxt).join(' ')}]`);
   yield { kind: 'pause', what: 'deal', ms: 500, data: { order, nDeal } };
   if (V) yield { kind: 'plans', order };
 
