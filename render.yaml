@@ -6,8 +6,8 @@ services:
     name: riverroom-server
     runtime: node
     plan: free
-    # Neon's US East (Ohio) region is AWS us-east-2; keep the server next to the database
-    region: ohio
+    # the Neon project is in AWS us-east-1 (N. Virginia); keep the server next to the database
+    region: virginia
     branch: main
     # dev dependencies are needed to bundle the server (esbuild) and generate the Prisma client
     buildCommand: npm ci --include=dev && npm run server:build
