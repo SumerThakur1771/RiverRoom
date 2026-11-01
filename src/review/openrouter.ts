@@ -25,10 +25,14 @@ export interface ModelSpec {
   reasoning?: boolean;
 }
 
-/** Free first; the paid model is the last resort. */
+/**
+ * Free first; the paid model is the last resort. The second free model was meant to be
+ * openai/gpt-oss-20b:free, but OpenRouter no longer lists a free gpt-oss variant (checked by
+ * tools/review/check-models.ts on 2026-11-01), so it is the larger Gemma 4.
+ */
 export const REVIEW_MODELS: readonly ModelSpec[] = [
   { id: 'google/gemma-4-26b-a4b-it:free', paid: false, json: 'object' },
-  { id: 'openai/gpt-oss-20b:free', paid: false, json: 'none', reasoning: true },
+  { id: 'google/gemma-4-31b-it:free', paid: false, json: 'object' },
   { id: 'google/gemini-2.5-flash-lite', paid: true, json: 'schema' },
 ];
 /** A review is three short fields; this leaves room without paying for rambling. */
