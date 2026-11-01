@@ -1,0 +1,4 @@
+# Vercel Web Analytics on the live site: 'Live smoke test' run https://github.com/SumerThakur1771/RiverRoom/actions/runs/41349679211 (commit 5424b13, 2026-11-01)
+# Command (in the workflow): node tools/ui/analytics-check.mjs https://sumer-riverroom.vercel.app
+/?seed=analytics-check: script 200; page views sent 1 (status 200); query string in page view: no; payload {"o":"https://sumer-riverroom.vercel.app/","sv":"0.1.3","sdkn":"@vercel/analytics","sdkv":"2.0.1","r":""}
+/mp.html?code=ABCDEF: script 200; page views sent 1 (status 200); query string in page view: no; payload {"o":"https://sumer-riverroom.vercel.app/mp.html","sv":"0.1.3","sdkn":"@vercel/analytics","sdkv":"2.0.1","r":""}

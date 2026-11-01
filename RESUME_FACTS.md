@@ -87,4 +87,5 @@ proof. Nothing here is an estimate. Dates are when the measurement was taken.
 - Multiplayer and storage are built and tested, but not yet deployed. The setup is ready
   for Render (free web service) and Neon (free Postgres), and waits on those accounts.
 - No real-device phone measurements.
-- No analytics numbers yet: Vercel Web Analytics is wired in, and needs its toggle in Vercel plus real visitors.
+- No visitor numbers yet. Vercel Web Analytics is live and sends page views without query
+  strings ([proof](tools/measure/results/2026-11-01-web-analytics-live.txt)).

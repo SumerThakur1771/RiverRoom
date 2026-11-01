@@ -461,9 +461,25 @@ Commands: `node tools/measure/shuffle-bias.mjs` (exact arithmetic) and
 
 Seeded play keeps the original shuffle; the 272-hand golden replay still passes unchanged.
 
+## Web Analytics on the live site
+
+Command: `node tools/ui/analytics-check.mjs https://sumer-riverroom.vercel.app`, run after
+each deploy by the "Live smoke test" workflow. Output:
+[`results/2026-11-01-web-analytics-live.txt`](tools/measure/results/2026-11-01-web-analytics-live.txt)
+([run 41349679211](https://github.com/SumerThakur1771/RiverRoom/actions/runs/41349679211)).
+
+| Page loaded | Analytics script | Page views sent | URL recorded |
+|---|---|---|---|
+| `/?seed=analytics-check` | 200 | 1 (200) | `https://sumer-riverroom.vercel.app/` |
+| `/mp.html?code=ABCDEF` | 200 | 1 (200) | `https://sumer-riverroom.vercel.app/mp.html` (the invite code is not sent) |
+
+The tracker sends nothing from automated or headless browsers. The check presents itself as
+a normal desktop Chrome; the first two runs, without that, saw the script load and no page
+view. Visitor numbers are not claimed: this only shows that tracking works.
+
 ## Not measured yet
 
-- Vercel Web Analytics numbers (needs the toggle in Vercel, then real visitors).
+- Vercel Web Analytics visitor numbers (tracking is verified working; no real-visitor data yet).
 - Real-device phone performance.
 - Persona win rates against each other (head-to-head), as opposed to against the scripted hero.
 - Users and hands played by real people.
