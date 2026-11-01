@@ -28,10 +28,12 @@ jobs:
         run: |
           code=$(curl -s -o body.json -w '%{http_code}' -X POST -H 'content-type: application/json' -d '{}' https://sumer-riverroom.vercel.app/api/review)
           echo "status $code: $(cat body.json)"
-          if [ "$code" = 400 ]; then echo "::notice title=AI review endpoint::status 400: ANTHROPIC_API_KEY is configured"; else echo "::notice title=AI review endpoint::status $code: ANTHROPIC_API_KEY is not configured yet"; fi
+          if [ "$code" = 400 ]; then echo "::notice title=AI review endpoint::status 400: OPENROUTER_API_KEY is configured"; else echo "::notice title=AI review endpoint::status $code: OPENROUTER_API_KEY is not configured yet"; fi
           # 503 = no API key configured yet, 400 = key present and the empty body was rejected
           [ "$code" = 400 ] || [ "$code" = 503 ]
           grep -q '"fallback":true' body.json
+      - name: The review's model chain matches OpenRouter's model list
+        run: npx tsx tools/review/check-models.ts
       - name: Desktop and phone, home game and tournament
         run: |
           node tools/ui/smoke.mjs https://sumer-riverroom.vercel.app/ 40 home

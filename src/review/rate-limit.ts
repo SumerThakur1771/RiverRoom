@@ -47,3 +47,26 @@ export function reviewLimiters() {
     return { allowed: true, retryAfterMs: 0 };
   };
 }
+
+/** Paid-model calls allowed per UTC day. */
+export const PAID_CALLS_PER_DAY = 200;
+
+/**
+ * A daily budget of paid-model calls; resets at midnight UTC. Like the limiters above it lives
+ * in this server instance's memory. A hard limit across all instances is the credit limit set
+ * on the OpenRouter key itself.
+ */
+export class DailyCap {
+  private day = '';
+  private count = 0;
+  constructor(readonly max: number = PAID_CALLS_PER_DAY) {}
+  /** Use one call from today's budget, if any is left. */
+  tryUse(now: number = Date.now()): boolean {
+    const d = new Date(now).toISOString().slice(0, 10);
+    if (d !== this.day) { this.day = d; this.count = 0; }
+    if (this.count >= this.max) return false;
+    this.count++;
+    return true;
+  }
+  used(now: number = Date.now()): number { return new Date(now).toISOString().slice(0, 10) === this.day ? this.count : 0; }
+}

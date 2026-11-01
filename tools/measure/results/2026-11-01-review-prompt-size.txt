@@ -1,0 +1,4 @@
+# 2026-11-01. Before: the Anthropic-era prompt (commit 9b58a40, src/review/review.ts), measured with the same method:
+old prompt (system + user), 20 eval hands: total 56668 chars, mean 2833, min 2278, max 3947; system prompt 988 chars
+# After: npx tsx tools/review/prompt-size.ts
+prompt (system + user), 20 eval hands: total 33658 chars, mean 1683, min 1233, max 2699; system prompt 486 chars

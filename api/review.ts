@@ -1,22 +1,26 @@
 // POST /api/review: an AI review of one finished hand, streamed as server-sent events.
 //
-//   event: delta    data: {"text": "..."}     raw model output as it is generated
-//   event: result   data: {"review": {...}}   the validated review (grade, mistake, lesson)
-//   event: fallback data: {"reason": "..."}  use the built-in review instead
+//   event: attempt  data: {"model": "...", "paid": false}   a model is being asked
+//   event: delta    data: {"text": "..."}                   its raw output as it arrives
+//   event: result   data: {"review": {...}, "model": "...", "paid": false, "cached": false}
+//   event: fallback data: {"reason": "..."}                 use the built-in review instead
 //
 // Errors before streaming starts are plain JSON with {fallback: true, reason}:
-//   503 not_configured (no ANTHROPIC_API_KEY), 429 rate_limited, 400 bad_request.
-// The API key is read from the server environment only and never sent to the browser.
+//   503 not_configured (no OPENROUTER_API_KEY), 429 rate_limited, 400 bad_request.
+// The key is read from the server environment only and never sent to the browser.
+import { ReviewCache } from '../src/review/cache.js';
 import { createReviewHandler } from '../src/review/handler.js';
-import { reviewLimiters } from '../src/review/rate-limit.js';
-import { anthropicModel, type ModelFn } from '../src/review/review.js';
+import { openRouterCall, type CallFn } from '../src/review/openrouter.js';
+import { DailyCap, reviewLimiters } from '../src/review/rate-limit.js';
 
-let model: ModelFn | null = null;
+let call: CallFn | null = null;
 
 export const POST = createReviewHandler({
-  hasKey: () => !!process.env.ANTHROPIC_API_KEY,
+  hasKey: () => !!process.env.OPENROUTER_API_KEY,
   limit: reviewLimiters(),
-  model: () => (model ??= anthropicModel()),
+  call: () => (call ??= openRouterCall({ apiKey: process.env.OPENROUTER_API_KEY! })),
+  cache: new ReviewCache(),
+  paidCap: new DailyCap(),
 });
 
 export function GET(): Response {

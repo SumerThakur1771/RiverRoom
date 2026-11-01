@@ -270,6 +270,7 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
 .ai{background:#0d1512;border:1px solid rgba(127,214,162,.3);border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.65;color:#d7e3dc}
 .ai p{margin:0 0 8px}.ai p:last-child{margin:0}
 .ai strong{color:var(--ink)}
+.ai-model{margin:6px 0 0;font-size:12px;color:var(--muted)}
 .rv-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
 .rv-actions .btn-main,.rv-actions .btn-ghost{margin:0;height:48px}
 .rv-pref{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;flex-wrap:wrap}

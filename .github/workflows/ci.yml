@@ -70,8 +70,10 @@ jobs:
           npx vite preview --outDir dist-mp --port 4177 --strictPort &
           for i in $(seq 30); do curl -sf http://localhost:4177/mp.html > /dev/null && curl -sf http://localhost:8099/health > /dev/null && break; sleep 1; done
           node tools/ui/mp-smoke.mjs http://localhost:4177/mp.html 3
-      - name: AI review eval against a mock model (checks the eval pipeline, not the model)
-        run: npx tsx tools/review/eval.ts --mock --min 1
+      - name: AI review eval against mock models (checks the eval pipeline and the model chain, not the models)
+        run: |
+          npx tsx tools/review/eval.ts --mock --min 1
+          npx tsx tools/review/eval.ts --mock-chain --min 1
       - uses: actions/upload-artifact@v6
         if: always()
         with:

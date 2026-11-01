@@ -1,8 +1,10 @@
 name: AI review eval (live)
 
-# Runs the 20-hand review eval against the deployed /api/review (the real model, using the
-# ANTHROPIC_API_KEY stored in Vercel). Run it by hand from the Actions tab. It sends 20
-# requests, paced to stay under the endpoint's rate limit, so it takes about 5 minutes.
+# Runs the 20-hand review eval against the deployed /api/review: real OpenRouter models, using
+# the OPENROUTER_API_KEY stored in Vercel. Manual only (Actions tab, "Run workflow"). It sends
+# 20 requests paced to stay under the endpoint's per-IP limit, so it takes about 5 minutes.
+# Reviews are cached by hand, so a second run on the same deployment is answered from the
+# cache; the report marks those.
 on:
   workflow_dispatch:
 
@@ -17,10 +19,20 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: The model chain matches OpenRouter's model list (prices, structured outputs)
+        continue-on-error: true
+        run: npx tsx tools/review/check-models.ts
       - name: Run the eval
         run: |
           npx tsx tools/review/eval.ts --live https://sumer-riverroom.vercel.app/api/review --out review-eval-live.txt
           { echo '```'; cat review-eval-live.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Post the results as annotations (readable through the API)
+        if: always()
+        run: |
+          [ -f review-eval-live.txt ] || exit 0
+          grep -E '^(schema-valid|overall score|answered by|response time)' review-eval-live.txt | while IFS= read -r line; do echo "::notice title=Review eval::$line"; done
+          # per-hand lines, five per annotation
+          grep -E '^[a-z0-9-]+ +expected' review-eval-live.txt | paste -d'|' - - - - - | sed 's/|/ %0A/g' | while IFS= read -r chunk; do echo "::notice title=Review eval hands::$chunk"; done
       - uses: actions/upload-artifact@v6
         if: always()
         with:

@@ -8,6 +8,7 @@ import { Tables } from '../engine/strength';
 import { toPlain } from '../coach/compute';
 import { compute, workerMs } from './compute-client';
 import { readReviewEvents } from '../review/sse';
+import { reviewKey } from '../review/key';
 import { bindGame,
   CONCEPTS, GRADE_LABEL, GRADE_SCORE, HOME_BUY, HOME_FRIENDS, LESSONS, LEVELS, LOGR, PCT, RANKCH,
   SEATSHORT, SUITCLS, SUITS, TYPES, VAR, VARIANTS, VAR_ORDER, actWords, cardTxt, catOf,
@@ -1077,8 +1078,10 @@ function showReview(r, blocking){
   $('#rvLesson').textContent = r.lesson;
   $('#rvReadWrap').hidden = !r.read; $('#rvRead').textContent = r.read;
   $('#rvAiWrap').hidden = !r.ai; if (r.ai) $('#rvAi').innerHTML = mdLite(r.ai);
+  showAiModel(r.aiModel);
   $('#rvNext').textContent = blocking ? 'Next hand' : 'Close';
-  $('#rvAsk').hidden = !sampleFn && serverReviewOff; $('#rvAsk').disabled = false; $('#rvAsk').textContent = r.ai ? 'Ask Claude again' : 'Ask Claude for a deeper review';
+  // a hand reviewed by the server's AI coach is cached, so asking again would give the same answer
+  $('#rvAsk').hidden = !sampleFn && (serverReviewOff || !!r.ai); $('#rvAsk').disabled = false; $('#rvAsk').textContent = r.ai ? 'Ask the AI coach again' : 'Ask the AI coach';
   segment($('#rvSeg'), [['all', 'Every hand'], ['played', 'Hands I played'], ['off', 'Off']], () => settings.review, v => { settings.review = v; saveSettings(); });
   revCurrent = r;
   const ov = $('#revOv'); ov.hidden = false; ov.scrollTop = 0;
@@ -1093,24 +1096,51 @@ function mdLite(t){
   return blocks.map(b => /^\s*[-•]\s/m.test(b) ? '<ul>' + b.split('\n').filter(x => x.trim()).map(x => `<li>${x.replace(/^\s*[-•]\s*/, '')}</li>`).join('') + '</ul>' : `<p>${b.replace(/\n/g, '<br>')}</p>`).join('');
 }
 function playersBrief(){ return S.players.filter(p => !p.isHuman).map(p => `${p.name}: ${TYPES[p.type].label} (${TYPES[p.type].desc})`).join('\n'); }
-// Off the claude.ai host: the AI review comes from this site's own /api/review route.
+// Off the claude.ai host: the AI review comes from this site's own /api/review route
+// (OpenRouter, free models first). Reviews are cached on this device by the same key the
+// server uses, so reopening a reviewed hand never calls a model again.
 let serverReviewOff = false;
 const reviewMarkdown = v => `**Grade:** ${GRADE_LABEL[v.grade] || v.grade}\n\n${v.mistake ? `**Biggest mistake:** ${v.mistake}\n\n` : '**Biggest mistake:** none. Every decision was reasonable.\n\n'}**What to remember:** ${v.lesson}`;
+const AI_CACHE = 'river-room-ai-reviews', AI_CACHE_MAX = 100;
+function aiCacheGet(key){ const all = loadLocal(AI_CACHE, {}) || {}; return all[key] || null; }
+function aiCachePut(key, entry){
+  const all = loadLocal(AI_CACHE, {}) || {};
+  all[key] = {...entry, at: Date.now()};
+  const keys = Object.keys(all).sort((a, b) => all[a].at - all[b].at);
+  while (keys.length > AI_CACHE_MAX) delete all[keys.shift()];
+  saveLocal(AI_CACHE, all);
+}
+/** Small line under the review: which model wrote it. */
+function showAiModel(m){
+  const el = $('#rvAiModel');
+  el.hidden = !m;
+  if (m) el.textContent = `Reviewed by ${m.model} (${m.paid ? 'paid' : 'free'} model)${m.saved ? ', saved on this device' : ''}`;
+}
 async function serverReview(r){
   const btn = $('#rvAsk'), out = $('#rvAi');
-  $('#rvAiWrap').hidden = false; out.textContent = 'Claude is reviewing this hand…'; btn.disabled = true;
+  $('#rvAiWrap').hidden = false; showAiModel(null); out.textContent = 'The AI coach is reviewing this hand…'; btn.disabled = true;
   const note = (reason, retryAfter) => {
-    if (reason === 'not_configured'){ serverReviewOff = true; btn.hidden = true; out.textContent = 'Claude reviews are not set up on this site yet. The review above is from the app\'s own coach.'; return; }
-    out.textContent = reason === 'rate_limited' ? `Too many reviews in a short time. Try again in ${retryAfter || 60} seconds. The review above is from the app's own coach.` : reason === 'network' && !navigator.onLine ? 'You are offline, so Claude cannot review this hand. The review above is from the app\'s own coach.' : 'Claude could not finish this review. The review above is from the app\'s own coach.';
+    const coach = ' The review above is from the app\'s own coach.';
+    if (reason === 'not_configured'){ serverReviewOff = true; btn.hidden = true; out.textContent = 'AI reviews are not set up on this site yet.' + coach; return; }
+    out.textContent = reason === 'rate_limited' ? `Too many reviews in a short time. Try again in ${retryAfter || 60} seconds.` + coach
+      : reason === 'paid_cap' ? 'The free AI models are busy and today\'s limit for the paid one is used up.' + coach
+      : reason === 'network' && !navigator.onLine ? 'You are offline, so the AI coach cannot review this hand.' + coach
+      : 'The AI coach could not finish this review.' + coach;
   };
+  const done = (review, m) => { r.ai = reviewMarkdown(review); r.aiModel = m; out.innerHTML = mdLite(r.ai); showAiModel(m); btn.hidden = true; };
   revCtl = new AbortController();
   try {
     const body = {hand: r.text.slice(0, 8000), decisions: r.decs.map(d => d.raw).slice(0, 20), money: MONEY, ...(r.game ? {game: r.game.slice(0, 80), gameDesc: (r.gameDesc || '').slice(0, 600)} : {})};
+    const key = await reviewKey(body);
+    const saved = aiCacheGet(key);
+    if (saved){ done(saved.review, {model: saved.model, paid: saved.paid, saved: true}); return; }
     const res = await fetch('/api/review', {method: 'POST', headers: {'content-type': 'application/json'}, body: JSON.stringify(body), signal: revCtl.signal});
     if (!res.ok){ const j = await res.json().catch(() => ({})); note(j.reason, j.retryAfter); return; }
-    let n = 0;
-    const ev = await readReviewEvents(res, t => { n += t.length; out.textContent = `Claude is reviewing this hand… (${n} characters so far)`; });
-    if (ev.review){ r.ai = reviewMarkdown(ev.review); out.innerHTML = mdLite(r.ai); btn.textContent = 'Ask Claude again'; }
+    let n = 0, asking = '';
+    const ev = await readReviewEvents(res,
+      t => { n += t.length; out.textContent = `The AI coach is reviewing this hand${asking}… (${n} characters so far)`; },
+      model => { n = 0; asking = ` (asking ${model})`; out.textContent = `The AI coach is reviewing this hand${asking}…`; });
+    if (ev.review){ done(ev.review, {model: ev.model, paid: !!ev.paid}); aiCachePut(key, {review: ev.review, model: ev.model, paid: !!ev.paid}); }
     else note(ev.fallback);
   } catch (e) {
     if (e && e.name === 'AbortError') return;
@@ -1141,7 +1171,7 @@ Write a coaching review in very simple, encouraging English for a complete begin
 Keep it under 260 words. No headings other than the bold labels.`;
   try {
     const {text} = await sampleFn(prompt, {signal: revCtl.signal, onText: ({text}) => { out.innerHTML = mdLite(text); }});
-    r.ai = text; out.innerHTML = mdLite(text); btn.textContent = 'Ask Claude again';
+    r.ai = text; out.innerHTML = mdLite(text); btn.textContent = 'Ask the AI coach again';
   } catch (e) {
     if (e && e.code === 'cancelled') return;
     const msg = {not_granted: 'Claude coaching is not allowed for this page. You can still use the built-in review above.', rate_limited: 'Too many requests right now. Try again in a minute.', sampling_disabled: 'Claude is not available on this account.'}[e && e.code];
