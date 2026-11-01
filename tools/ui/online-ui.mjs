@@ -135,7 +135,7 @@ for (const [hostSize, guestSize] of [['desktop', 'phone'], ['phone', 'desktop']]
   await press(G, '#tableBtn');
   await press(G, '#tpLeave');
   c.backInLobby = await G.waitForSelector('#onlineOv:not([hidden])').then(() => true, () => false);
-  c.freedForOthers = await playUntil([H], async () => { await press(H, '#tableBtn'); const n = await panelNames(H); await press(H, '#tpClose'); return n.find(r => r.name === 'Rohit')?.tag === ''; }, 60_000);
+  c.freedForOthers = await playUntil([H], async () => { await press(H, '#tableBtn'); const n = await panelNames(H); await press(H, '#tpClose'); return n.find(r => r.name === 'Rohit')?.tag === ''; }, STORED ? 240_000 : 60_000); // a character stays locked until the hand being played ends
   // 7. an old link from the earlier multiplayer page
   await G.goto(SITE + 'mp.html?code=' + code);
   c.oldLink = await G.waitForSelector('#olJoin:not([hidden])', { timeout: 15_000 }).then(() => G.url().includes('join=' + code), () => false);
