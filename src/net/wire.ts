@@ -31,7 +31,11 @@ const PUBLIC_GAME = [
 
 type Json = null | boolean | number | string | Json[] | { [k: string]: Json };
 export type WirePlayer = Record<string, Json> & { i: number; name: string; isHuman: boolean; human: boolean };
-export interface WireGame { players: WirePlayer[]; board: number[]; board2: number[]; boardVis: number; boardVis2: number; hist: string[]; ev: Json[]; settings: { games: string }; [k: string]: Json | WirePlayer[] | number[] | string[] | Json[] | { games: string } }
+export interface WireGame {
+  players: WirePlayer[]; board: number[]; board2: number[]; boardVis: number; boardVis2: number; hist: string[]; ev: Json[]; settings: { games: string };
+  handNo: number; button: number; street: number; pot: number; currentBet: number; minRaise: number; variant: string | null; msg: string;
+  [k: string]: Json | WirePlayer[] | number[] | string[] | Json[] | { games: string } | undefined;
+}
 export type WireStep = Record<string, Json> & { kind: Step['kind'] };
 
 /** Plain JSON copy; players become {"$p": index}. Maps, sets, functions and class instances are dropped. */

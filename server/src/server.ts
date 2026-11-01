@@ -2,7 +2,8 @@
 // and per-socket message limits. Game logic lives in room.ts and the shared engine.
 import { createServer, type Server as HttpServer } from 'node:http';
 import { Server, type Socket } from 'socket.io';
-import { ActMsg, CreateMsg, JoinMsg, RebuyMsg, ResumeMsg, type Ack, type View } from './protocol.js';
+import { DEFAULT_ROSTER, validRoster } from '../../src/engine/roster.js';
+import { ActMsg, CreateMsg, JoinMsg, PeekMsg, RebuyMsg, ResumeMsg, RosterMsg, SplitMsg, VariantMsg, type Ack, type TableMsg } from './protocol.js';
 import { LIVE_TIMING, newCode, Room, type RoomRecord, type Timing } from './room.js';
 import type { Store } from './store.js';
 
@@ -16,14 +17,16 @@ export interface ServerOptions {
   record?: (e: RoomRecord) => void;
   /** Postgres storage (rooms, hands, ledger); without it settlements use the in-memory ledger. */
   store?: Store;
-  /** Tests only: see every view just before it is sent, with the room's real state. */
-  inspect?: (room: Room, view: View) => void;
+  /** Tests only: see every message just before it is sent, with the room's real state. */
+  inspect?: (room: Room, msg: TableMsg) => void;
   /** Close a room after this long with nobody connected. */
   idleMs?: number;
 }
 export interface RunningServer { http: HttpServer; io: Server; rooms: Map<string, Room>; port: number; close: () => Promise<void> }
 
-interface Session { code: string; seat: number; token: string }
+// a session is a token in a room; the seat is looked up from the token each time (seats can move
+// when the creator removes a character)
+interface Session { code: string; token: string }
 
 export async function startServer(opts: ServerOptions): Promise<RunningServer> {
   const http = createServer((req, res) => {
@@ -36,15 +39,20 @@ export async function startServer(opts: ServerOptions): Promise<RunningServer> {
   const sockets = new Map<string, Socket>(); // session token -> socket
   const timing = opts.timing ?? LIVE_TIMING;
 
-  const makeRoom = (creator: string): Room => {
+  const makeRoom = (roster: Parameters<typeof validRoster>[0], character: string, games: 'dealer' | 'holdem'): Room | string => {
+    const r = validRoster(roster ?? DEFAULT_ROSTER);
+    if (!r) return 'that list of players cannot be used';
+    // the creator plays seat 0: put their character first
+    const mine = r.findIndex(c => c.id === character);
+    if (mine < 0) return 'pick one of the players';
     let code = newCode();
     while (rooms.has(code)) code = newCode();
-    const room = new Room(code, creator, {
-      send: (token, view) => { opts.inspect?.(room, view); sockets.get(token)?.emit('state', view); },
+    const room = new Room(code, r, character, {
+      send: (token, msg) => { opts.inspect?.(room, msg); sockets.get(token)?.emit('table', msg); },
       log: line => io.to(code).emit('log', line),
       record: e => { opts.record?.(e); void opts.store?.record(e); },
       removed: (token, reason) => { sockets.get(token)?.emit('removed', { reason }); sockets.delete(token); },
-    }, timing, opts.seed ? opts.seed + ':' + code : null);
+    }, timing, opts.seed ? opts.seed + ':' + code : null, games);
     rooms.set(code, room);
     return room;
   };
@@ -71,39 +79,48 @@ export async function startServer(opts: ServerOptions): Promise<RunningServer> {
       budget--;
       next();
     });
-    const attach = (room: Room, seat: number, token: string): void => {
+    const attach = (room: Room, token: string): void => {
       if (session) return;
-      session = { code: room.code, seat, token };
+      session = { code: room.code, token };
       sockets.get(token)?.disconnect(true); // only one live connection per seat
       sockets.set(token, socket);
       void socket.join(room.code);
-      room.setConnected(seat, true);
+      room.setConnected(token, true);
       clearTimeout(idle.get(room.code));
-      const v = room.viewFor(seat);
-      opts.inspect?.(room, v);
-      socket.emit('state', v);
+      const m = room.messageFor(token);
+      if (m) { opts.inspect?.(room, m); socket.emit('table', m); }
     };
     const reply = (ack: unknown, body: Ack): void => { if (typeof ack === 'function') (ack as (b: Ack) => void)(body); };
     const bad = (ack: unknown, error: string): void => reply(ack, { ok: false, error });
+    const current = (): Room | undefined => (session ? rooms.get(session.code) : undefined);
 
     socket.on('create', (msg: unknown, ack: unknown) => {
       const m = CreateMsg.safeParse(msg);
-      if (!m.success || session) return bad(ack, m.success ? 'already in a room' : 'invalid name');
-      const room = makeRoom(m.data.name);
-      const { seat, token } = room.seatHuman(m.data.name, true)!;
-      reply(ack, { ok: true, code: room.code, token, seat });
-      attach(room, seat, token);
+      if (!m.success || session) return bad(ack, m.success ? 'already in a room' : 'invalid request');
+      const room = makeRoom(m.data.roster, m.data.character, m.data.games);
+      if (typeof room === 'string') return bad(ack, room);
+      const r = room.seatHuman(m.data.character, true);
+      if ('error' in r) return bad(ack, r.error);
+      reply(ack, { ok: true, code: room.code, token: r.token, seat: r.seat });
+      attach(room, r.token);
       void room.run();
+    });
+    socket.on('peek', (msg: unknown, ack: unknown) => {
+      const m = PeekMsg.safeParse(msg);
+      if (!m.success) return bad(ack, 'invalid code');
+      const room = rooms.get(m.data.code);
+      if (!room) return bad(ack, 'no such room');
+      if (typeof ack === 'function') (ack as (b: unknown) => void)(room.peek());
     });
     socket.on('join', (msg: unknown, ack: unknown) => {
       const m = JoinMsg.safeParse(msg);
-      if (!m.success || session) return bad(ack, m.success ? 'already in a room' : 'invalid code or name');
+      if (!m.success || session) return bad(ack, m.success ? 'already in a room' : 'invalid code or player');
       const room = rooms.get(m.data.code);
       if (!room) return bad(ack, 'no such room');
-      const r = room.seatHuman(m.data.name);
-      if (!r) return bad(ack, 'the table is full');
+      const r = room.seatHuman(m.data.character);
+      if ('error' in r) return bad(ack, r.error);
       reply(ack, { ok: true, code: room.code, token: r.token, seat: r.seat });
-      attach(room, r.seat, r.token);
+      attach(room, r.token);
       void room.run();
     });
     socket.on('resume', (msg: unknown, ack: unknown) => {
@@ -113,25 +130,46 @@ export async function startServer(opts: ServerOptions): Promise<RunningServer> {
       const seat = room ? room.seatOf(m.data.token) : -1;
       if (!room || seat < 0) return bad(ack, 'session not found');
       reply(ack, { ok: true, code: room.code, seat });
-      attach(room, seat, m.data.token);
+      attach(room, m.data.token);
     });
+    // answers to what the table asks this person
+    const answer = (kind: 'act' | 'variant' | 'split' | 'rebuy', value: unknown, ack: unknown): void => {
+      const room = current();
+      if (!room || !session) return bad(ack, 'not in a room');
+      const err = room.answer(session.token, kind, value);
+      reply(ack, err ? { ok: false, error: err } : { ok: true });
+    };
     socket.on('act', (msg: unknown, ack: unknown) => {
       const m = ActMsg.safeParse(msg);
-      if (!m.success || !session) return bad(ack, 'invalid action');
-      const room = rooms.get(session.code);
-      const err = room ? room.act(session.seat, m.data.type === 'raise' ? { type: 'raise', to: m.data.to ?? 0 } : { type: m.data.type }) : 'room closed';
-      reply(ack, err ? { ok: false, error: err } : { ok: true });
+      if (!m.success) return bad(ack, 'invalid action');
+      answer('act', m.data.type === 'raise' ? { type: 'raise', to: m.data.to ?? 0 } : { type: m.data.type }, ack);
+    });
+    socket.on('variant', (msg: unknown, ack: unknown) => {
+      const m = VariantMsg.safeParse(msg);
+      if (!m.success) return bad(ack, 'invalid game');
+      answer('variant', m.data.variant, ack);
+    });
+    socket.on('split', (msg: unknown, ack: unknown) => {
+      const m = SplitMsg.safeParse(msg);
+      if (!m.success) return bad(ack, 'invalid split');
+      answer('split', m.data.groups, ack);
     });
     socket.on('rebuy', (msg: unknown, ack: unknown) => {
       const m = RebuyMsg.safeParse(msg);
-      if (!m.success || !session) return bad(ack, 'invalid');
-      const err = rooms.get(session.code)?.answerRebuy(session.seat, m.data.yes) ?? 'room closed';
-      reply(ack, err ? { ok: false, error: err } : { ok: true });
+      if (!m.success) return bad(ack, 'invalid');
+      answer('rebuy', m.data.yes, ack);
+    });
+    socket.on('roster', (msg: unknown, ack: unknown) => {
+      const m = RosterMsg.safeParse(msg);
+      const room = current();
+      if (!m.success) return bad(ack, 'invalid change');
+      if (!room || !session) return bad(ack, 'not in a room');
+      const r = room.editRoster(session.token, m.data);
+      reply(ack, r.ok ? { ok: true, queued: r.queued } : r);
     });
     socket.on('settle', async (_msg: unknown, ack: unknown) => {
-      if (!session) return bad(ack, 'not in a room');
-      const room = rooms.get(session.code);
-      if (!room) return bad(ack, 'room closed');
+      const room = current();
+      if (!room) return bad(ack, 'not in a room');
       try {
         const s = opts.store ? await opts.store.settlement(room.code, room.onTable()) : room.settlement();
         // with storage: what the database holds for this room, and whether its ledger gives the
@@ -149,10 +187,11 @@ export async function startServer(opts: ServerOptions): Promise<RunningServer> {
       }
     });
     socket.on('leave', (_msg: unknown, ack: unknown) => {
+      const room = current();
       if (!session) return bad(ack, 'not in a room');
-      const room = rooms.get(session.code);
-      room?.leave(session.seat);
+      room?.leave(session.token);
       sockets.delete(session.token);
+      void socket.leave(session.code);
       reply(ack, { ok: true });
       if (room) checkIdle(room);
       session = null;
@@ -162,7 +201,7 @@ export async function startServer(opts: ServerOptions): Promise<RunningServer> {
       if (sockets.get(session.token) === socket) {
         sockets.delete(session.token);
         const room = rooms.get(session.code);
-        if (room) { room.setConnected(session.seat, false); checkIdle(room); }
+        if (room) { room.setConnected(session.token, false); checkIdle(room); }
       }
     });
   });
