@@ -3,7 +3,7 @@
 [![CI](https://github.com/SumerThakur1771/RiverRoom/actions/workflows/ci.yml/badge.svg)](https://github.com/SumerThakur1771/RiverRoom/actions/workflows/ci.yml)
 [![Live smoke test](https://github.com/SumerThakur1771/RiverRoom/actions/workflows/live-smoke.yml/badge.svg)](https://github.com/SumerThakur1771/RiverRoom/actions/workflows/live-smoke.yml)
 
-**Live:** https://sumer-riverroom.vercel.app
+**Live:** https://sumer-riverroom.vercel.app · **Play online with friends:** https://sumer-riverroom.vercel.app/mp.html
 
 A poker trainer built around a real home game. You play No-Limit Hold'em and four
 dealer's-choice "split" variants against computer players modelled on real friends, and a
@@ -20,7 +20,7 @@ coach explains each decision.
   split pots and odd chips.
 - **Two modes:** the home cash game (rebuys, cash-out sheet) and a sit-and-go tournament
   with rising blinds.
-- **Play with friends** (`/mp.html`): invite-code tables on a Node + Socket.IO server that
+- **Play online with friends** (the start screen's "Play online with friends" button, or `/mp.html`; also a shortcut on the installed app's icon): invite-code tables on a Node + Socket.IO server that
   deals, runs the bots and sends each player only their own cards. Reconnects by session
   token; a turn timer keeps the game moving. **Settle up** shows everyone's buy-ins, rebuys
   and cash-outs and who pays whom, in the fewest possible payments.

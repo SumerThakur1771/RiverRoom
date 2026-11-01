@@ -8,29 +8,38 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-<title>River Room · Play with friends</title>
+<title>River Room · Play online with friends</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Barlow+Condensed:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="/src/mp/mp.css">
 </head>
 <body>
 <main id="app">
-  <header class="bar"><a class="brand" href="/">River Room</a><span class="sub">Play with friends</span><span id="conn" class="conn" role="status" aria-live="polite"></span></header>
+  <header class="top">
+    <div class="brand"><span class="logo">River Room</span><span class="sub">Play online with friends</span></div>
+    <span id="conn" class="conn" role="status" aria-live="polite"></span>
+    <a class="back" id="backLink" href="/">Back to single player</a>
+  </header>
 
   <p id="wake" class="wake" role="status" hidden>Waking up the server, about a minute. The free hosting sleeps when nobody is playing.</p>
 
-  <section id="lobby" class="panel">
-    <h1>Play your home game online</h1>
-    <p>Start a table and share the code. Empty seats are filled by the computer players. The server deals and keeps everyone's cards private.</p>
+  <section id="lobby" class="panel" data-mode="create">
+    <h1 id="lobbyTitle">Play your home game online</h1>
+    <p id="lobbyLede">Start a table and share the invite link. Computer players fill the empty seats. The server deals and keeps everyone's cards private.</p>
     <label for="name">Your name</label>
     <input id="name" maxlength="16" autocomplete="nickname" placeholder="e.g. Sumer">
-    <div class="row"><button id="create" class="primary">Start a table</button></div>
-    <div class="or">or join a table</div>
+    <div class="create-part"><div class="row"><button id="create" class="primary">Start a table</button></div>
+    <div class="or">or join a table</div></div>
     <label for="code">Table code</label>
     <div class="row"><input id="code" maxlength="6" autocapitalize="characters" placeholder="ABC234"><button id="join">Join</button></div>
+    <p class="join-part other"><button id="createInstead" class="link">Start your own table instead</button></p>
     <p id="lobbyErr" class="err" role="alert"></p>
   </section>
 
   <section id="table" hidden>
-    <div class="invite">Table <b id="tcode"></b> · <button id="copy" class="link">Copy invite link</button> · <button id="settleBtn" class="link" aria-controls="settle">Settle up</button> · <button id="leave" class="link">Leave table</button></div>
+    <div class="invite">Table <b id="tcode"></b> · <button id="settleBtn" class="link" aria-controls="settle">Settle up</button> · <button id="leave" class="link">Leave table</button></div>
+    <p class="invite-link">Invite friends: <a id="inviteLink" href=""></a> <button id="copy" class="link">Copy</button></p>
     <div id="seats" class="seats" aria-label="Players"></div>
     <div class="felt">
       <div class="pot">Pot <b id="pot">$0.00</b></div>

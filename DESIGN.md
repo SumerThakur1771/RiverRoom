@@ -337,6 +337,23 @@ own cards". It now applies the public rule to anyone not yet seated, and putting
 original bug back (waiting players see their future seat's cards) still fails it 3 runs out
 of 3.
 
+**Getting there, and leaving.**
+- The single-player start screen has a "Play online with friends" button. The installed app
+  also has it as an icon shortcut.
+- An invite link (`/mp.html?code=ABC234`) opens a join view with the code filled in.
+- `tools/ui/mp-entry.mjs` checks the whole path on desktop and phone, in CI and on
+  production: start screen, then start a table, then the invite link, then join, then both
+  players are seated.
+
+**Losing a seat.** A player who runs out of chips and does not answer the rebuy question
+within 30 s loses the seat to a computer player.
+- The server now tells them (`removed` event), and their page returns to the lobby with the
+  reason. Before, the page kept showing a table it no longer received.
+- The entry test found this: its host busted and sat on "Waiting for the next hand"
+  forever.
+- The replacement computer player never copies a name already at the table. Before, when
+  all four friends were seated, the seat went to a second "Rohit".
+
 **Tradeoffs.**
 - Game state lives in the server's memory (the engine generator cannot be serialized), so a
   restart ends the current hand. Rooms, buy-ins and hand histories go to the database.

@@ -63,8 +63,23 @@ async function call<T extends { ok: true } | { ok: false; error: string } = Ack>
 
 /* ---- lobby ---- */
 const params = new URLSearchParams(location.search);
-if (params.get('code')) $<HTMLInputElement>('code').value = params.get('code')!.toUpperCase();
 $<HTMLInputElement>('name').value = session?.name ?? '';
+/** Lobby mode: 'join' when the page was opened from an invite link (the table code is filled in). */
+function lobbyMode(mode: 'create' | 'join', code = ''): void {
+  $('lobby').dataset.mode = mode;
+  $('lobbyTitle').textContent = mode === 'join' ? `Join table ${code}` : 'Play your home game online';
+  $('lobbyLede').textContent = mode === 'join'
+    ? 'A friend invited you to their table. Type your name and join. Computer players hold the other empty seats.'
+    : 'Start a table and share the invite link. Computer players fill the empty seats. The server deals and keeps everyone\'s cards private.';
+}
+const invited = (params.get('code') ?? '').trim().toUpperCase();
+if (/^[A-Z2-9]{6}$/.test(invited)) {
+  $<HTMLInputElement>('code').value = invited;
+  lobbyMode('join', invited);
+  // straight to the one field that is still empty
+  ($<HTMLInputElement>('name').value ? $('join') : $('name')).focus();
+}
+$('createInstead').onclick = () => { lobbyMode('create'); $('name').focus(); };
 function lobbyError(e: string): void { $('lobbyErr').textContent = e; }
 async function enter(kind: 'create' | 'join'): Promise<void> {
   const name = $<HTMLInputElement>('name').value.trim(), code = $<HTMLInputElement>('code').value.trim().toUpperCase();
@@ -100,6 +115,18 @@ sock.on('connect_error', () => {
   $('conn').textContent = 'Cannot reach the game server';
 });
 sock.on('state', (v: View) => { view = v; render(); });
+// the server took the seat back (out of chips and no rebuy): back to the lobby, and say why
+sock.on('removed', (m: { reason?: string }) => {
+  session = null; save(null); view = null;
+  clearInterval(countdown);
+  $('table').hidden = true;
+  $('lobby').hidden = false;
+  lobbyMode('create');
+  lobbyError(m.reason === 'out_of_chips'
+    ? 'You ran out of chips and did not rebuy, so a computer player took your seat. Your buy-ins stay in the table\'s ledger.'
+    : 'A computer player took your seat.');
+  history.replaceState(null, '', location.pathname);
+});
 sock.on('log', (l: LogLine) => {
   const li = document.createElement('li');
   li.textContent = l.text;
@@ -115,6 +142,8 @@ function render(): void {
   $('lobby').hidden = true;
   $('table').hidden = false;
   $('tcode').textContent = v.code;
+  const link = inviteUrl(v.code), a = $<HTMLAnchorElement>('inviteLink');
+  if (a.getAttribute('href') !== link) { a.href = link; a.textContent = link.replace(/^https?:\/\//, ''); }
   $('pot').textContent = money(v.pot);
   $('board').innerHTML = v.board.map(cardHtml).join('');
   $('msg').textContent = v.msg;
@@ -161,7 +190,13 @@ $('call').onclick = () => act({ type: view?.turn?.options?.toCall ? 'call' : 'ch
 $('raise').onclick = () => act({ type: 'raise', to: +$<HTMLInputElement>('amount').value });
 $('rebuyYes').onclick = () => void call('rebuy', { yes: true });
 $('rebuyNo').onclick = () => void call('rebuy', { yes: false });
-$('copy').onclick = () => { if (view) void navigator.clipboard?.writeText(`${location.origin}${location.pathname}?code=${view.code}`); };
+function inviteUrl(code: string): string { return `${location.origin}${location.pathname}?code=${code}`; }
+$('copy').onclick = async () => {
+  if (!view) return;
+  try { await navigator.clipboard.writeText(inviteUrl(view.code)); $('copy').textContent = 'Copied'; }
+  catch { $('copy').textContent = 'Select the link to copy it'; }
+  window.setTimeout(() => { $('copy').textContent = 'Copy'; }, 2500);
+};
 
 /* ---- settle up ---- */
 type SettleAck = { ok: true; balances: Balance[]; transfers: Transfer[]; stored: boolean; saved?: { hands: number; buyins: number; cashouts: number }; matchesMemory?: boolean } | { ok: false; error: string };

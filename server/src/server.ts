@@ -43,6 +43,7 @@ export async function startServer(opts: ServerOptions): Promise<RunningServer> {
       send: (token, view) => { opts.inspect?.(room, view); sockets.get(token)?.emit('state', view); },
       log: line => io.to(code).emit('log', line),
       record: e => { opts.record?.(e); void opts.store?.record(e); },
+      removed: (token, reason) => { sockets.get(token)?.emit('removed', { reason }); sockets.delete(token); },
     }, timing, opts.seed ? opts.seed + ':' + code : null);
     rooms.set(code, room);
     return room;

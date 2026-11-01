@@ -71,6 +71,8 @@ jobs:
           npx vite preview --outDir dist-mp --port 4177 --strictPort &
           for i in $(seq 30); do curl -sf http://localhost:4177/mp.html > /dev/null && curl -sf http://localhost:8099/health > /dev/null && break; sleep 1; done
           node tools/ui/mp-smoke.mjs http://localhost:4177/mp.html 3
+          # from the main game's start screen to a shared table, desktop and phone
+          node tools/ui/mp-entry.mjs http://localhost:4177/
           # a sleeping server (free hosting): the page says it is waking up and holds the first click
           kill $SERVER_PID
           node tools/ui/mp-wake.mjs http://localhost:4177/mp.html 8099 8000

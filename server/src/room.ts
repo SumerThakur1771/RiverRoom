@@ -6,7 +6,7 @@ import { botAction } from '../../src/ai/bots.js';
 import { cardTxt } from '../../src/engine/cards.js';
 import { planSplit } from '../../src/ai/split.js';
 import { HOME_BUY, makePlayer, newGame, options, playHand, type Action } from '../../src/engine/engine.js';
-import { HOME_FRIENDS } from '../../src/engine/personas.js';
+import { HOME_FRIENDS, NAMES, TYPES } from '../../src/engine/personas.js';
 import type { Game, Player } from '../../src/engine/state.js';
 import type { LogLine, View } from './protocol.js';
 import { buildView, type SeatMeta } from './view.js';
@@ -33,6 +33,21 @@ export interface RoomHooks {
   log: (line: LogLine) => void;
   /** Ledger and history events (stored by the database layer when there is one). */
   record?: (e: RoomRecord) => void;
+  /** A player lost their seat without asking to leave (out of chips and no rebuy). */
+  removed?: (token: string, reason: 'out_of_chips' | 'removed') => void;
+}
+
+/**
+ * The computer player who takes over a seat: a friend from the home game who is not at the
+ * table yet, else a generic player whose name is not at the table (never a duplicate name).
+ */
+export function replacementBot(players: readonly Player[], seat: number): { name: string; type: string; color: string; avatar: string | null } {
+  const atTable = new Set(players.filter(p => p.i !== seat).map(p => p.name));
+  const friend = HOME_FRIENDS.find(f => !atTable.has(f.name));
+  if (friend) return friend;
+  const generic = Object.keys(TYPES).filter(k => !TYPES[k]!.home);
+  const [name, color] = NAMES.find(([n]) => !atTable.has(n)) ?? [`Player ${seat + 1}`, '#8e9f96'];
+  return { name, type: generic[seat % generic.length]!, color, avatar: null };
 }
 export type RoomRecord =
   | { t: 'buyin'; code: string; name: string; token: string; amount: number }
@@ -53,6 +68,7 @@ export class Room {
   private rebuyAsk: { seat: number; resolve: (yes: boolean) => void; timer: NodeJS.Timeout } | null = null;
   private phase: View['phase'] = 'waiting';
   private pendingJoin = new Map<number, Seat>();
+  private readonly leftOnPurpose = new Set<number>();
   private pendingLeave = new Set<number>();
   private lastEv = 0;
   private running = false;
@@ -126,6 +142,7 @@ export class Room {
   leave(seat: number): void {
     if (this.pendingJoin.has(seat)) { this.pendingJoin.delete(seat); return; }
     this.pendingLeave.add(seat);
+    this.leftOnPurpose.add(seat);
     this.seats[seat]!.connected = false;
     if (this.turn?.seat === seat) this.autoAct();
     if (this.phase !== 'playing') this.applySeatChanges();
@@ -137,9 +154,12 @@ export class Room {
     const g = this.g;
     for (const seat of this.pendingLeave) {
       const p = g.players[seat]!, s = this.seats[seat]!;
-      if (s.kind === 'human' && s.token) this.note({ t: 'cashout', code: this.code, name: s.name, token: s.token, amount: p.stack });
-      const used = new Set(g.players.filter(x => !x.isHuman).map(x => x.type));
-      const friend = HOME_FRIENDS.find(f => !used.has(f.type)) ?? HOME_FRIENDS[seat % HOME_FRIENDS.length]!;
+      if (s.kind === 'human' && s.token) {
+        this.note({ t: 'cashout', code: this.code, name: s.name, token: s.token, amount: p.stack });
+        // tell the player their seat is gone (unless they left on purpose), so their page does not sit on a stale table
+        if (!this.leftOnPurpose.delete(seat)) this.hooks.removed?.(s.token, p.stack <= 0 ? 'out_of_chips' : 'removed');
+      }
+      const friend = replacementBot(g.players, seat);
       Object.assign(p, makePlayer(g.rs, g.settings, p.seat, friend, HOME_BUY), { i: seat, read: true });
       Object.assign(s, { kind: 'bot', connected: false, token: null, name: friend.name });
     }
