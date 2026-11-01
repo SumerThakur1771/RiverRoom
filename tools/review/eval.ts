@@ -6,6 +6,7 @@
 //   npx tsx tools/review/eval.ts --mock-chain      the perfect mock, but the free models fail on some
 //                                                  hands, so the chain falls through to the paid one
 //   npx tsx tools/review/eval.ts --live <url>      the deployed endpoint (real models, real key)
+//   add --model <id> (live) to ask one free model on its own instead of the chain
 //   add --out <file> to save the report, --min <score> to fail below a score.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { ModelError, REVIEW_MODELS, runChain, type CallFn } from '../../src/review/openrouter';
@@ -34,26 +35,28 @@ function mockCall(item: EvalItem, index: number, mode: string): CallFn {
   };
 }
 
-interface Row { answer: unknown; ms: number; note: string; model?: string; paid?: boolean; cached?: boolean; tried?: string }
+interface Row { answer: unknown; ms: number; note: string; model?: string; paid?: boolean; cached?: boolean; tried?: string; attempts?: Array<{ model: string; outcome: string; ms: number }> }
 const triedText = (a?: Array<{ model: string; outcome: string; ms: number }>): string | undefined =>
   a && a.length > 1 ? a.map(x => `${x.model.split('/')[1]}:${x.outcome}`).join(' > ') : undefined;
 
 async function live(url: string, item: EvalItem): Promise<Row> {
   for (let attempt = 0; attempt < 4; attempt++) {
     const t0 = Date.now();
-    const res = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(item.request) });
+    const body = arg('--model') ? { ...item.request, model: arg('--model') } : item.request;
+    const res = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
     if (res.status === 429) { const wait = Number(res.headers.get('retry-after') || 30); console.log(`  rate limited, waiting ${wait}s`); await new Promise(r => setTimeout(r, (wait + 1) * 1000)); continue; }
     if (!res.ok) return { answer: null, ms: Date.now() - t0, note: `HTTP ${res.status} ${(await res.text()).slice(0, 120)}` };
     const out = await readReviewEvents(res);
     const tried = triedText(out.attempts);
-    return { answer: out.review ?? null, ms: Date.now() - t0, note: out.fallback ? `fallback: ${out.fallback}` : '', ...(out.model ? { model: out.model, paid: !!out.paid, cached: !!out.cached } : {}), ...(tried ? { tried } : {}) };
+    return { answer: out.review ?? null, ms: Date.now() - t0, note: out.fallback ? `fallback: ${out.fallback}` : '', ...(out.model ? { model: out.model, paid: !!out.paid, cached: !!out.cached } : {}), ...(tried ? { tried } : {}), ...(out.attempts ? { attempts: out.attempts } : {}) };
   }
   return { answer: null, ms: 0, note: 'gave up after repeated rate limits' };
 }
 
+const attemptsAll: Array<{ model: string; outcome: string; ms: number }> = [];
 const mode = ['--mock', '--mock-lazy', '--mock-chain'].find(m => args.includes(m))?.slice(2) ?? (arg('--live') ? 'live' : '');
 if (!mode) { console.error('choose --mock, --mock-lazy, --mock-chain or --live <url>'); process.exit(2); }
-const lines: string[] = [`Review eval (${mode}${mode === 'live' ? ' ' + arg('--live') : ''}), ${items.length} hands, ${new Date().toISOString()}`];
+const lines: string[] = [`Review eval (${mode}${mode === 'live' ? ' ' + arg('--live') : ''}${arg('--model') ? ', only ' + arg('--model') : ''}), ${items.length} hands, ${new Date().toISOString()}`];
 const all: Checks[] = [], times: number[] = [], byModel = new Map<string, number>();
 let free = 0, paid = 0, fallback = 0, cached = 0;
 const cap = new DailyCap();
@@ -66,8 +69,9 @@ for (const [i, item] of items.entries()) {
   } else {
     const out = await runChain(mockCall(item, i, mode), item.request, { paidCap: cap });
     const tried = triedText(out.attempts);
-    row = out.ok ? { answer: out.review, ms: 0, note: '', model: out.model, paid: out.paid, ...(tried ? { tried } : {}) } : { answer: null, ms: 0, note: 'fallback: ' + out.reason, ...(tried ? { tried } : {}) };
+    row = out.ok ? { answer: out.review, ms: 0, note: '', model: out.model, paid: out.paid, attempts: out.attempts, ...(tried ? { tried } : {}) } : { answer: null, ms: 0, note: 'fallback: ' + out.reason, attempts: out.attempts, ...(tried ? { tried } : {}) };
   }
+  attemptsAll.push(...(row.attempts ?? []));
   if (row.model) { byModel.set(row.model, (byModel.get(row.model) ?? 0) + 1); if (row.paid) paid++; else free++; if (row.cached) cached++; } else fallback++;
   const c = scoreOne(row.answer, item.expected);
   all.push(c);
@@ -78,6 +82,12 @@ lines.push('', `schema-valid ${s.valid}/${s.n} · grade within one step ${s.grad
 lines.push(`overall score (mean of all applicable checks): ${(100 * s.score).toFixed(1)}%`);
 lines.push(`answered by: free models ${free}, paid model ${paid}, built-in fallback ${fallback}${cached ? ` (${cached} from the server cache)` : ''}; ${[...byModel].map(([m, n]) => `${m} ${n}`).join(', ') || 'no model'}`);
 if (times.length) { const t = times.slice().sort((a, b) => a - b); lines.push(`response time (full stream) median ${t[Math.floor(t.length / 2)]} ms, max ${t[t.length - 1]} ms`); }
+// per model: how its attempts ended, and how long the successful ones took
+for (const m of [...new Set(attemptsAll.map(a => a.model))]) {
+  const mine = attemptsAll.filter(a => a.model === m), ok = mine.filter(a => a.outcome === 'ok').map(a => a.ms).sort((a, b) => a - b);
+  const outcomes = [...new Set(mine.map(a => a.outcome))].map(o => `${o} ${mine.filter(a => a.outcome === o).length}`).join(', ');
+  lines.push(`model ${m}: ${mine.length} attempts (${outcomes})${ok.length ? `; valid answers in median ${ok[Math.floor(ok.length / 2)]} ms, max ${ok[ok.length - 1]} ms` : ''}`);
+}
 console.log(lines.join('\n'));
 if (arg('--out')) writeFileSync(arg('--out')!, lines.join('\n') + '\n');
 const min = arg('--min');

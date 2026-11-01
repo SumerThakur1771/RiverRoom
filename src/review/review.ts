@@ -53,6 +53,8 @@ export const ReviewRequestSchema = z.object({
   game: z.string().max(80).optional(),
   gameDesc: z.string().max(600).optional(),
   money: z.boolean().optional(),
+  /** Eval only: ask one free model on its own (must be one of FREE_CANDIDATES). */
+  model: z.string().max(100).optional(),
 });
 export type ReviewRequest = z.infer<typeof ReviewRequestSchema>;
 

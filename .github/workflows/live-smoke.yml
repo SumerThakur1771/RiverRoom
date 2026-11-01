@@ -38,6 +38,9 @@ jobs:
           node tools/ui/smoke.mjs https://sumer-riverroom.vercel.app/ 25 tourney
       - name: Lighthouse on the live site (3 runs per page; fails below 95 accessibility)
         run: node tools/measure/lighthouse.mjs https://sumer-riverroom.vercel.app/ lighthouse 3 95
+      - name: Vercel Web Analytics sends page views without query strings
+        if: always()
+        run: node tools/ui/analytics-check.mjs https://sumer-riverroom.vercel.app
       - name: The review's model chain matches OpenRouter's model list
         if: always()
         run: npx tsx tools/review/check-models.ts

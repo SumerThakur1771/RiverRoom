@@ -26,15 +26,20 @@ export interface ModelSpec {
 }
 
 /**
- * Free first; the paid model is the last resort. The second free model was meant to be
- * openai/gpt-oss-20b:free, but OpenRouter no longer lists a free gpt-oss variant (checked by
- * tools/review/check-models.ts on 2026-11-01), so it is the larger Gemma 4.
+ * Free models the review can use. The chain's second slot was meant to be
+ * openai/gpt-oss-20b:free, which OpenRouter no longer offers for free (checked by
+ * tools/review/check-models.ts on 2026-11-01), so it goes to a free model from a different
+ * provider than the first, so that one provider's outage or rate limit does not take out both.
  */
-export const REVIEW_MODELS: readonly ModelSpec[] = [
-  { id: 'google/gemma-4-26b-a4b-it:free', paid: false, json: 'object' },
-  { id: 'google/gemma-4-31b-it:free', paid: false, json: 'object' },
-  { id: 'google/gemini-2.5-flash-lite', paid: true, json: 'schema' },
-];
+export const GEMMA_26B: ModelSpec = { id: 'google/gemma-4-26b-a4b-it:free', paid: false, json: 'object' };
+export const NEMOTRON: ModelSpec = { id: 'nvidia/nemotron-3.5-super-vl:free', paid: false, json: 'schema', reasoning: true };
+export const GEMMA_31B: ModelSpec = { id: 'google/gemma-4-31b-it:free', paid: false, json: 'object' };
+export const GEMINI_FLASH_LITE: ModelSpec = { id: 'google/gemini-2.5-flash-lite', paid: true, json: 'schema' };
+/** Free models a request may ask for on their own (for the eval); never a paid one. */
+export const FREE_CANDIDATES: readonly ModelSpec[] = [GEMMA_26B, NEMOTRON, GEMMA_31B];
+
+/** Free first; the paid model is the last resort. */
+export const REVIEW_MODELS: readonly ModelSpec[] = [GEMMA_26B, NEMOTRON, GEMINI_FLASH_LITE];
 /** A review is three short fields; this leaves room without paying for rambling. */
 export const REVIEW_MAX_TOKENS = 500;
 /** Per model: after this, move on to the next one. */

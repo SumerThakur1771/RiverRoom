@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { ReviewCache } from '../src/review/cache';
 import { createReviewHandler, readReviewEvents } from '../src/review/handler';
 import { reviewKey } from '../src/review/key';
-import { ModelError, openRouterCall, OPENROUTER_URL, REVIEW_MAX_TOKENS, REVIEW_MODELS, runChain, type AttemptResult, type CallFn, type ModelSpec } from '../src/review/openrouter';
+import { FREE_CANDIDATES, GEMINI_FLASH_LITE, ModelError, NEMOTRON, openRouterCall, OPENROUTER_URL, REVIEW_MAX_TOKENS, REVIEW_MODELS, runChain, type AttemptResult, type CallFn, type ModelSpec } from '../src/review/openrouter';
 import { DailyCap, reviewLimiters, SlidingWindowLimiter } from '../src/review/rate-limit';
 import { buildUserMessage, compactHand, GRADES, parseReview, REVIEW_JSON_SCHEMA, ReviewSchema, SYSTEM_PROMPT, type ReviewRequest } from '../src/review/review';
 
@@ -257,6 +257,14 @@ describe('POST /api/review handler', () => {
     expect(await readReviewEvents(await h(post(REQ)))).toMatchObject({ fallback: 'all_failed' });
     await readReviewEvents(await h(post(REQ)));
     expect(calls.filter(c => c === FREE_A.id)).toHaveLength(2);
+  });
+  it('eval only: one free model can be asked on its own; a paid or unknown model is refused', async () => {
+    const calls: string[] = [], h = make({ call: () => mockCall({ [NEMOTRON.id]: JSON.stringify(GOOD), [FREE_A.id]: JSON.stringify(GOOD) }, calls) });
+    expect(await readReviewEvents(await h(post({ ...REQ, model: NEMOTRON.id })))).toMatchObject({ model: NEMOTRON.id, paid: false });
+    expect(calls).toEqual([NEMOTRON.id]);
+    for (const bad of [GEMINI_FLASH_LITE.id, 'openai/gpt-5']) expect((await h(post({ ...REQ, model: bad }))).status).toBe(400);
+    expect(FREE_CANDIDATES.every(m => !m.paid)).toBe(true);
+    expect(await reviewKey({ ...REQ, model: NEMOTRON.id })).not.toBe(await reviewKey(REQ)); // cached apart from the chain's answer
   });
   it('rate-limits new hands by client IP (first x-forwarded-for entry): 429 with retry-after', async () => {
     const h = make();

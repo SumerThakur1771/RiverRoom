@@ -4,7 +4,7 @@
 // prices and parameters (as GitHub annotations in CI) and fails on any mismatch.
 // Usage: npx tsx tools/review/check-models.ts
 import { appendFileSync } from 'node:fs';
-import { REVIEW_MODELS } from '../../src/review/openrouter';
+import { FREE_CANDIDATES, REVIEW_MODELS } from '../../src/review/openrouter';
 
 interface OrModel { id: string; context_length?: number; pricing?: { prompt?: string; completion?: string }; supported_parameters?: string[] }
 
@@ -13,7 +13,7 @@ if (!res.ok) { console.error(`OpenRouter model list: HTTP ${res.status}`); proce
 const list = ((await res.json()) as { data: OrModel[] }).data;
 const byId = new Map(list.map(m => [m.id, m]));
 const problems: string[] = [], rows: string[] = [];
-for (const spec of REVIEW_MODELS) {
+for (const spec of [...new Set([...REVIEW_MODELS, ...FREE_CANDIDATES])]) {
   const m = byId.get(spec.id);
   if (!m) {
     const base = spec.id.split(':')[0]!, family = base.replace(/-\d+b.*$/, '');

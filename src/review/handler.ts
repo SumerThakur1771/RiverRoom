@@ -5,7 +5,7 @@
 // same hand already being reviewed (share that call) -> per-IP rate limit -> model chain.
 import type { ReviewCache } from './cache.js';
 import { reviewKey } from './key.js';
-import { runChain, type CallFn, type ChainOutcome, type ModelSpec } from './openrouter.js';
+import { FREE_CANDIDATES, runChain, type CallFn, type ChainOutcome, type ModelSpec } from './openrouter.js';
 import type { DailyCap, LimitResult } from './rate-limit.js';
 import { ReviewRequestSchema } from './review.js';
 
@@ -42,7 +42,11 @@ export function createReviewHandler(deps: HandlerDeps): (request: Request) => Pr
     }
     const parsed = ReviewRequestSchema.safeParse(body);
     if (!parsed.success) return json(400, { fallback: true, reason: 'bad_request', detail: parsed.error.issues.slice(0, 3).map(i => i.path.join('.') + ': ' + i.message).join('; ') });
-    const req = parsed.data, key = await reviewKey(req), enc = new TextEncoder(), t0 = Date.now();
+    const req = parsed.data;
+    // eval only: one free model on its own; a paid or unknown model is refused
+    const only = req.model ? FREE_CANDIDATES.find(m => m.id === req.model) : undefined;
+    if (req.model && !only) return json(400, { fallback: true, reason: 'bad_request', detail: 'model must be one of the free candidates' });
+    const key = await reviewKey(req), enc = new TextEncoder(), t0 = Date.now();
     const sse = (run: (send: (event: string, data: unknown) => void) => Promise<void>): Response =>
       new Response(new ReadableStream<Uint8Array>({
         async start(controller) {
@@ -76,7 +80,7 @@ export function createReviewHandler(deps: HandlerDeps): (request: Request) => Pr
     const call = deps.call();
     return sse(async send => {
       const work = runChain(call, req, {
-        ...(deps.models ? { models: deps.models } : {}),
+        ...(only ? { models: [only] } : deps.models ? { models: deps.models } : {}),
         paidCap: deps.paidCap,
         onAttempt: spec => send('attempt', { model: spec.id, paid: spec.paid }),
         onText: text => send('delta', { text }),

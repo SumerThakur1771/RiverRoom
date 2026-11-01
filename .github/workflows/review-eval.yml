@@ -1,15 +1,42 @@
 name: AI review eval (live)
 
 # Runs the 20-hand review eval against the deployed /api/review: real OpenRouter models, using
-# the OPENROUTER_API_KEY stored in Vercel. Manual only (Actions tab, "Run workflow"). It sends
-# 20 requests paced to stay under the endpoint's per-IP limit, so it takes about 5 minutes.
-# Reviews are cached by hand, so a second run on the same deployment is answered from the
-# cache; the report marks those.
+# the OPENROUTER_API_KEY stored in Vercel. Manual only (Actions tab, "Run workflow").
+#
+#  1. Each free candidate model on its own, in parallel (separate runners, so each stays under
+#     the endpoint's per-IP limit): compares the free models directly.
+#  2. Then the real chain (free first, paid last): score, free vs paid split, latency per model.
+# Each run sends 20 requests paced 13 s apart (about 5 minutes). Reviews are cached by hand,
+# so a repeat run on the same deployment is answered from the cache; the report marks those.
 on:
   workflow_dispatch:
 
 jobs:
-  eval:
+  single:
+    name: Only ${{ matrix.model }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        model: ['google/gemma-4-26b-a4b-it:free', 'nvidia/nemotron-3.5-super-vl:free', 'google/gemma-4-31b-it:free']
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Run the eval with one model
+        run: npx tsx tools/review/eval.ts --live https://sumer-riverroom.vercel.app/api/review --model "${{ matrix.model }}" --out review-eval.txt
+      - name: Post the results as annotations (readable through the API)
+        if: always()
+        run: bash tools/review/annotate.sh review-eval.txt "Review eval, only ${{ matrix.model }}"
+
+  chain:
+    name: Full chain (free first, paid last)
+    needs: single
+    if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -19,22 +46,11 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: The model chain matches OpenRouter's model list (prices, structured outputs)
+      - name: The model chain matches OpenRouter's model list (prices, JSON support)
         continue-on-error: true
         run: npx tsx tools/review/check-models.ts
-      - name: Run the eval
-        run: |
-          npx tsx tools/review/eval.ts --live https://sumer-riverroom.vercel.app/api/review --out review-eval-live.txt
-          { echo '```'; cat review-eval-live.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Run the eval through the chain
+        run: npx tsx tools/review/eval.ts --live https://sumer-riverroom.vercel.app/api/review --out review-eval.txt
       - name: Post the results as annotations (readable through the API)
         if: always()
-        run: |
-          [ -f review-eval-live.txt ] || exit 0
-          grep -E '^(schema-valid|overall score|answered by|response time)' review-eval-live.txt | while IFS= read -r line; do echo "::notice title=Review eval::$line"; done
-          # per-hand lines, five per annotation
-          grep -E '^[a-z0-9-]+ +expected' review-eval-live.txt | paste -d'|' - - - - - | sed 's/|/ %0A/g' | while IFS= read -r chunk; do echo "::notice title=Review eval hands::$chunk"; done
-      - uses: actions/upload-artifact@v6
-        if: always()
-        with:
-          name: review-eval-live
-          path: review-eval-live.txt
+        run: bash tools/review/annotate.sh review-eval.txt "Review eval, chain"

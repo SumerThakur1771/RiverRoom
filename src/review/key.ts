@@ -5,7 +5,8 @@ import { buildUserMessage, PROMPT_VERSION } from './prompt.js';
 import type { ReviewRequest } from './review.js';
 
 export async function reviewKey(req: ReviewRequest): Promise<string> {
-  const bytes = new TextEncoder().encode(PROMPT_VERSION + '\n' + buildUserMessage(req));
+  // a single-model eval request is cached apart from the normal chain's answer
+  const bytes = new TextEncoder().encode(PROMPT_VERSION + '\n' + (req.model ? 'model:' + req.model + '\n' : '') + buildUserMessage(req));
   const digest = await globalThis.crypto.subtle.digest('SHA-256', bytes);
   return Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, '0')).join('');
 }
