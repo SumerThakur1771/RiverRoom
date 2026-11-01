@@ -44,7 +44,7 @@
       "name": "Play online with friends",
       "short_name": "Play online",
       "description": "Create a table and share the invite link; computer players fill the empty seats.",
-      "url": "/mp.html",
+      "url": "/?online",
       "icons": [
         {
           "src": "/icons/icon-192.png",

@@ -20,6 +20,7 @@
     <div class="brand"><span class="logo">River Room</span><span class="sub" id="tableName">Hold'em · Sit &amp; Go</span></div>
     <div class="info" id="info"></div>
     <div class="tools">
+      <button class="ibtn" id="tableBtn" hidden title="Table: players, invite, settle up" aria-label="Table: players, invite link and settle up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c.6-3.4 3-5.4 6-5.4s5.4 2 6 5.4"/><circle cx="17" cy="9" r="2.6"/><path d="M15.6 14.4c2.6-.2 4.6 1.6 5.2 4.6"/></svg></button>
       <button class="ibtn" id="pauseBtn" title="Pause after this hand" aria-label="Pause after this hand" aria-pressed="false"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
       <button class="ibtn" id="learnBtn" title="How to play" aria-label="How to play"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/></svg></button>
       <button class="ibtn" id="progBtn" title="My progress" aria-label="My progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></button>
@@ -80,7 +81,7 @@
     <div class="eyebrow" id="startEyebrow">No-Limit Texas Hold'em · Sit &amp; Go</div>
     <h1>River Room</h1>
     <div class="field"><span>Game</span><div class="seg tall" id="modeSeg"></div></div>
-    <a class="online-btn" id="onlineBtn" href="/mp.html"><span class="ob-title">Play online with friends</span><span class="ob-sub">Create a table, share the invite link. Computer players fill the empty seats.</span></a>
+    <a class="online-btn" id="onlineBtn" href="/?online"><span class="ob-title">Play online with friends</span><span class="ob-sub">Create a table, share the invite link. Computer players fill the empty seats.</span></a>
     <div id="homeInfo" hidden>
       <p class="lede">Your home game with the boys: $10 buy-in, blinds 10¢/20¢ (the small blind adds 10¢ more to play), rebuys allowed. Chips: <b style="color:#6c9cf0">blue 10¢</b>, <b style="color:#e06a5e">red 20¢</b>, <b style="color:#5cc07f">green 50¢</b>, <b>black $1</b>. Like the real game, people just call before the flop (a raise is rare and small), and a $1 bet is a big deal.</p>
       <div class="who" id="homeRoster" style="margin:0 0 16px"></div>
@@ -102,6 +103,48 @@
 </div>
 
 <!-- settings -->
+<!-- online: lobby (start or join a table) -->
+<div class="ov" id="onlineOv" hidden>
+  <div class="dlg">
+    <div class="eyebrow">Home cash game · online</div>
+    <h2 id="olTitle">Play online with friends</h2>
+    <p class="lede" id="olLede">Start a table and share the invite link. Everyone picks who they play; the computer plays the rest, each in their own style. The server deals and keeps everyone's cards private.</p>
+    <p class="ol-wake" id="olWake" role="status" hidden>Waking up the server, about a minute. The free hosting sleeps when nobody is playing.</p>
+    <div id="olCreate">
+      <div id="olRosterHost"></div>
+      <div class="field"><span>Games</span><div class="seg tall" id="olGamesSeg"></div></div>
+      <button class="btn-main" id="olCreateBtn">Start the table</button>
+    </div>
+    <div id="olJoin" hidden>
+      <fieldset class="roster-pick" id="olPick"></fieldset>
+      <button class="btn-main" id="olJoinBtn">Join the table</button>
+      <button type="button" class="rp-reset" id="olToCreate">Start your own table instead</button>
+    </div>
+    <p class="rp-err" id="olErr" role="alert"></p>
+    <button class="btn-ghost" id="olBack">Back to single player</button>
+    <p class="fine" id="olConn" role="status" aria-live="polite"></p>
+  </div>
+</div>
+
+<!-- online: the table's players, invite link, settle up -->
+<div class="ov" id="tableOv" hidden>
+  <div class="dlg">
+    <div class="eyebrow">Online table</div>
+    <h2>Table <span id="tpCode"></span></h2>
+    <p class="tp-invite">Invite friends: <a id="tpLink" href=""></a> <button type="button" class="rp-btn" id="tpCopy">Copy</button></p>
+    <h3 class="tp-h">Players</h3>
+    <p class="fine" id="tpWho"></p>
+    <div id="tpRoster" class="tp-roster"></div>
+    <div class="rp-add" id="tpAdd" hidden><input type="text" id="tpNewName" maxlength="12" placeholder="Add a player" aria-label="New player's name"><select id="tpNewStyle" aria-label="How the computer plays them"></select><button type="button" class="rp-btn" id="tpAddBtn">Add</button></div>
+    <p class="rp-err" id="tpErr" role="alert"></p>
+    <h3 class="tp-h">Settle up</h3>
+    <button type="button" class="btn-ghost" id="tpSettle">Who pays whom</button>
+    <div id="tpSettleOut" class="tp-settle" hidden></div>
+    <button class="btn-ghost btn-danger" id="tpLeave">Leave the table</button>
+    <button class="btn-main" id="tpClose">Back to the table</button>
+  </div>
+</div>
+
 <div class="ov" id="setOv" hidden>
   <div class="dlg">
     <div class="eyebrow">Table settings</div>

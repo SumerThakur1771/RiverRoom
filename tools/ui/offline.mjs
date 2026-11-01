@@ -1,6 +1,6 @@
 // Offline test for the installable app: open the production build once (the service worker
 // caches the app), cut the network, reload, and play single-player hands with no network.
-// Also checks the manifest and that the multiplayer page still opens offline.
+// Also checks the manifest and that the online lobby still opens offline.
 //
 // Usage: node tools/ui/offline.mjs [url=http://localhost:4173/] [seconds=60]
 // Passes when at least one full hand (deal to showdown or fold) finishes with no network.
@@ -46,8 +46,9 @@ while (Date.now() - t0 < SECS * 1000) {
 const hand = await page.evaluate(() => +(document.querySelector('#info')?.textContent?.match(/Hand#(\d+)/)?.[1] ?? 0));
 await page.screenshot({ path: 'screenshots/offline-phone.png' });
 // the multiplayer page is cached too (it needs the network to play, and says so)
-await page.goto(URL_ + 'mp.html');
-const mpLoaded = await page.isVisible('#lobby');
+// the online lobby opens too (playing online needs the network, and says so)
+await page.goto(URL_ + '?online');
+const mpLoaded = await page.waitForSelector('#onlineOv:not([hidden])', { timeout: 10_000 }).then(() => true, () => false);
 await ctx.setOffline(false);
 await browser.close();
 

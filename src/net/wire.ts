@@ -19,10 +19,14 @@ export function canSee(p: Player, viewer: number): boolean {
 const PUBLIC_PLAYER = [
   'i', 'seat', 'name', 'type', 'color', 'avatar', 'stack', 'out', 'place', 'buyins', 'start', 'vis', 'folded', 'allIn', 'bet', 'total',
   'acted', 'actedAt', 'raiseLocked', 'label', 'shown', 'justShown', 'mucked', 'revealed', 'won', 'winner', 'hud', 'read', 'splitDone', 'partWin',
+  // the table's read of each player's range, built from public actions only (src/engine/reads.ts)
+  'rg',
 ] as const;
 /** The hand itself and what is worked out from it: the owner's, or everyone's once shown. */
 const HAND_PLAYER = ['cards', 'all', 'extra', 'parts', 'plan', 'handName', 'pname', 'pscore', 'score', 'eq', 'eqAtReveal', 'vrank'] as const;
-// Never sent: persona, hf, rg, tilt, mem, _plan, _eq (the computer players' private reasoning).
+// Per-hand play flags (hf: saw the flop, went to showdown, raised...) are public, except
+// hadDraw, which comes from the player's own cards. Never sent: persona, tilt, mem, _plan, _eq
+// (the computer players' private reasoning).
 const PUBLIC_GAME = [
   'mode', 'money', 'handNo', 'button', 'sbIdx', 'bbIdx', 'level', 'sb', 'bb', 'ante', 'variant', 'pot', 'street', 'currentBet', 'minRaise', 'toAct',
   'lastAggressor', 'pfAggressor', 'cbetMade', 'streetRaises', 'revealed', 'tableNo', 'entrants', 'msg', 'explain', 'sideInfo', 'highlight', 'handActive',
@@ -40,7 +44,7 @@ export type WireStep = Record<string, Json> & { kind: Step['kind'] };
 
 /** Plain JSON copy; players become {"$p": index}. Maps, sets, functions and class instances are dropped. */
 function enc(v: unknown, index: Map<object, number>, depth = 0): Json | undefined {
-  if (v === null || typeof v === 'boolean' || typeof v === 'string') return v;
+  if (v === null || typeof v === 'boolean' || typeof v === 'string') return v as Json;
   if (typeof v === 'number') return Number.isFinite(v) ? v : null;
   if (typeof v !== 'object' || depth > 8) return undefined;
   const pi = index.get(v);
@@ -56,12 +60,15 @@ function encodePlayer(p: Player, viewer: number, index: Map<object, number>): Wi
   const src = p as unknown as Record<string, unknown>;
   const o: Record<string, Json> = {};
   for (const k of PUBLIC_PLAYER) { const e = enc(src[k], index, 1); if (e !== undefined) o[k] = e; }
+  const hf = { ...(p.hf ?? {}) } as Record<string, unknown>;
   if (canSee(p, viewer)) {
     for (const k of HAND_PLAYER) { const e = enc(src[k], index, 1); if (e !== undefined) o[k] = e; }
   } else {
+    delete hf.hadDraw;
     o.cards = p.cards.map(() => HIDDEN);
     o.all = (p.all ?? []).map(() => HIDDEN);
   }
+  o.hf = enc(hf, index, 1) ?? {};
   // to the table screen, "the human" is the person looking at it; `human` says whether a person plays this seat
   return { ...o, i: p.i, name: p.name, isHuman: p.i === viewer, human: p.isHuman } as WirePlayer;
 }

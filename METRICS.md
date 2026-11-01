@@ -358,20 +358,30 @@ against a local Postgres 16, after `npm run db:migrate`. Output:
 | Coverage (`npx vitest run --coverage`, with Postgres) of everything outside the page: engine, bots, simulator, coach, AI review, ledger, server | Statements 88.88%, branches 82.27%, functions 91.58%, lines 91.52%. Per file: [`results/2026-10-31-coverage-current.txt`](tools/measure/results/2026-10-31-coverage-current.txt). Lowest: `src/ai/equity.ts` at 60.07% of statements; the uncovered part is mostly the multi-opponent range equity (`equityVsMulti`) that split-game bots use, which the unit tests rarely reach |
 | Storage test (`test/store.test.ts`) | Real server, real Postgres, 3 clients, 8+ hands; one player leaves mid-session. Stored 7 hands with 5 results each and 9 ledger entries in the saved run. The settlement read from Postgres equals the in-memory one. The leaver's cash-out equals their buy-ins plus their stored hand results. Tokens are stored only as hashes. 0 failed writes. Passed 6 runs in a row on its own, about 3 s each |
 
-## Multiplayer: no-card-leak check
+## Online play: no-card-leak checks
 
-Command: `npx vitest run test/server.test.ts --reporter=verbose`, run 5 times. Output:
-[`results/2026-10-31-mp-leak-check.txt`](tools/measure/results/2026-10-31-mp-leak-check.txt).
+Command: `npx vitest run test/wire.test.ts test/server.test.ts --reporter=verbose`, run 3 times
+on the final code (2026-11-01). Output:
+[`results/2026-11-01-online-leak-checks.txt`](tools/measure/results/2026-11-01-online-leak-checks.txt).
 
-A hook compares every view the server is about to send with the real game state: a player
-may only see their own cards, plus cards turned face up for everyone.
+Both tests compare what is sent with the real game state, using their own copy of the rule:
+a person may see their own cards, plus cards turned face up for everyone.
 
-| Run | Views checked (12 hands, 3 clients + 2 bots) | Leaks |
-|---|---|---|
-| 1–5 | 1,445 / 1,362 / 1,365 / 1,312 / 1,359 | 0 in every run |
+| Test | What it covers | Checked per run | Leaks |
+|---|---|---|---|
+| `test/wire.test.ts` | every game type (Hold'em and the four split games), three people at one table, each person's copy and a spectator's at every engine step | 931 steps, 3,724 copies (same every run: seeded) | 0 |
+| `test/server.test.ts` | a real server and clients playing dealer's choice as characters, with games and splits chosen by people, timeouts, a reconnect and roster edits | 5,090 / 4,999 / 5,033 messages; people chose the game 15 / 14 / 15 times and split their own cards 35 / 32 / 37 times | 0 in every run |
 
-Mutation check: changing one line so that a player waiting for a seat sees that seat's
-cards makes the test fail in 3 of 3 runs.
+Mutation checks on the wire format:
+- Sending other people's cards as they are fails the test.
+- Showing everything to everyone fails it too.
+
+That second check failed to fail at first, because the test reused the code's own visibility
+rule. It now has its own copy.
+
+The earlier protocol (one view per seat, Hold'em only) was checked the same way on
+2026-10-31: 1,312 to 1,445 views per run over 5 runs, 0 leaks
+([output](tools/measure/results/2026-10-31-mp-leak-check.txt)).
 
 ## Settlement (fewest payments)
 

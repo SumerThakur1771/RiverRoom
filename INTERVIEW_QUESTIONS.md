@@ -12,18 +12,24 @@ the freeze fix) are in [ANALYSIS.md](ANALYSIS.md#8-technical-interviewer-questio
     every deck order is exactly equally likely, not just close.
   - Plain `x % n` would favour some cards by about 1 in 10⁸; the test suite shows that
     bias and fails if it comes back.
-- **Each player gets their own view.** After every engine step, `buildView` in
-  `server/src/view.ts` builds one view per seat. A seat's cards go into a view only if
-  `canSee(p, viewer)`: it is the viewer's own seat, or the cards were turned face up and not
-  folded or mucked.
-- **Waiting players are spectators.** Someone waiting to take a seat watches with viewer
-  = -1, so they never see the cards of the bot they are replacing.
-- **The test checks every message.** `test/server.test.ts` runs a real server and 3 real
-  clients. A hook compares every view against the true game state just before it is sent.
-  - 5 runs: 1,312–1,445 views each, 0 leaks.
-  - Reintroducing the spectator bug fails the test 3 of 3 times.
-  - Follow-up story: the check itself once raised a false alarm, and I fixed the check, not
-    the server. See DESIGN.md section 10.
+- **Each person gets their own copy.** After every engine step, `encodeGame` in
+  `src/net/wire.ts` builds one copy of the game per person.
+  - It is a whitelist: a field reaches a client only if it is listed there.
+  - Another person's cards go as hidden placeholders, so the count is kept and the table
+    can draw backs.
+  - Their split, hand name, score and equity are left out until their cards are face up.
+  - The deck and the computer players' private reasoning are never sent.
+- **Waiting players are spectators.** Someone waiting to sit down sees the table as a
+  spectator (viewer = -1), so they never see the cards of the computer player whose seat
+  they are taking.
+- **The tests check every message.**
+  - `test/wire.test.ts` plays every game type with three people at one table and checks
+    3,724 copies: 0 leaks.
+  - `test/server.test.ts` checks every message on a live server against its real state:
+    about 5,000 a run, 0 leaks.
+  - Both tests have their own copy of the visibility rule. The first version reused the
+    code's rule, so a broken rule also broke the check and the test still passed. I found
+    that by breaking the rule on purpose.
 
 ## 2. Players reconnect with a session token, not a password. Why is that safe enough, and how is the token protected?
 

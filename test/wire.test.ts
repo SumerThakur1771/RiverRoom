@@ -18,7 +18,7 @@ import { scriptedHero } from '../src/sim/driver';
 
 const SETTINGS = { name: '', opp: 4, stack: 1000, perLevel: 10, revealAll: false, games: 'dealer' as const };
 const PRIVATE_KEYS = ['parts', 'extra', 'plan', 'handName', 'pname', 'pscore', 'score', 'eq', 'eqAtReveal', 'vrank'];
-const NEVER = ['deck', 'nextDeck', 'persona', 'hf', 'rg', 'tilt', 'mem', '_plan', '_eq', 'stats', 'btab'];
+const NEVER = ['deck', 'nextDeck', 'persona', 'tilt', 'mem', '_plan', '_eq', 'stats', 'btab'];
 
 function threePeople(seed: string): Game {
   const g = newGame({ mode: 'home', seed, settings: SETTINGS, roster: DEFAULT_ROSTER, heroId: 'sumer' });
@@ -41,6 +41,7 @@ function check(g: Game, viewer: number, w: WireGame, problems: string[]): void {
     if (cards.some(c => c !== HIDDEN) || all.some(c => c !== HIDDEN)) problems.push(`hand ${g.handNo}: viewer ${viewer} got ${p.name}'s cards`);
     if (cards.length !== p.cards.length) problems.push(`hand ${g.handNo}: ${p.name}'s card count wrong for viewer ${viewer}`);
     for (const k of PRIVATE_KEYS) if (k in wp) problems.push(`hand ${g.handNo}: viewer ${viewer} got ${p.name}'s ${k}`);
+    if (wp.hf && typeof wp.hf === 'object' && 'hadDraw' in wp.hf) problems.push(`hand ${g.handNo}: viewer ${viewer} got ${p.name}'s hadDraw`);
     if (json.hist.some(l => l.startsWith(`Dealt to ${p.name} [`) || l.startsWith(`${p.name} splits: `))) problems.push(`hand ${g.handNo}: viewer ${viewer} got ${p.name}'s private history line`);
   });
   if ((json.ev as Array<{ t?: string }>).some(e => e?.t === 'all')) problems.push('practice view sent');

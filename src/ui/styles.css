@@ -498,3 +498,22 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
 .rp-err{color:var(--g-blunder);font-size:13px;min-height:1.2em;margin:4px 0}
 .rp-note{color:var(--muted);font-size:13px;margin:6px 0 0}
 .rp-reset{background:none;border:0;color:var(--brass);text-decoration:underline;font:600 13px var(--f-body);padding:4px 0;margin-bottom:10px}
+
+/* Online lobby and table panel */
+.ol-wake{background:rgba(211,168,84,.08);border:1px solid rgba(211,168,84,.6);border-radius:12px;padding:10px 12px;font-size:14px;color:var(--ink);margin:0 0 12px}
+.rp.taken{opacity:.6}
+.rp.taken .rp-main{cursor:not-allowed}
+.rp-taken{flex:none;font:800 10px var(--f-body);font-style:normal;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:1px 6px}
+#olPick legend{font:700 11px var(--f-body);letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;padding:0}
+.tp-h{font:700 11px var(--f-body);letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:16px 0 6px}
+.tp-invite{font-size:14px;color:var(--muted);overflow-wrap:anywhere;margin:4px 0 0}
+.tp-invite a{color:var(--win)}
+.tp-roster{display:flex;flex-direction:column;gap:6px}
+.tp-roster .rp-main{cursor:default}
+.tp-settle{margin-top:8px;font-size:14px}
+.tp-settle table{border-collapse:collapse;width:100%}
+.tp-settle td,.tp-settle th{text-align:left;padding:4px 8px;border-bottom:1px solid var(--line)}
+.tp-settle .pos{color:var(--g-great)}.tp-settle .neg{color:var(--g-mistake)}
+.tp-pay{padding-left:18px;margin:8px 0}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+#tpClose{margin-top:12px}

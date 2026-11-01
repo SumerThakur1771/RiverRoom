@@ -296,71 +296,118 @@ CI runs it against mock models:
 The live run is manual (the "AI review eval (live)" workflow). It runs each free candidate
 on its own, then the real chain, against the deployed endpoint.
 
-## 10. Multiplayer: a server-authoritative table (`server/`)
+## 10. Online play: the same table, dealt by the server (`server/`, `src/net/wire.ts`)
 
-**What it does.** Friends play the home game online:
-- One player starts a table and gets a 6-character invite code (no 0/O/1/I).
-- Others join with the code and their name; computer players hold the empty seats.
-- Each human gets a session token, kept in the browser's local storage, so a reload or a
+**What it does.** Friends play the home game online, on the same table screen as
+single-player:
+- dealer's choice and every split game;
+- the coach and hints;
+- hand history;
+- the same animations.
+
+How a table works:
+- One person starts a table from the start screen ("Play online with friends"). Their home
+  game roster comes along: Sumer and the four friends, or however they have edited it.
+- The table gets a 6-character invite code (no 0/O/1/I) and a link, `/?join=ABC234`.
+- Everyone picks the character they play. A picked character is locked: nobody else can take
+  it.
+- The computer plays every character nobody picked, in that character's own style. When a
+  person leaves, the computer takes their character back.
+- Each person gets a session token, kept in the browser's local storage, so a reload or a
   dropped connection puts them back in their seat.
+
+**One table screen for both modes.** The single-player screen is a dispatcher: one handler
+per engine step (an action, the dealer's choice, the split, a rebuy, and each animation).
+Online, the steps come from the server instead of a local engine.
+- The page decodes the server's copy of the game into the same game object it renders, then
+  runs the same handler.
+- When the server asks *you* something (your action, your dealer's choice, your split, your
+  rebuy), the page opens the same control as in single-player and sends your answer.
+- If the server answers for you on a timeout, the open control closes.
+- If the screen falls behind the server, animations speed up until it catches up.
+- Online, the review never blocks the table: it waits in the hand history. Nothing is saved
+  as a single-player table to resume.
+- `/mp.html` and its old `?code=` links redirect to the lobby.
 
 **Server-authoritative.**
 - The Node server (Socket.IO) runs the same engine generator as the browser game.
-- It shuffles with the crypto RNG and decides every bot move.
-- It is the only place hole cards exist. After every engine step it builds a view for each
-  seat (`server/src/view.ts`) with public information plus that seat's own cards. Other
-  players' cards appear only once they are turned face up (showdown or an all-in runout).
-  Someone who joins mid-hand watches as a spectator until the next deal, so they never see
-  the cards of the bot whose seat they are taking.
-- Clients can send only `act`, `rebuy` and `leave` for their own seat, on their own turn. Each
-  message is validated with zod.
-- The engine still enforces the betting rules (minimum raise, short all-ins).
-- Each socket may send 20 messages a second.
-- A turn timer (30 s) checks or folds for anyone who doesn't act, so a disconnected player
-  never stalls the table.
+- It shuffles with the crypto RNG and decides every computer player's move, including their
+  split habits.
+- It is the only place hole cards exist. After every engine step it sends each person their
+  own copy of the game, made by `src/net/wire.ts`. That module is a whitelist:
+  - Other people's cards go as hidden placeholders (the count is kept, so the table draws
+    backs).
+  - Their split, hand name, score and equity are left out until their cards are face up.
+  - The deck, the computer players' private reasoning and the practice view are never sent.
+  - Other people's "Dealt to" and split lines are removed from the history.
+  - Someone who joins mid-hand watches as a spectator until the next deal.
+- The table asks one question at a time, each with a timer and a safe answer if it runs
+  out:
+  - your action (30 s; check or fold);
+  - your dealer's choice (30 s; Poker + 3 Patti), offering only games the deck can deal at
+    this table size;
+  - your final split (45 s; the computer's best split for your cards), which must be exactly
+    your cards in the right group sizes;
+  - your rebuy (30 s; no).
+- Every message is validated with zod, and each socket may send 20 messages a second.
 
-**Testing it.** `test/server.test.ts` starts a real server and three real Socket.IO clients
-that play full hands against two bots. A hook compares every outgoing view with the
-server's real state at that moment. In 5 runs it checked 1,312 to 1,445 views over 12 hands
-with 0 leaks, and a deliberately broken visibility rule makes it fail. The test also covers:
-- a player who stops acting (the timer folds or checks for them);
-- a disconnect and a reconnect by token (same seat, same cards);
-- a wrong token being refused;
-- invalid input.
+**The engine with several people.** In single-player only one person is at the table. Online
+there can be several. Every person now gets their own final-split step and their own
+"Dealt to" line. With one person both behave exactly as before, and the golden replay
+passes.
 
-`tools/ui/mp-smoke.mjs` plays two browsers against the bundled server in CI.
+**The roster online.**
+- Only the person who started the table can rename, add or remove characters. A character
+  someone is playing cannot be removed.
+- Between hands a change applies at once; during a hand it waits for the hand to end.
+- Removing a character re-numbers the seats and keeps the dealer button with the same
+  player. The server looks people up by session token, never by a remembered seat number,
+  so nobody's seat is lost.
+- When the creator leaves, whoever has been at the table longest takes over the roster.
 
-One false alarm, and what it taught: the leak check once flagged a player who was waiting for
-a seat. They were shown the cards of the bot in that seat, but only after those cards had
-been turned face up for everyone. The check had treated "the seat you will take" as "your
-own cards". It now applies the public rule to anyone not yet seated, and putting the
-original bug back (waiting players see their future seat's cards) still fails it 3 runs out
-of 3.
+**Testing it.**
+- `test/wire.test.ts`: 931 engine steps over every game type with three people at one table,
+  3,724 viewer copies checked, 0 leaks.
+  - The test has its own copy of the visibility rule, so a broken rule in the code cannot
+    also break the check.
+  - Showing everything to everyone makes it fail.
+- `test/server.test.ts`: a real server and real clients play dealer's choice as characters.
+  A hook checks every message against the server's real state: about 5,000 messages a run,
+  0 leaks. It also covers:
+  - locks;
+  - games and splits chosen by people, and wrong splits refused;
+  - timeouts;
+  - reconnecting by token;
+  - creator-only edits, including during a hand;
+  - the creator role passing on.
+- `test/room.test.ts`: the seat and roster bookkeeping.
+- `tools/ui/online-ui.mjs`: two browsers, desktop and phone, both ways round:
+  - start screen to lobby, invite link, and a character picker with the taken one disabled;
+  - dealer's choice by clicking;
+  - creator-only edits;
+  - settle up from Postgres;
+  - reload resume, then leaving;
+  - axe on the lobby, join view and table panel.
 
-**Getting there, and leaving.**
-- The single-player start screen has a "Play online with friends" button. The installed app
-  also has it as an icon shortcut.
-- An invite link (`/mp.html?code=ABC234`) opens a join view with the code filled in.
-- `tools/ui/mp-entry.mjs` checks the whole path on desktop and phone, in CI and on
-  production: start screen, then start a table, then the invite link, then join, then both
-  players are seated.
+  It runs in CI and, after each deploy, against production.
+- `tools/ui/online-wake.mjs`: a sleeping server.
 
-**Losing a seat.** A player who runs out of chips and does not answer the rebuy question
-within 30 s loses the seat to a computer player.
-- The server now tells them (`removed` event), and their page returns to the lobby with the
-  reason. Before, the page kept showing a table it no longer received.
-- The entry test found this: its host busted and sat on "Waiting for the next hand"
-  forever.
-- The replacement computer player never copies a name already at the table. Before, when
-  all four friends were seated, the seat went to a second "Rohit".
+Bugs these tests found along the way:
+- A player who busted and did not answer the rebuy question lost their seat without being
+  told, and their page showed a stale table. The server now sends them a notice.
+- A replacement computer player could copy a name already at the table.
+- The creator role passed by seat position, which is random. It now passes by time at the
+  table.
 
 **Tradeoffs.**
 - Game state lives in the server's memory (the engine generator cannot be serialized), so a
   restart ends the current hand. Rooms, buy-ins and hand histories go to the database.
-- Showdown: humans always show their cards (as in the single-player game), with no option
-  to muck.
+- People always show their cards at a showdown (as in the single-player game), with no
+  option to muck.
 - One server instance. Several instances would need sticky sessions or a shared room
   registry.
+- The table read of each player (`rg`, built from public actions) is sent so the coach works
+  online.
 
 ## 11. Storage and settling up (`prisma/`, `server/src/store.ts`, `src/ledger/settle.ts`)
 
@@ -412,7 +459,7 @@ Postgres is on Neon's free plan.
 - Render free services sleep after 15 minutes without traffic and take about a minute to
   wake. While the first connection is pending, the multiplayer page says "Waking up the
   server, about a minute", and a "Start a table" click waits for the server instead of
-  failing. `tools/ui/mp-wake.mjs` tests this in CI against a server that starts 8 s late.
+  failing. `tools/ui/online-wake.mjs` tests this in CI against a server that starts 8 s late.
 - A sleeping server also ends any game in memory. Rooms already close after 15 idle
   minutes, and buy-ins, hands and settlements are in Postgres.
 
@@ -488,3 +535,30 @@ mean about 789 errors, measured with `checkJs` and `strict: true`. 615 of those 
 **The worker client is strict TypeScript** (`src/ui/compute-client.ts`). Each job kind now
 has a result type (`JobResults` in `src/coach/compute.ts`), so `compute({ type: 'bot', … })`
 resolves to `{ action, patch }`, not `unknown`.
+
+## 14. The home game roster (`src/engine/roster.ts`)
+
+**Who is at the table.** By default the roster is Sumer and his four friends. Anyone can play
+any of them: you pick who you are, and the computer plays the rest.
+- The computer plays each character in a style: the four friends' styles, plus "Balanced"
+  for Sumer. Balanced is a steady, strong style close to what the coach recommends.
+- The roster can be renamed, extended to six players or trimmed to two.
+- Names must be unique, in any case.
+- New characters play in one of the home-game styles, because tournament styles do not fit
+  a $10 home game.
+- Single-player saves the roster on your device; online, the table's creator manages it
+  (section 10).
+
+**Same random numbers as before.** The engine seats any roster: the person first, the
+others shuffled into seats. With the default roster and Sumer, it makes exactly the same
+random draws as before rosters existed, so the 272-hand golden replay is unchanged.
+
+**A table size the deck cannot serve.** With six players, the 8-card game needs 53 cards
+(6 × 8 plus the 5 table cards).
+- If that game is picked, it is played as Poker + 3 Patti, and the hand history says why.
+- Online, it is not even offered.
+
+`test/roster.test.ts` plays every game type at every table size from 2 to 6, and checks
+that chips are conserved. `tools/ui/roster-ui.mjs` covers the start-screen editor on
+desktop and phone: pick, rename, a refused duplicate, remove, add to six, play, reload,
+reset, and axe.

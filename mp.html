@@ -2,72 +2,20 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="River Room: play your home game online with friends. Invite-code tables, the server deals.">
-<meta name="theme-color" content="#0a0e0c">
-<link rel="manifest" href="/manifest.webmanifest">
-<link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
 <title>River Room · Play online with friends</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Barlow+Condensed:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/src/mp/mp.css">
+<script>
+  // Online play now lives on the main page, on the same table as single-player.
+  // Old links (/mp.html and /mp.html?code=ABC234) land in the right place.
+  (function () {
+    var code = (new URLSearchParams(location.search).get('code') || '').trim().toUpperCase();
+    location.replace(/^[A-Z2-9]{6}$/.test(code) ? '/?join=' + code : '/?online');
+  })();
+</script>
+<style>html,body{margin:0;background:#0a0e0c;color:#eef1ea;font:16px system-ui,sans-serif}p{padding:24px}a{color:#d3a854}</style>
 </head>
 <body>
-<main id="app">
-  <header class="top">
-    <div class="brand"><span class="logo">River Room</span><span class="sub">Play online with friends</span></div>
-    <span id="conn" class="conn" role="status" aria-live="polite"></span>
-    <a class="back" id="backLink" href="/">Back to single player</a>
-  </header>
-
-  <p id="wake" class="wake" role="status" hidden>Waking up the server, about a minute. The free hosting sleeps when nobody is playing.</p>
-
-  <section id="lobby" class="panel" data-mode="create">
-    <h1 id="lobbyTitle">Play your home game online</h1>
-    <p id="lobbyLede">Start a table and share the invite link. Computer players fill the empty seats. The server deals and keeps everyone's cards private.</p>
-    <label for="name">Your name</label>
-    <input id="name" maxlength="16" autocomplete="nickname" placeholder="e.g. Sumer">
-    <div class="create-part"><div class="row"><button id="create" class="primary">Start a table</button></div>
-    <div class="or">or join a table</div></div>
-    <label for="code">Table code</label>
-    <div class="row"><input id="code" maxlength="6" autocapitalize="characters" placeholder="ABC234"><button id="join">Join</button></div>
-    <p class="join-part other"><button id="createInstead" class="link">Start your own table instead</button></p>
-    <p id="lobbyErr" class="err" role="alert"></p>
-  </section>
-
-  <section id="table" hidden>
-    <div class="invite">Table <b id="tcode"></b> · <button id="settleBtn" class="link" aria-controls="settle">Settle up</button> · <button id="leave" class="link">Leave table</button></div>
-    <p class="invite-link">Invite friends: <a id="inviteLink" href=""></a> <button id="copy" class="link">Copy</button></p>
-    <div id="seats" class="seats" aria-label="Players"></div>
-    <div class="felt">
-      <div class="pot">Pot <b id="pot">$0.00</b></div>
-      <div id="board" class="cards" aria-label="Table cards"></div>
-      <p id="msg" class="msg" role="status" aria-live="polite"></p>
-    </div>
-    <div class="me">
-      <div><span class="lbl">Your cards</span><div id="mine" class="cards big" aria-label="Your cards"></div></div>
-      <div id="turn" class="turn" role="status" aria-live="polite"></div>
-    </div>
-    <div id="actions" class="actions" hidden>
-      <button id="fold" class="danger">Fold</button>
-      <button id="call"></button>
-      <div class="raise"><input id="amount" type="range" aria-label="Raise to"><button id="raise" class="primary"></button></div>
-    </div>
-    <div id="rebuy" class="rebuy" hidden><p>You are out of chips. Buy back in for $10.00?</p><button id="rebuyYes" class="primary">Rebuy</button><button id="rebuyNo">Stop for tonight</button></div>
-    <section id="settle" class="settle" hidden tabindex="-1" aria-labelledby="settleTitle">
-      <h2 id="settleTitle">Settle up</h2>
-      <p class="sm">Everyone's buy-ins and rebuys against what they cashed out or still have on the table, settled in the fewest payments.</p>
-      <table><caption class="sr">Balance per player</caption><thead><tr><th scope="col">Player</th><th scope="col">Up or down</th></tr></thead><tbody id="balances"></tbody></table>
-      <h3>Who pays whom</h3>
-      <ul id="transfers"></ul>
-      <p id="settleNote" class="sm"></p>
-      <button id="settleClose">Close</button>
-    </section>
-    <details class="log" open><summary>What happened</summary><ul id="log"></ul></details>
-  </section>
-</main>
-<script type="module" src="/src/mp/main.ts"></script>
+<p>Opening the online table… If nothing happens, <a href="/?online">go to the online lobby</a>.</p>
 </body>
 </html>

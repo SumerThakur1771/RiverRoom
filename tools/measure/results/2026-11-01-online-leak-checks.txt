@@ -1,0 +1,46 @@
+# npx vitest run test/wire.test.ts test/server.test.ts --reporter=verbose, 3 runs, 2026-11-01, Node v22.22.0
+## run 1
+ ✓ test/server.test.ts > multiplayer server > rejects bad input 44ms
+ ✓ test/server.test.ts > multiplayer server > people pick characters; a picked character is locked; the computer plays the rest in their styles 1516ms
+wire: 931 steps, 3724 views checked, 0 leaks
+ ✓ test/wire.test.ts > online wire format > never shows anyone else's hidden cards, over many hands of every game type with three people 5073ms
+ ✓ test/wire.test.ts > online wire format > decodes back into players with working references, keeping the page's seat elements 4ms
+ ✓ test/server.test.ts > multiplayer server > plays dealer's choice: people pick the game when they deal and arrange their own split; wrong splits are refused 5224ms
+ ✓ test/server.test.ts > multiplayer server > a person who stops answering is answered for when the timer runs out (act, game, split) 2079ms
+ ✓ test/server.test.ts > multiplayer server > a disconnected person keeps the seat and gets it back, with the same cards, by session token 850ms
+ ✓ test/server.test.ts > multiplayer server > a wrong token cannot take over a seat 11ms
+ ✓ test/server.test.ts > multiplayer server > only the creator edits the roster; changes made during a hand wait for it to end; picked characters cannot be removed 1124ms
+ ✓ test/server.test.ts > multiplayer server > when the creator leaves, whoever has been at the table longest manages the roster; their character goes back to the computer 1038ms
+checked 5090 messages: 0 leaks; human splits 35, games chosen by people 15
+ ✓ test/server.test.ts > multiplayer server > never sent anyone a hidden card or hand detail 2ms
+      Tests  11 passed (11)
+## run 2
+ ✓ test/server.test.ts > multiplayer server > rejects bad input 45ms
+ ✓ test/server.test.ts > multiplayer server > people pick characters; a picked character is locked; the computer plays the rest in their styles 1398ms
+wire: 931 steps, 3724 views checked, 0 leaks
+ ✓ test/wire.test.ts > online wire format > never shows anyone else's hidden cards, over many hands of every game type with three people 5256ms
+ ✓ test/wire.test.ts > online wire format > decodes back into players with working references, keeping the page's seat elements 5ms
+ ✓ test/server.test.ts > multiplayer server > plays dealer's choice: people pick the game when they deal and arrange their own split; wrong splits are refused 3842ms
+ ✓ test/server.test.ts > multiplayer server > a person who stops answering is answered for when the timer runs out (act, game, split) 2171ms
+ ✓ test/server.test.ts > multiplayer server > a disconnected person keeps the seat and gets it back, with the same cards, by session token 761ms
+ ✓ test/server.test.ts > multiplayer server > a wrong token cannot take over a seat 13ms
+ ✓ test/server.test.ts > multiplayer server > only the creator edits the roster; changes made during a hand wait for it to end; picked characters cannot be removed 1261ms
+ ✓ test/server.test.ts > multiplayer server > when the creator leaves, whoever has been at the table longest manages the roster; their character goes back to the computer 1254ms
+checked 4999 messages: 0 leaks; human splits 32, games chosen by people 14
+ ✓ test/server.test.ts > multiplayer server > never sent anyone a hidden card or hand detail 2ms
+      Tests  11 passed (11)
+## run 3
+ ✓ test/server.test.ts > multiplayer server > rejects bad input 45ms
+ ✓ test/server.test.ts > multiplayer server > people pick characters; a picked character is locked; the computer plays the rest in their styles 1057ms
+wire: 931 steps, 3724 views checked, 0 leaks
+ ✓ test/wire.test.ts > online wire format > never shows anyone else's hidden cards, over many hands of every game type with three people 4859ms
+ ✓ test/wire.test.ts > online wire format > decodes back into players with working references, keeping the page's seat elements 4ms
+ ✓ test/server.test.ts > multiplayer server > plays dealer's choice: people pick the game when they deal and arrange their own split; wrong splits are refused 5169ms
+ ✓ test/server.test.ts > multiplayer server > a person who stops answering is answered for when the timer runs out (act, game, split) 2495ms
+ ✓ test/server.test.ts > multiplayer server > a disconnected person keeps the seat and gets it back, with the same cards, by session token 678ms
+ ✓ test/server.test.ts > multiplayer server > a wrong token cannot take over a seat 11ms
+ ✓ test/server.test.ts > multiplayer server > only the creator edits the roster; changes made during a hand wait for it to end; picked characters cannot be removed 1101ms
+ ✓ test/server.test.ts > multiplayer server > when the creator leaves, whoever has been at the table longest manages the roster; their character goes back to the computer 869ms
+checked 5033 messages: 0 leaks; human splits 37, games chosen by people 15
+ ✓ test/server.test.ts > multiplayer server > never sent anyone a hidden card or hand detail 2ms
+      Tests  11 passed (11)

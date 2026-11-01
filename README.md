@@ -3,7 +3,7 @@
 [![CI](https://github.com/SumerThakur1771/RiverRoom/actions/workflows/ci.yml/badge.svg)](https://github.com/SumerThakur1771/RiverRoom/actions/workflows/ci.yml)
 [![Live smoke test](https://github.com/SumerThakur1771/RiverRoom/actions/workflows/live-smoke.yml/badge.svg)](https://github.com/SumerThakur1771/RiverRoom/actions/workflows/live-smoke.yml)
 
-**Live:** https://sumer-riverroom.vercel.app · **Play online with friends:** https://sumer-riverroom.vercel.app/mp.html
+**Live:** https://sumer-riverroom.vercel.app · **Play online with friends:** https://sumer-riverroom.vercel.app/?online
 
 A poker trainer built around a real home game. You play No-Limit Hold'em and four
 dealer's-choice "split" variants against computer players modelled on real friends, and a
@@ -20,10 +20,17 @@ coach explains each decision.
   split pots and odd chips.
 - **Two modes:** the home cash game (rebuys, cash-out sheet) and a sit-and-go tournament
   with rising blinds.
-- **Play online with friends** (the start screen's "Play online with friends" button, or `/mp.html`; also a shortcut on the installed app's icon): invite-code tables on a Node + Socket.IO server that
-  deals, runs the bots and sends each player only their own cards. Reconnects by session
-  token; a turn timer keeps the game moving. **Settle up** shows everyone's buy-ins, rebuys
-  and cash-outs and who pays whom, in the fewest possible payments.
+- **Pick who you are:** the home game's roster is Sumer and his four friends. Play as any
+  of them, rename them, add up to six players or trim to two; the computer plays everyone
+  you don't, each in their own style (Sumer's computer style is "Balanced").
+- **Play online with friends** (the start screen's "Play online with friends" button; also a
+  shortcut on the installed app's icon). It is the same table, with dealer's choice, splits,
+  the coach and hand history:
+  - share the invite link; each person picks a character, which then stays locked to them;
+  - the server deals and sends each person only their own cards;
+  - the person who started the table manages the players;
+  - reloading or a dropped connection puts you back in your seat;
+  - **Settle up** shows who pays whom, in the fewest payments.
 - **Saved games (optional):** with `DATABASE_URL` set, the server stores rooms, players,
   hand histories and the buy-in ledger in Postgres (Prisma). Session tokens are stored only
   as hashes.
@@ -58,8 +65,9 @@ src/worker/   the compute Web Worker: bots, coach analysis and opponent-model ta
 src/ui/       screens and animations (carried over from the original version and driven
               by the engine). JavaScript, type-checked by TypeScript (checkJs, not strict);
               the worker client is strict TypeScript.
-server/       the multiplayer server (Node, Socket.IO), using the same engine, and its
+server/       the online-play server (Node, Socket.IO), using the same engine, and its
               Postgres storage (server/src/store.ts).
+src/net/      the online wire format: each person's redacted copy of the game (anti-cheat).
 src/pwa/      service worker and page setup (offline cache, analytics).
 src/ledger/   end-of-night settlement: fewest payments, exact for up to 16 people.
 prisma/       database schema and migrations.
@@ -79,7 +87,7 @@ through the new engine and requires identical hand histories and chip counts.
 npm install
 npm run dev        # http://localhost:5173 (add ?seed=anything for a reproducible session)
 npm run build      # production build in dist/
-npm run server:dev # multiplayer server on :8080 (open /mp.html from `npm run dev`)
+npm run server:dev # online-play server on :8080 (then "Play online with friends" in `npm run dev`)
 ```
 
 Storage is optional. To try it locally with Postgres:
