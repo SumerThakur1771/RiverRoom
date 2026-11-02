@@ -557,7 +557,18 @@ DESIGN.md section 10. The sleeping-server test (`tools/ui/online-wake.mjs`) stil
 the table opened 10.0 s after the click once the server came up. Lighthouse on the local
 production build after these changes: accessibility 100 on both pages.
 
-The production run comes after deploy (section "Online play on production").
+**On production.** The same test against the live site (Vercel page, Render server, Neon), run
+by the "Live smoke test" workflow after deploy:
+[run 41373084747](https://github.com/SumerThakur1771/RiverRoom/actions/runs/41373084747), commit
+`19de4ab`, `--hands 2`. Output:
+[`results/2026-11-02-waiting-room-live.txt`](tools/measure/results/2026-11-02-waiting-room-live.txt).
+Every check in the table above passed in both pairings; settle up read the ledger back from
+Neon (3 finished hands saved per table) and matched the server's memory.
+
+The first production run (commit `0a47755`) and a CI run failed in the test, not the app: with
+no timer, a question for the host (a game pick, a split, a rebuy) opens on top of the players
+panel and waits, and the test kept clicking the covered panel. The test now answers it first,
+as a person would, and prints what each page shows if a step fails.
 
 ## Not measured yet
 
