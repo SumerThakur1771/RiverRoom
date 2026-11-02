@@ -68,7 +68,8 @@ async function play(p) {
   if (await p.isVisible('#dealOv')) await p.locator('#dealOpts button').first().click().catch(() => {});
   if (await p.isVisible('#splitOv')) await p.click('#spLock').catch(() => {});
   if (await p.isVisible('#rebuyOv')) await p.click('#rebuyYes').catch(() => {});
-  if (await p.isVisible('#act')) await p.click('#bCall').catch(() => {});
+  // the action bar sits under the players panel: a person closes the panel to act
+  if (await p.isVisible('#act') && !(await p.isVisible('#tableOv'))) await p.click('#bCall', { timeout: 3000 }).catch(() => {});
 }
 /** Click a control, first answering anything the table is asking (a modal dialog may be up). */
 async function press(p, sel, ms = 60_000) {
@@ -162,17 +163,19 @@ for (const [hostSize, guestSize] of [['desktop', 'phone'], ['phone', 'desktop']]
   await press(H, '#tableBtn');
   await H.waitForSelector('#tableOv:not([hidden]) #tpRoster .rp');
   const bot = (await panelRows(H)).find(r => !r.tag);
-  await H.click(`#tpRoster .rp:has(b:text-is("${bot.name}")) [data-act="rename"]`);
+  // with no timer, a question for the host (game, split, rebuy) opens on top of the panel and
+  // waits: press() answers it first, as a person would
+  await press(H, `#tpRoster .rp:has(b:text-is("${bot.name}")) [data-act="rename"]`);
   await H.fill('#tpRenameIn', 'Robo');
   await H.press('#tpRenameIn', 'Enter');
   // a rename made during a hand shows when it ends; close the panel so the host can play on
-  await H.waitForSelector('#tpRenameIn', { state: 'detached' });
-  await H.click('#tpClose');
+  c.renameSaved = await playUntil([H], async () => !(await H.$('#tpRenameIn')), 30_000);
+  await press(H, '#tpClose');
   c.renamed = await playUntil([H, G, G2], async () => (await G.$$eval('.seat .nm', els => els.map(e => e.textContent))).includes('Robo'), 120_000);
   await press(H, '#tableBtn');
   await H.waitForSelector('#tableOv:not([hidden]) #tpRoster .rp');
-  await H.click('#tpRoster .rp:has(b:text-is("Rohit")) [data-act="kick"]');
-  await H.click('#tpRoster .rp:has(b:text-is("Rohit")) [data-act="kick"]');
+  await press(H, '#tpRoster .rp:has(b:text-is("Rohit")) [data-act="kick"]');
+  await press(H, '#tpRoster .rp:has(b:text-is("Rohit")) [data-act="kick"]:text-is("Tap again to remove")');
   c.kicked = await G2.waitForSelector('#onlineOv:not([hidden])', { timeout: 20_000 }).then(async () => /removed you/.test(await G2.textContent('#olErr')), () => false);
   await press(H, '#tpClose');
   // 5. settle up
@@ -209,7 +212,7 @@ for (const [hostSize, guestSize] of [['desktop', 'phone'], ['phone', 'desktop']]
   c.sideScroll = [...await sideScroll(H), ...await sideScroll(G)];
 
   const ok = c.axe.length === 0 && c.mePick === 'sumer' && c.codeShown && c.notDealt && c.hostControls && c.zeroComputers && c.timerOff && c.pickList && /^Join as Asha$/.test(c.joinLabel)
-    && c.guestNoControls && c.hostSeesThree && c.oneComputer && c.started && c.played && c.guestSeat === 'Asha' && c.guestCannotEdit && c.renamed && c.kicked
+    && c.guestNoControls && c.hostSeesThree && c.oneComputer && c.started && c.played && c.guestSeat === 'Asha' && c.guestCannotEdit && c.renameSaved && c.renamed && c.kicked
     && c.settleFromDb && /Sumer/.test(c.settle) && c.resumed && /Asha|Fold|Check|Call|Raise|Bet|All-in/.test(c.resumedAs) && c.secondTab && c.backInLobby && c.paused && c.oldLink && !c.sideScroll.length;
   console.log(`${hostSize} host, ${guestSize} guests: ${ok ? 'ok' : 'FAIL'} | table ${code} | ${JSON.stringify(c)}`);
   if (!ok) failed = true;
@@ -220,7 +223,7 @@ for (const [hostSize, guestSize] of [['desktop', 'phone'], ['phone', 'desktop']]
     for (const [label, p] of [['host', H], ['guest1', G], ['guest2', G2]]) {
       const st = await p.evaluate(() => {
         const vis = s => { const e = document.querySelector(s); return !!e && !e.closest('[hidden]'); };
-        return { url: location.pathname + location.search, lobby: vis('#onlineOv'), panel: vis('#tableOv'), waiting: vis('#wroom'), act: vis('#act'), err: document.querySelector('#olErr')?.textContent, conn: document.querySelector('#olConn')?.textContent, lede: document.querySelector('#olLede')?.textContent, hand: document.querySelector('#info')?.textContent?.slice(0, 60) };
+        return { url: location.pathname + location.search, lobby: vis('#onlineOv'), panel: vis('#tableOv'), waiting: vis('#wroom'), act: vis('#act'), asked: ['#dealOv', '#splitOv', '#rebuyOv', '#revOv'].filter(vis), err: document.querySelector('#olErr')?.textContent, conn: document.querySelector('#olConn')?.textContent, lede: document.querySelector('#olLede')?.textContent, hand: document.querySelector('#info')?.textContent?.slice(0, 60) };
       }).catch(e => ({ error: e.message }));
       console.log(`  ${label}-${label === 'host' ? hostSize : guestSize}: ${JSON.stringify(st)}`);
       await p.screenshot({ path: `screenshots/fail-${label}-${hostSize}.png` }).catch(() => {});
