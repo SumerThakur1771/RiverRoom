@@ -487,24 +487,34 @@ The tracker sends nothing from automated or headless browsers. The check present
 a normal desktop Chrome; the first two runs, without that, saw the script load and no page
 view. Visitor numbers are not claimed: this only shows that tracking works.
 
-## Multiplayer on production
+## Online play on production
 
 The "Live smoke test" workflow runs this after each deploy:
 1. It polls the Render server's `/health` until it reports the deployed commit, which also
    wakes the free server.
-2. It runs `node tools/ui/mp-smoke.mjs https://sumer-riverroom.vercel.app/mp.html 2 --expect-stored`.
+2. It runs `node tools/ui/online-ui.mjs https://sumer-riverroom.vercel.app/ --expect-stored --hands 2`.
 
-Output: [`results/2026-11-01-multiplayer-live.txt`](tools/measure/results/2026-11-01-multiplayer-live.txt)
-([run 41351661571](https://github.com/SumerThakur1771/RiverRoom/actions/runs/41351661571), commit `9b7086c`).
+Output: [`results/2026-11-02-online-live.txt`](tools/measure/results/2026-11-02-online-live.txt)
+([run 41364411896](https://github.com/SumerThakur1771/RiverRoom/actions/runs/41364411896), commit `29ac4fc`).
 
-| Check | Result |
+Two real browsers on the live site, desktop host with phone guest and then the reverse:
+
+| Check | Result (both pairings) |
 |---|---|
-| Render server (free, Virginia) runs the commit | yes; it answered 31 s after the first request (time to wake and/or finish deploying, not separated) |
-| Two browsers (desktop, phone) create and join table M2F9CY on the live page | yes |
-| Hands played | 2 started, 1 finished |
-| Reload mid-game | same seat and same table, by session token |
-| Settle up | computed from the ledger read back from Neon. Same balances as the server's memory. Saved: 1 finished hand, 2 buy-ins, 0 cash-outs |
-| Table opened after the "Start a table" click (server already awake) | 224 ms |
+| Start screen to online lobby, then start a table with the roster (5 players) | yes |
+| Invite link: the join view lists the roster with the host's character taken and disabled; "Join as Rohit" | yes |
+| Dealer's choice played by clicking (game picks, splits, rebuys, actions) | yes, 2+ hands |
+| Only the host can edit the players; the host adds Asha and she appears at both tables | yes |
+| Settle up: computed from the ledger read back from Neon, same as the server's memory; 4 finished hands saved | yes |
+| The guest reloads and gets the Rohit seat back, then leaves; Rohit is free again | yes |
+| An old `/mp.html?code=` link lands in the join view | yes |
+| axe-core on the lobby, the join view and the table panel | 0 violations |
+| Render server answered after | 11 s (to wake up and/or finish deploying, not separated) |
+
+The first production runs of this test found the blank-names bug and a workflow step that
+passed even when its test failed (see DESIGN.md section 10). The previous multiplayer page
+was checked the same way on 2026-11-01
+([output](tools/measure/results/2026-11-01-multiplayer-live.txt)).
 
 ## Not measured yet
 
