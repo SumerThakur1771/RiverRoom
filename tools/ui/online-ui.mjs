@@ -45,6 +45,8 @@ async function open(label, size) {
   const ctx = await browser.newContext({ viewport: SIZES[size], hasTouch: size === 'phone' });
   await ctx.addInitScript(() => { if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1'); localStorage.setItem('river-room-v2', JSON.stringify({ mode: 'home', games: 'dealer', pace: 'fast', review: 'off', sound: false, timer: 0, holdResult: false, hints: true })); } });
   const page = await ctx.newPage();
+  // THROTTLE=4: a slower CPU (as on CI machines), to shake out timing problems
+  if (process.env.THROTTLE) await (await ctx.newCDPSession(page)).send('Emulation.setCPUThrottlingRate', { rate: +process.env.THROTTLE });
   watch(page, label);
   page.on('dialog', d => { errors.push(`${label}: browser dialog "${d.message()}"`); void d.dismiss(); });
   return { ctx, page };
@@ -93,6 +95,7 @@ for (const [hostSize, guestSize] of [['desktop', 'phone'], ['phone', 'desktop']]
   const c = {};
   const host = await open('host-' + hostSize, hostSize), g1 = await open('guest1-' + guestSize, guestSize), g2 = await open('guest2-' + guestSize, guestSize);
   const H = host.page, G = g1.page, G2 = g2.page;
+  try {
   // 1. host: home page > Play online > Open my table (plays Sumer) > the waiting room
   await H.goto(SITE);
   await H.click('#onlineBtn');
@@ -210,6 +213,19 @@ for (const [hostSize, guestSize] of [['desktop', 'phone'], ['phone', 'desktop']]
     && c.settleFromDb && /Sumer/.test(c.settle) && c.resumed && /Asha|Fold|Check|Call|Raise|Bet|All-in/.test(c.resumedAs) && c.secondTab && c.backInLobby && c.paused && c.oldLink && !c.sideScroll.length;
   console.log(`${hostSize} host, ${guestSize} guests: ${ok ? 'ok' : 'FAIL'} | table ${code} | ${JSON.stringify(c)}`);
   if (!ok) failed = true;
+  } catch (err) {
+    // what each page showed when a step failed (a message in the lobby says why a seat was lost)
+    failed = true;
+    console.log(`${hostSize} host, ${guestSize} guests: FAIL | ${String(err.message).split('\n')[0]} | so far ${JSON.stringify(c)}`);
+    for (const [label, p] of [['host', H], ['guest1', G], ['guest2', G2]]) {
+      const st = await p.evaluate(() => {
+        const vis = s => { const e = document.querySelector(s); return !!e && !e.closest('[hidden]'); };
+        return { url: location.pathname + location.search, lobby: vis('#onlineOv'), panel: vis('#tableOv'), waiting: vis('#wroom'), act: vis('#act'), err: document.querySelector('#olErr')?.textContent, conn: document.querySelector('#olConn')?.textContent, lede: document.querySelector('#olLede')?.textContent, hand: document.querySelector('#info')?.textContent?.slice(0, 60) };
+      }).catch(e => ({ error: e.message }));
+      console.log(`  ${label}-${label === 'host' ? hostSize : guestSize}: ${JSON.stringify(st)}`);
+      await p.screenshot({ path: `screenshots/fail-${label}-${hostSize}.png` }).catch(() => {});
+    }
+  }
   for (const x of [host, g1, g2]) await x.ctx.close();
 }
 await browser.close();
