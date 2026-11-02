@@ -58,8 +58,10 @@ export class Store {
   }
 
   /** Ledger rows for a room from the database, plus chips still on the table (by session token). */
-  async ledgerRows(code: string, onTable: ReadonlyMap<string, number> = new Map()): Promise<LedgerRow[]> {
+  async ledgerRows(code: string, onTableNow: ReadonlyMap<string, number> | (() => ReadonlyMap<string, number>) = new Map()): Promise<LedgerRow[]> {
     await this.flush();
+    // read the chips on the table after the queued writes are in (a cash-out written meanwhile is not counted twice)
+    const onTable = typeof onTableNow === 'function' ? onTableNow() : onTableNow;
     const roomId = this.roomIds.get(code);
     if (!roomId) return [];
     const players = await this.db.player.findMany({ where: { roomId }, include: { ledger: true }, orderBy: { joinedAt: 'asc' } });
@@ -71,7 +73,7 @@ export class Store {
       onTable: tableByHash.get(p.tokenHash) ?? 0,
     }));
   }
-  async settlement(code: string, onTable?: ReadonlyMap<string, number>): Promise<{ balances: Balance[]; transfers: Transfer[] }> {
+  async settlement(code: string, onTable?: ReadonlyMap<string, number> | (() => ReadonlyMap<string, number>)): Promise<{ balances: Balance[]; transfers: Transfer[] }> {
     const balances = balancesFrom(await this.ledgerRows(code, onTable));
     return { balances, transfers: settle(balances) };
   }

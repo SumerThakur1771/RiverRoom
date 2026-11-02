@@ -68,7 +68,10 @@ export const HOUSE = 'Computer players';
  * (nobody actually pays them, and they pay nobody).
  */
 export function balancesFrom(rows: readonly LedgerRow[]): Balance[] {
-  const out = rows.map(r => ({ name: r.name, net: r.cashouts + r.onTable - r.buyins }));
+  // one line per name: someone who left and came back as the same player is one person
+  const byName = new Map<string, number>();
+  for (const r of rows) byName.set(r.name, (byName.get(r.name) ?? 0) + r.cashouts + r.onTable - r.buyins);
+  const out = [...byName].map(([name, net]) => ({ name, net }));
   const total = out.reduce((a, b) => a + b.net, 0);
   if (total !== 0) out.push({ name: HOUSE, net: -total });
   return out;

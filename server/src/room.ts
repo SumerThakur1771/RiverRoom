@@ -143,13 +143,15 @@ export class Room {
     }
     this.hooks.record?.(e);
   }
-  /** Chips each seated person has on the table now (during a hand, including what they put in the pot). */
+  /**
+   * Chips a person has at the table. During a hand that is the stack they started it with (stack
+   * plus what they have put in the pot, exact through every payout step and side pot), so settling
+   * up or closing mid-hand counts the hand as not played; after it, their stack.
+   */
+  private chipsOf(i: number): number { const p = this.g.players[i]!; return this.inHand ? p.start : p.stack; }
   onTable(): Map<string, number> {
     const m = new Map<string, number>();
-    for (const [i, s] of this.seats.entries()) {
-      const p = this.g.players[i]!;
-      if (s.kind === 'human' && s.token) m.set(s.token, p.stack + (this.phase === 'playing' ? p.total : 0));
-    }
+    for (const [i, s] of this.seats.entries()) if (s.kind === 'human' && s.token) m.set(s.token, this.chipsOf(i));
     return m;
   }
   ledgerRows(): LedgerRow[] {
@@ -337,7 +339,18 @@ export class Room {
       this.games = s.games;
       this.g.settings.games = s.games;
     }
-    if (s.timer !== undefined) this.timer = s.timer;
+    if (s.timer !== undefined) {
+      this.timer = s.timer;
+      // a question already waiting with no deadline gets one now (someone may be away)
+      const a = this.ask, ms = a ? this.limit(a.kind === 'split' ? 'split' : a.kind === 'rebuy' ? 'rebuy' : 'turn') : null;
+      if (a && !a.deadline && ms !== null) {
+        clearTimeout(a.timer);
+        a.deadline = Date.now() + ms;
+        a.timer = setTimeout(() => this.answerNow(), ms);
+        a.view = { ...a.view, deadline: a.deadline };
+        this.waitingOn = { seat: a.seat, kind: a.kind, deadline: a.deadline };
+      }
+    }
     if (s.computers !== undefined) {
       this.computers = Math.max(0, Math.min(s.computers, this.maxComputers()));
       if (!this.inHand) this.reconcile();
@@ -353,6 +366,14 @@ export class Room {
     this.started = true;
     void this.run();
     return { ok: true };
+  }
+  /**
+   * The last hand's log is kept between hands for the people who played it. Its private lines
+   * ("Dealt to …", "… splits: …") are matched by name, so once seats change (someone new may now
+   * play that name) they go.
+   */
+  private forgetPrivateLines(): void {
+    this.g.hist = this.g.hist.filter(l => !l.startsWith('Dealt to ') && !/ splits?:/.test(l));
   }
   /** Apply queued renames (between hands only). */
   private applyPendingEdits(): void {
@@ -415,6 +436,8 @@ export class Room {
       replace = this.chars[k]!.id;
     }
     if (fromBench >= 0) this.bench.splice(fromBench, 1);
+    // nobody runs the table (its creator left with nobody else there): this newcomer does
+    if (!this.creatorToken) this.creatorToken = token;
     this.pendingJoin.push({ seat: { kind: 'human', token, name: char.name, connected: true, since: ++this.joins }, char: { ...char }, replace });
     if (!this.inHand) this.applySeatChanges();
     this.broadcast();
@@ -446,7 +469,8 @@ export class Room {
     const j = this.joinerOf(token);
     if (j >= 0) {
       const [x] = this.pendingJoin.splice(j, 1);
-      if (!x!.replace) this.bench.unshift(x!.char);
+      // their character goes back on the list unless it is a computer's at the table
+      if (!this.chars.some(c => c.id === x!.char.id)) this.bench.unshift(x!.char);
       if (reason) this.hooks.removed?.(token, reason);
       this.passCreator(token);
       return true;
@@ -501,6 +525,7 @@ export class Room {
   /** Between hands: seats given up go, newcomers sit down, renames apply, computers match the count. */
   private applySeatChanges(): void {
     const g = this.g;
+    if (this.pendingLeave.size || this.pendingJoin.length || this.pendingEdits.length) this.forgetPrivateLines();
     for (const [seat, reason] of [...this.pendingLeave].sort((x, y) => y[0] - x[0])) {
       const p = g.players[seat]!, s = this.seats[seat]!;
       if (s.kind === 'human' && s.token) {
@@ -636,6 +661,10 @@ export class Room {
         if (!this.seats.some(s => s.kind === 'human')) break;
         // fewer than two players left: back to the waiting room until the creator starts again
         if (this.g.players.length < 2) { this.started = false; this.broadcast(); break; }
+        // everyone's phone asleep or tab closed: wait for someone to come back rather than post
+        // their blinds against the computers until the table closes
+        while (!this.closed && this.humansConnected() === 0) await sleep(500);
+        if (this.closed) break;
         await this.playOne();
         if (this.closed) break;
         await sleep(this.timing.betweenHandsMs);
@@ -735,7 +764,7 @@ export class Room {
 
   /** End the night: cash everyone out at their current stack, then close. */
   finish(): void {
-    for (const [i, s] of this.seats.entries()) if (s.kind === 'human' && s.token) this.note({ t: 'cashout', code: this.code, name: s.name, token: s.token, amount: this.g.players[i]!.stack });
+    for (const [i, s] of this.seats.entries()) if (s.kind === 'human' && s.token) this.note({ t: 'cashout', code: this.code, name: s.name, token: s.token, amount: this.chipsOf(i) });
     this.note({ t: 'close', code: this.code });
     this.close();
   }

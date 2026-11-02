@@ -184,12 +184,12 @@ const LAY = {
     seats: [[50,89],[11,72],[11,30],[50,12.5],[89,30],[89,72]],
     bets:  [[50,66],[25,62],[25,38],[50,28],[75,38],[75,62]],
     dbtn:  [[59.5,67],[19,54],[19,46],[41,28],[81,46],[81,55]],
-    pot: [50,35.5], board: [50,48], msg: [50,60], street:[50,58.5], board2: [50,22.5], msg2: [50,60] },
+    pot: [50,35.5], board: [50,48], msg: [50,60], street:[50,58.5], board2: [50,24.5], msg2: [50,60] },
   port: { ratio: .64, felt: [9, 6, 14, 6],
     seats: [[50,90],[15,65],[15,32],[50,11],[85,32],[85,65]],
-    bets:  [[50,68.5],[33,60],[31,38.5],[50,23],[69,38.5],[67,60]],
-    dbtn:  [[63,70],[24,53],[22,45],[37,23.5],[78,45],[76,53]],
-    pot: [50,33.5], board: [50,46.5], msg: [50,56.5], street:[50,55], board2: [50,22.5], msg2: [50,56.5] }
+    bets:  [[73,79],[34,58],[29,36.5],[30,20.5],[71,36.5],[66,58]],
+    dbtn:  [[63,70],[24,53],[22,45],[66,17],[78,45],[76,53]],
+    pot: [50,33.5], board: [50,46.5], msg: [50,56.5], street:[50,55], board2: [50,24.5], msg2: [50,56.5] }
 };
 
 const SKEY = 'river-room-v2';
@@ -218,10 +218,18 @@ function wait(ms, raw){
 function guard(gid){ if (!S || S.gid !== gid) throw new Abort(); }
 const ordinal = n => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ({1:'st', 2:'nd', 3:'rd'}[n % 10] || 'th'));
 const homeName = () => (!settings.name || settings.name === 'You') ? 'Sumer' : settings.name;
+/**
+ * Where a chair is drawn: online, the table turns so that you sit at the bottom (chair 0 on
+ * screen), with everyone else in the same order around it. Single-player you are chair 0 anyway.
+ */
+function vseat(seat){
+  const me = S && S.online ? S.players.find(x => x.isHuman) : null;
+  return me ? (seat - me.seat + 6) % 6 : seat;
+}
 function buildSeats(){
   $$('.seat,.bet', arena).forEach(e => e.remove());
   for (let s = 0; s < 6; s++){
-    const p = S.players.find(x => x.seat === s);
+    const p = S.players.find(x => vseat(x.seat) === s);
     const seat = document.createElement('div');
     seat.className = 'seat' + (p ? '' : ' empty') + (p && p.isHuman ? ' hero' : '');
     seat.dataset.seat = String(s);
@@ -229,7 +237,7 @@ function buildSeats(){
       const ini = p.isHuman ? (p.name.trim()[0] || 'Y').toUpperCase() : p.name.slice(0, 2).toUpperCase();
       seat.innerHTML = `<div class="hole"></div><div class="plate" style="--pc:${p.color}"><div class="avatar${p.avatar ? ' pic' : ''}">${p.avatar ? avatarSVG(p.avatar, p.color) : `<span>${esc(ini)}</span>`}</div><div class="meta"><div class="nm"></div><div class="stk"></div>${p.isHuman ? '' : '<div class="hud"></div>'}</div><div class="timer"><i></i></div><div class="eqp" hidden></div></div><div class="hn" hidden></div><div class="xp" hidden></div><div class="gain"></div>${p.isHuman ? '' : '<div class="bubble"></div>'}`;
       p.el = seat;
-      const b = document.createElement('div'); b.className = 'bet'; b.hidden = true; arena.appendChild(b); p.betEl = b;
+      const b = document.createElement('div'); b.className = 'bet'; b.dataset.seat = String(s); b.hidden = true; arena.appendChild(b); p.betEl = b;
     } else seat.innerHTML = `<div class="plate"><div class="meta"><div class="nm">Open seat</div></div></div>`;
     arena.appendChild(seat);
   }
@@ -239,22 +247,25 @@ function layout(){
   // a narrow screen keeps the upright table even when it is short (e.g. above the online waiting room)
   const portrait = W / H < 1.05 || W < 480; L = portrait ? LAY.port : LAY.land;
   let aw, ah;
-  if (portrait){ ah = Math.min(H, W / L.ratio); aw = ah * L.ratio; } else { aw = Math.min(W, H * L.ratio); ah = aw / L.ratio; }
+  // portrait: a short screen (a phone with the browser's bars, or the controls taking room) gets a
+  // wider oval instead of a thin one in the middle; tall phones keep the usual shape
+  const ratio = portrait ? Math.min(1.05, Math.max(L.ratio, W / H)) : L.ratio;
+  if (portrait){ ah = Math.min(H, W / ratio); aw = ah * ratio; } else { aw = Math.min(W, H * ratio); ah = aw / ratio; }
   arena.style.width = aw + 'px'; arena.style.height = ah + 'px';
   const shortWide = !portrait && window.innerHeight <= 520;
-  arena.style.fontSize = Math.max(8, Math.min(19, portrait ? aw / 30 : aw / (shortWide ? 56 : 64))) + 'px';
+  arena.style.fontSize = Math.max(7, Math.min(19, portrait ? Math.min(aw / 30, ah / 40) : aw / (shortWide ? 56 : 64))) + 'px';
   arena.classList.toggle('portrait', portrait);
   const f = L.felt, rail = $('#rail');
   rail.style.top = f[0] + '%'; rail.style.right = f[1] + '%'; rail.style.bottom = f[2] + '%'; rail.style.left = f[3] + '%';
   $$('.seat', arena).forEach(el => { const s = +el.dataset.seat; el.style.left = L.seats[s][0] + '%'; el.style.top = L.seats[s][1] + '%'; });
-  if (S) S.players.forEach(p => { p.betEl.style.left = L.bets[p.seat][0] + '%'; p.betEl.style.top = L.bets[p.seat][1] + '%'; });
+  if (S) S.players.forEach(p => { const b = L.bets[vseat(p.seat)]; p.betEl.style.left = b[0] + '%'; p.betEl.style.top = b[1] + '%'; });
   const b2 = !!(VAR() && VAR().board2); board2El.hidden = !b2; arena.classList.toggle('b2on', b2); arena.classList.toggle('var', !!VAR());
   for (const [el, k] of [[potEl, 'pot'], [boardEl, 'board'], [msgEl, b2 ? 'msg2' : 'msg'], [$('#streetLbl'), 'street'], [board2El, 'board2']]){ el.style.left = L[k][0] + '%'; el.style.top = L[k][1] + '%'; }
   placeButton();
 }
 function placeButton(){
   if (!S || S.button < 0){ dbtnEl.hidden = true; return; }
-  const d = L.dbtn[S.players[S.button].seat]; dbtnEl.hidden = false; dbtnEl.style.left = d[0] + '%'; dbtnEl.style.top = d[1] + '%';
+  const d = L.dbtn[vseat(S.players[S.button].seat)]; dbtnEl.hidden = false; dbtnEl.style.left = d[0] + '%'; dbtnEl.style.top = d[1] + '%';
 }
 new ResizeObserver(() => layout()).observe(stage);
 
@@ -403,7 +414,7 @@ function streetFlash(t){ const el = $('#streetLbl'); el.textContent = t; el.clas
 /* ================= animation helpers ================= */
 function ptOf(el){ const a = arena.getBoundingClientRect(), b = el.getBoundingClientRect(); return {x: b.left - a.left + b.width / 2, y: b.top - a.top + b.height / 2}; }
 function pct(v){ return {x: v[0] / 100 * arena.clientWidth, y: v[1] / 100 * arena.clientHeight}; }
-const panOf = p => p ? (L.seats[p.seat][0] - 50) / 50 : 0;
+const panOf = p => p ? (L.seats[vseat(p.seat)][0] - 50) / 50 : 0;
 function fly(html, from, to, dur = 400, cls = '', fade = false){
   const el = document.createElement('div'); el.className = 'flyer ' + cls; el.innerHTML = html;
   el.style.left = from.x + 'px'; el.style.top = from.y + 'px'; arena.appendChild(el);
@@ -419,7 +430,7 @@ function fly(html, from, to, dur = 400, cls = '', fade = false){
   return anim.finished.then(() => el.remove(), () => el.remove());
 }
 const plateOf = p => p.el.querySelector('.plate');
-function betFly(p){ return fly(chipsHTML(p.bet), ptOf(plateOf(p)), pct(L.bets[p.seat]), 300).then(() => renderSeat(p)); }
+function betFly(p){ return fly(chipsHTML(p.bet), ptOf(plateOf(p)), pct(L.bets[vseat(p.seat)]), 300).then(() => renderSeat(p)); }
 function muckFly(p){ if (!p.vis) return; fly(backHTML(), ptOf(p.el.querySelector('.hole')), pct(L.pot), 420, 'fcard', true); }
 function gainFx(p, amt){ const g = p.el.querySelector('.gain'); g.textContent = '+' + fmt(amt); g.classList.remove('show'); void g.offsetWidth; g.classList.add('show'); }
 function say(p, text){
@@ -617,7 +628,11 @@ $('#spLock').onclick = () => {
   const st = spState; if (!st) return;
   const sp = st.cur.map(x => x.slice()); $('#splitOv').hidden = true; spState = null;
   if (st.mode === 'final'){ if (splitWait){ const r = splitWait; splitWait = null; r(sp); } return; }
-  if (S && st.p === heroP() && !st.p.splitDone && S.handActive){ st.p.plan = sp; useSplit(st.p, sp); Snd.cardSlide(0, 0.2); render(); }
+  if (S && st.p === heroP() && !st.p.splitDone && S.handActive){
+    st.p.plan = sp; useSplit(st.p, sp); Snd.cardSlide(0, 0.2); render();
+    // online, the server's next copy of the game carries the dealt order: remember yours for this hand
+    if (S.online && ON) ON.myPlan = {hand: S.handNo, cards: cardKey(st.p.all), plan: sp.map(x => x.slice())};
+  }
 };
 arena.addEventListener('click', e => { if (e.target.closest('.seat.hero .hole')) openArrange(); });
 $('#dealOpts').addEventListener('click', e => { const b = e.target.closest('button[data-k]'); if (!b || !dealWait) return; $('#dealOv').hidden = true; const r = dealWait; dealWait = null; r(b.dataset.k); });
@@ -699,7 +714,7 @@ async function chipsToPot(se){
   if (se.returned) render();
   if (!se.moved.length){ render(); return; }
   await wait(400);
-  const potPt = pct(L.pot), fl = se.moved.map(m => fly(chipsHTML(m.amt), pct(L.bets[m.p.seat]), potPt, 420));
+  const potPt = pct(L.pot), fl = se.moved.map(m => fly(chipsHTML(m.amt), pct(L.bets[vseat(m.p.seat)]), potPt, 420));
   render(); Snd.chipsSlide(Math.min(10, 3 + se.moved.length * 2));
   await Promise.all(fl); guard(gid);
   render();
@@ -759,7 +774,7 @@ async function playHand(){
     } else if (s.kind === 'variant'){ answer = await pickVariant(s.p); if (answer !== 'holdem') await S.tablesReady; }
     else if (s.kind === 'plans'){
       B.initPlans(S, s.order); render();
-      if (!S.tipArr && !hero.out){ S.tipArr = true; toast('Your cards are in the order they were dealt. Tap them to arrange them your way; tap Hint for ideas. Your final split happens at the showdown.', 6000); }
+      if (!S.tipArr && !hero.out){ S.tipArr = true; toast('Tap your cards to arrange them (Hint has ideas). The final split is at the showdown.', 5000); }
     } else if (s.kind === 'split'){
       if (s.p.isHuman && MEASURE){ const sp = planSplit(s.p, s.k); gradeSplit(s.p, sp, s.k); answer = sp; }
       else if (s.p.isHuman){ const sp = await heroSplit(s.p, s.k, 'final'); if (!sp) throw new Abort(); gradeSplit(s.p, sp, s.k); answer = sp; }
@@ -1716,7 +1731,12 @@ function socket(){
       // after a dropped connection, take the seat back
       if (ON && ON.token) sock.emit('resume', {code: ON.code, token: ON.token}, r => { if (!r || !r.ok) leaveOnline(ENDED, true); });
     });
-    sock.on('disconnect', () => { olStatus('Reconnecting…'); if (S && S.online) toast('Connection lost. Reconnecting…', 2400); });
+    sock.on('disconnect', reason => {
+      olStatus('Reconnecting…'); if (S && S.online) toast('Connection lost. Reconnecting…', 2400);
+      // the server closed this connection (seat opened elsewhere, or too many messages): the
+      // client does not retry by itself, so connect again for the lobby or to take the seat back
+      if (reason === 'io server disconnect') setTimeout(() => sock.connect(), 1000);
+    });
     sock.on('connect_error', () => {
       if (!everConnected && Date.now() - started < WAKE_LIMIT_MS) { waking(true); return; }
       waking(false); olStatus('Cannot reach the game server');
@@ -1740,6 +1760,8 @@ async function call(ev, msg){
   return new Promise(res => sock.timeout(10000).emit(ev, msg, (err, r) => res(err ? {ok: false, error: 'no answer from the server'} : r)));
 }
 
+/** The same cards in any order give the same key. */
+const cardKey = cards => [...cards].sort((a, b) => a - b).join(',');
 /* ---- lobby: start a table, or join one with its code ---- */
 const CODE_RE = /^[A-Z2-9]{6}$/;
 const cleanCode = s => String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -1939,6 +1961,9 @@ function hydrate(m){
   // the app never puts words in a real person's mouth
   for (const p of /** @type {any[]} */ (d.players)) p.persona = p.type && TYPES[p.type] ? TYPES[p.type] : Object.assign({}, TYPES.sumer, {chat: 0, slow: 0, quickFold: false});
   Object.assign(S, d);
+  // your own arrangement of your cards stays as you left it for the rest of the hand
+  const me0 = heroP(), mp = ON && ON.myPlan;
+  if (me0 && mp && mp.hand === S.handNo && !me0.splitDone && me0.all && cardKey(me0.all) === mp.cards) { me0.plan = mp.plan.map(x => x.slice()); useSplit(me0, me0.plan); }
   S.settings = Object.assign({}, settings, {games: m.games, revealAll: false});
   S.mode = 'home'; S.money = true;
   const key = S.players.map(p => [p.seat, p.name, p.avatar, p.color, p.isHuman].join(':')).join('|');
@@ -1954,7 +1979,7 @@ async function onlineStep(s, m){
   }
   if (s.kind === 'plans') {
     render();
-    if (!S.tipArr && me && !me.out) { S.tipArr = true; toast('Your cards are in the order they were dealt. Tap them to arrange them your way; tap Hint for ideas. Your final split happens at the showdown.', 6000); }
+    if (!S.tipArr && me && !me.out) { S.tipArr = true; toast('Tap your cards to arrange them (Hint has ideas). The final split is at the showdown.', 5000); }
     return;
   }
   if (s.kind === 'pause') { await pauseFx(s, {hero: me, prevLevel: S.level}); return; }
@@ -1995,7 +2020,10 @@ async function answerAsk(a, key){
   if (ON && ev) {
     ON.done.add(key);
     const r = await call(ev, val);
-    if (r && !r.ok && ON) toast(r.error, 2600);
+    // the answer never reached the server (a dropped connection): when the server asks again
+    // after reconnecting, the same question opens again instead of being skipped
+    if (r && !r.ok && ON && r.error === 'no answer from the server') ON.done.delete(key);
+    if (r && !r.ok && ON) toast(r.error === 'no answer from the server' ? 'Your answer did not get through. Answer again when it comes back.' : r.error, 2600);
   }
 }
 /** The server answered for you (time ran out) or moved on: close whatever is waiting for you. */
@@ -2053,7 +2081,12 @@ $('#tpSettings').addEventListener('click', changeSettings);
 /** Before the game starts (or after it drops below two players): the code to share, the settings, Start. */
 function renderWaitRoom(){
   const m = ON && ON.msg, show = !!(m && m.you >= 0 && !m.started);
-  $('#wroom').hidden = !show; $('#status').hidden = show; $('#feed').hidden = show;
+  // the status line and feed make way for the waiting room, and come back only when it closes
+  // (the action bar hides the status line itself during your turn)
+  const was = !$('#wroom').hidden;
+  $('#wroom').hidden = !show;
+  if (show) { $('#status').hidden = true; $('#feed').hidden = true; }
+  else if (was) { $('#status').hidden = false; $('#feed').hidden = false; }
   if (!show) return;
   $('#dbtn').hidden = true; // no button until the game starts again
   $('#wrCode').textContent = m.code;

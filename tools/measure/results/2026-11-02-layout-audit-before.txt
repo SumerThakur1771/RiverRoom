@@ -1,0 +1,230 @@
+# 2026-11-02 layout audit BEFORE the fixes (commit 737ca50 code)
+# command: node tools/ui/layout-audit.mjs http://localhost:4177/ both   (local build as in CI: VITE_MP_SERVER_URL=http://localhost:8099 vite build --outDir dist-mp; game server TIMING=fast; Chromium via Playwright, cloud sandbox)
+# 20 viewports x (5 single-player game types at the bottom seat + 3 online game types playing Krish's seat), measured at a decision point after the flop
+ISSUES single-simple            phone-se-safari 375x553      table 144x225 (16% of screen) your card  52px board  42px smallest button 32px
+         your cards over Check 20%; your cards over Call 20%; Check's cards over board 52%; Check over board 13%; Check over pot 37%; Bet over board 13%; Bet over pot 37%; Bet over bet $0.40 67%; Call over bet $0.40 94%; Call's cards over board 52%; Call's cards over bet $0.40 30%; board over pot 8%; board over bet $0.40 76%; pot over bet $0.40 20%
+ISSUES single-simple            phone-se 375x667             table 217x339 (29% of screen) your card  52px board  42px smallest button 32px
+         Call over bet $0.40 29%
+ISSUES single-simple            phone-small 320x568          table 128x200 (14% of screen) your card  52px board  42px smallest button 32px
+         your cards over Check 31%; your cards over Call 31%; your cards over bet $0.40 48%; Check's cards over board 65%; Check over board 24%; Check over pot 47%; Check's cards over open seat 3 38%; open seat 3 over Bet's cards 38%; Bet over board 24%; Bet over pot 47%; Bet over bet $0.40 81%; Call over bet $0.40 100%; Call's cards over board 65%; Call's cards over bet $0.40 37%; board over pot 25%; board over bet $0.40 93%; pot over bet $0.40 29%; clipped "Krish bet $0.40"; clipped "Rohit checked"
+ISSUES single-simple            android-small 360x640        table 200x312 (27% of screen) your card  52px board  42px smallest button 32px
+         Bet over bet $0.40 15%; Call over bet $0.40 41%; board over bet $0.40 16%
+ISSUES single-simple            iphone-safari 390x664        table 221x345 (29% of screen) your card  52px board  42px smallest button 32px
+         Call over bet $0.40 27%
+ISSUES single-simple            iphone 390x844               table 336x525 (54% of screen) your card  72px board  59px smallest button 32px
+         Call over bet $0.40 12%
+ISSUES single-simple            pixel 412x915                table 380x594 (60% of screen) your card  82px board  67px smallest button 32px
+         Call over bet $0.40 14%
+ISSUES single-simple            iphone-max-safari 430x740    table 269x421 (36% of screen) your card  58px board  47px smallest button 32px
+         Call over bet $0.40 15%
+ISSUES single-simple            iphone-max 430x932           table 392x613 (60% of screen) your card  84px board  69px smallest button 32px
+         Call over bet $0.40 12%
+ok     single-simple            phone-land 844x390           table 540x314 (52% of screen) your card  62px board  51px smallest button 28px
+ISSUES single-simple            phone-land-small 667x375     table 216x337 (29% of screen) your card  52px board  42px smallest button 28px
+         Call over bet $0.40 30%
+ok     single-simple            phone-land-max 932x430       table 601x349 (52% of screen) your card  69px board  56px smallest button 28px
+ok     single-simple            ipad-mini 768x1024           table 736x428 (40% of screen) your card  74px board  60px smallest button 32px
+ok     single-simple            ipad-land 1024x768           table 788x458 (46% of screen) your card  79px board  65px smallest button 32px
+ISSUES single-simple            ipad-air 820x1180            table 557x870 (50% of screen) your card 120px board  97px smallest button 32px
+         Call over bet $0.40 11%
+ok     single-simple            ipad-air-land 1180x820       table 884x514 (47% of screen) your card  89px board  73px smallest button 32px
+ok     single-simple            laptop-small 1024x640        table 568x330 (29% of screen) your card  57px board  47px smallest button 32px
+ok     single-simple            laptop 1280x800              table 850x494 (41% of screen) your card  86px board  70px smallest button 32px
+ok     single-simple            desktop 1440x900             table 1022x594 (47% of screen) your card 103px board  84px smallest button 32px
+ok     single-simple            desktop-wide 1920x1080       table 1331x774 (50% of screen) your card 123px board 100px smallest button 32px
+ISSUES single-standard          phone-se-safari 375x553      table 128x200 (12% of screen) your card  50px board  42px smallest button 32px
+         your cards over Venky 52%; your cards over Venky's cards 11%; your cards over Fold 52%; Venky's cards over board 69%; Fold over board 24%; Fold over pot 47%; open seat 3 over Bet's cards 37%; Bet over board 24%; Bet over pot 47%; Bet over bet $0.30 81%; board over pot 25%; board over bet $0.30 93%; pot over bet $0.30 29%
+ISSUES single-standard          phone-se 375x667             table 180x281 (20% of screen) your card  50px board  42px smallest button 32px
+         your cards over Venky 8%; your cards over Fold 8%; Venky's cards over board 21%; Fold over pot 15%; Bet over pot 15%; Bet over bet $0.30 32%; board over bet $0.30 37%
+ISSUES single-standard          phone-small 320x568          table 128x200 (14% of screen) your card  50px board  42px smallest button 32px
+         your cards over Venky 52%; your cards over Venky's cards 11%; your cards over Fold 52%; Venky's cards over board 69%; Fold over board 24%; Fold over pot 47%; open seat 3 over Bet's cards 37%; Bet over board 24%; Bet over pot 47%; Bet over bet $0.30 81%; board over pot 25%; board over bet $0.30 93%; pot over bet $0.30 29%
+ISSUES single-standard          android-small 360x640        table 163x254 (18% of screen) your card  50px board  42px smallest button 32px
+         your cards over Venky 20%; your cards over Fold 20%; Venky's cards over board 39%; Fold over pot 26%; Bet over pot 26%; Bet over bet $0.30 50%; board over bet $0.30 56%; pot over bet $0.30 11%
+ISSUES single-standard          iphone-safari 390x664        table 202x316 (25% of screen) your card  50px board  42px smallest button 32px
+         Bet over bet $0.30 13%; board over bet $0.30 13%
+ok     single-standard          iphone 390x844               table 317x496 (48% of screen) your card  66px board  56px smallest button 32px
+ok     single-standard          pixel 412x915                table 363x567 (55% of screen) your card  75px board  64px smallest button 32px
+ok     single-standard          iphone-max-safari 430x740    table 269x421 (36% of screen) your card  56px board  47px smallest button 32px
+ok     single-standard          iphone-max 430x932           table 392x613 (60% of screen) your card  81px board  69px smallest button 32px
+ok     single-standard          phone-land 844x390           table 540x314 (52% of screen) your card  60px board  51px smallest button 28px
+ok     single-standard          phone-land-small 667x375     table 216x337 (29% of screen) your card  50px board  42px smallest button 28px
+ok     single-standard          phone-land-max 932x430       table 601x349 (52% of screen) your card  67px board  56px smallest button 28px
+ok     single-standard          ipad-mini 768x1024           table 736x428 (40% of screen) your card  72px board  60px smallest button 32px
+ok     single-standard          ipad-land 1024x768           table 788x458 (46% of screen) your card  77px board  65px smallest button 32px
+ok     single-standard          ipad-air 820x1180            table 536x837 (46% of screen) your card 111px board  94px smallest button 32px
+ok     single-standard          ipad-air-land 1180x820       table 884x514 (47% of screen) your card  86px board  73px smallest button 32px
+ok     single-standard          laptop-small 1024x640        table 568x330 (29% of screen) your card  55px board  47px smallest button 32px
+ok     single-standard          laptop 1280x800              table 850x494 (41% of screen) your card  83px board  70px smallest button 32px
+ok     single-standard          desktop 1440x900             table 1022x594 (47% of screen) your card  99px board  84px smallest button 32px
+ok     single-standard          desktop-wide 1920x1080       table 1331x774 (50% of screen) your card 118px board 100px smallest button 32px
+ISSUES single-twoboards         phone-se-safari 375x553      table 128x200 (12% of screen) your card  50px board  42px smallest button 32px
+         your cards over Check 52%; your cards over Check's cards 11%; Check's cards over board 69%; Check over board 24%; Check over board 2 24%; Check over pot 47%; Check's cards over board 2 9%; Fold over board 24%; Fold over board 2 24%; Fold over pot 47%; board over pot 12%; board 2 over pot 39%
+ok     single-twoboards         phone-se 375x667             table 198x310 (25% of screen) your card  50px board  42px smallest button 32px
+ISSUES single-twoboards         phone-small 320x568          table 128x200 (14% of screen) your card  50px board  42px smallest button 32px
+         your cards over Check 52%; your cards over Check's cards 11%; Check's cards over board 69%; Check over board 24%; Check over board 2 24%; Check over pot 47%; Check's cards over board 2 9%; Fold over board 24%; Fold over board 2 24%; Fold over pot 47%; board over pot 12%; board 2 over pot 39%; clipped "Rohit checked"; clipped "Venky checked"
+ISSUES single-twoboards         android-small 360x640        table 170x266 (20% of screen) your card  50px board  42px smallest button 32px
+         your cards over Check 15%; Check's cards over board 31%; Check over pot 21%; Fold over pot 21%
+ok     single-twoboards         iphone-safari 390x664        table 202x316 (25% of screen) your card  50px board  42px smallest button 32px
+ok     single-twoboards         iphone 390x844               table 317x496 (48% of screen) your card  66px board  56px smallest button 32px
+ok     single-twoboards         pixel 412x915                table 363x567 (55% of screen) your card  75px board  64px smallest button 32px
+ok     single-twoboards         iphone-max-safari 430x740    table 251x392 (31% of screen) your card  52px board  44px smallest button 32px
+ok     single-twoboards         iphone-max 430x932           table 374x584 (54% of screen) your card  78px board  65px smallest button 32px
+ok     single-twoboards         phone-land 844x390           table 540x314 (52% of screen) your card  60px board  51px smallest button 28px
+ok     single-twoboards         phone-land-small 667x375     table 216x337 (29% of screen) your card  50px board  42px smallest button 28px
+ok     single-twoboards         phone-land-max 932x430       table 601x349 (52% of screen) your card  67px board  56px smallest button 28px
+ok     single-twoboards         ipad-mini 768x1024           table 736x428 (40% of screen) your card  72px board  60px smallest button 32px
+ok     single-twoboards         ipad-land 1024x768           table 788x458 (46% of screen) your card  77px board  65px smallest button 32px
+ok     single-twoboards         ipad-air 820x1180            table 536x837 (46% of screen) your card 111px board  94px smallest button 32px
+ok     single-twoboards         ipad-air-land 1180x820       table 884x514 (47% of screen) your card  86px board  73px smallest button 32px
+ok     single-twoboards         laptop-small 1024x640        table 568x330 (29% of screen) your card  55px board  47px smallest button 32px
+ok     single-twoboards         laptop 1280x800              table 850x494 (41% of screen) your card  83px board  70px smallest button 32px
+ok     single-twoboards         desktop 1440x900             table 1022x594 (47% of screen) your card  99px board  84px smallest button 32px
+ok     single-twoboards         desktop-wide 1920x1080       table 1331x774 (50% of screen) your card 118px board 100px smallest button 32px
+ISSUES single-8cards            phone-se-safari 375x553      table 128x200 (12% of screen) your card  50px board  42px smallest button 32px
+         your cards over Venky 80%; your cards over Venky's cards 14%; your cards over Bet 80%; your cards over Bet's cards 14%; your cards over bet $1.10 50%; Venky's cards over board 69%; Fold over board 24%; Fold over pot 47%; Bet over bet $1.10 100%; Bet's cards over board 69%; Bet's cards over bet $1.10 63%; board over pot 25%
+ISSUES single-8cards            phone-se 375x667             table 180x281 (20% of screen) your card  50px board  42px smallest button 32px
+         your cards over Venky 16%; your cards over Bet 16%; Venky's cards over board 19%; Fold over pot 15%; Bet over bet $1.10 58%; Bet's cards over board 19%; Bet's cards over bet $1.10 45%
+ISSUES single-8cards            phone-small 320x568          table 128x200 (14% of screen) your card  50px board  42px smallest button 32px
+         your cards over Venky 80%; your cards over Venky's cards 14%; your cards over Bet 80%; your cards over Bet's cards 14%; your cards over bet $1.10 50%; Venky's cards over board 69%; Fold over board 24%; Fold over pot 47%; Bet over bet $1.10 100%; Bet's cards over board 69%; Bet's cards over bet $1.10 63%; board over pot 25%; clipped "Flop: 3♠︎ K♦︎ 6♠︎"; clipped "You called $0.80"
+ISSUES single-8cards            android-small 360x640        table 163x254 (18% of screen) your card  50px board  42px smallest button 32px
+         your cards over Venky 35%; your cards over Bet 35%; Venky's cards over board 34%; Fold over pot 26%; Bet over bet $1.10 74%; Bet's cards over board 35%; Bet's cards over bet $1.10 53%
+ISSUES single-8cards            iphone-safari 390x664        table 202x316 (25% of screen) your card  50px board  42px smallest button 32px
+         Bet over bet $1.10 39%; Bet's cards over bet $1.10 34%
+ISSUES single-8cards            iphone 390x844               table 317x496 (48% of screen) your card  66px board  56px smallest button 32px
+         Bet over bet $1.10 13%; Bet's cards over bet $1.10 15%
+ISSUES single-8cards            pixel 412x915                table 380x594 (60% of screen) your card  79px board  67px smallest button 32px
+         Bet over bet $1.10 14%; Bet's cards over bet $1.10 15%
+ISSUES single-8cards            iphone-max-safari 430x740    table 269x421 (36% of screen) your card  56px board  47px smallest button 32px
+         Bet over bet $1.10 15%; Bet's cards over bet $1.10 15%
+ISSUES single-8cards            iphone-max 430x932           table 392x613 (60% of screen) your card  81px board  69px smallest button 32px
+         Bet over bet $1.10 12%; Bet's cards over bet $1.10 15%
+ok     single-8cards            phone-land 844x390           table 540x314 (52% of screen) your card  60px board  51px smallest button 28px
+ISSUES single-8cards            phone-land-small 667x375     table 216x337 (29% of screen) your card  50px board  42px smallest button 28px
+         Bet over bet $1.10 30%; Bet's cards over bet $1.10 27%
+ok     single-8cards            phone-land-max 932x430       table 601x349 (52% of screen) your card  67px board  56px smallest button 28px
+ok     single-8cards            ipad-mini 768x1024           table 736x428 (40% of screen) your card  72px board  60px smallest button 32px
+ok     single-8cards            ipad-land 1024x768           table 788x458 (46% of screen) your card  77px board  65px smallest button 32px
+ISSUES single-8cards            ipad-air 820x1180            table 557x870 (50% of screen) your card 116px board  97px smallest button 32px
+         Bet over bet $1.10 11%; Bet's cards over bet $1.10 15%
+ok     single-8cards            ipad-air-land 1180x820       table 884x514 (47% of screen) your card  86px board  73px smallest button 32px
+ok     single-8cards            laptop-small 1024x640        table 568x330 (29% of screen) your card  55px board  47px smallest button 32px
+ok     single-8cards            laptop 1280x800              table 850x494 (41% of screen) your card  83px board  70px smallest button 32px
+ok     single-8cards            desktop 1440x900             table 1022x594 (47% of screen) your card  99px board  84px smallest button 32px
+ok     single-8cards            desktop-wide 1920x1080       table 1331x774 (50% of screen) your card 118px board 100px smallest button 32px
+ISSUES single-7cards            phone-se-safari 375x553      table 128x200 (12% of screen) your card  50px board  42px smallest button 32px
+         your cards over Venky 64%; your cards over Venky's cards 13%; your cards over Fold 64%; Venky's cards over board 69%; Rohit over board 24%; Rohit over pot 47%; Rohit's cards over open seat 3 34%; open seat 3 over Krish's cards 34%; Krish over board 24%; Krish over pot 47%; board over pot 12%
+ok     single-7cards            phone-se 375x667             table 198x310 (25% of screen) your card  50px board  42px smallest button 32px
+ISSUES single-7cards            phone-small 320x568          table 128x200 (14% of screen) your card  50px board  42px smallest button 32px
+         your cards over Venky 64%; your cards over Venky's cards 13%; your cards over Fold 64%; Venky's cards over board 69%; Rohit over board 24%; Rohit over pot 47%; Rohit's cards over open seat 3 34%; open seat 3 over Krish's cards 34%; Krish over board 24%; Krish over pot 47%; board over pot 12%; clipped "Venky called $0.20"; clipped "You called $0.30"
+ISSUES single-7cards            android-small 360x640        table 170x266 (20% of screen) your card  50px board  42px smallest button 32px
+         your cards over Venky 19%; your cards over Fold 19%; Venky's cards over board 28%; Rohit over pot 21%; Krish over pot 21%
+ok     single-7cards            iphone-safari 390x664        table 202x316 (25% of screen) your card  50px board  42px smallest button 32px
+ok     single-7cards            iphone 390x844               table 317x496 (48% of screen) your card  66px board  56px smallest button 32px
+ok     single-7cards            pixel 412x915                table 363x567 (55% of screen) your card  75px board  64px smallest button 32px
+ok     single-7cards            iphone-max-safari 430x740    table 251x392 (31% of screen) your card  52px board  44px smallest button 32px
+ok     single-7cards            iphone-max 430x932           table 374x584 (54% of screen) your card  78px board  65px smallest button 32px
+ok     single-7cards            phone-land 844x390           table 540x314 (52% of screen) your card  60px board  51px smallest button 28px
+ok     single-7cards            phone-land-small 667x375     table 216x337 (29% of screen) your card  50px board  42px smallest button 28px
+ok     single-7cards            phone-land-max 932x430       table 601x349 (52% of screen) your card  67px board  56px smallest button 28px
+ok     single-7cards            ipad-mini 768x1024           table 736x428 (40% of screen) your card  72px board  60px smallest button 32px
+ok     single-7cards            ipad-land 1024x768           table 788x458 (46% of screen) your card  77px board  65px smallest button 32px
+ok     single-7cards            ipad-air 820x1180            table 536x837 (46% of screen) your card 111px board  94px smallest button 32px
+ok     single-7cards            ipad-air-land 1180x820       table 884x514 (47% of screen) your card  86px board  73px smallest button 32px
+ok     single-7cards            laptop-small 1024x640        table 568x330 (29% of screen) your card  55px board  47px smallest button 32px
+ok     single-7cards            laptop 1280x800              table 850x494 (41% of screen) your card  83px board  70px smallest button 32px
+ok     single-7cards            desktop 1440x900             table 1022x594 (47% of screen) your card  99px board  84px smallest button 32px
+ok     single-7cards            desktop-wide 1920x1080       table 1331x774 (50% of screen) your card 118px board 100px smallest button 32px
+ISSUES online-krish-standard    phone-se-safari 375x553      table 128x200 (12% of screen) your card  50px board  42px smallest button 32px
+         Sumer's cards over your hand name 35%; your cards over Venky 32%; your cards over board 68%; your cards over pot 18%; Venky over board 24%; Venky over pot 47%; Venky's cards over open seat 3 37%; Fold over board 24%; Fold over pot 47%; board over pot 8%
+ISSUES online-krish-standard    phone-se 375x667             table 168x263 (18% of screen) your card  50px board  42px smallest button 32px
+         your cards over board 45%; Venky over pot 22%; Fold over pot 22%
+ISSUES online-krish-standard    phone-small 320x568          table 128x200 (14% of screen) your card  50px board  42px smallest button 32px
+         Sumer's cards over your hand name 35%; your cards over Venky 32%; your cards over board 68%; your cards over pot 18%; Venky over board 24%; Venky over pot 47%; Venky's cards over open seat 3 37%; Fold over board 24%; Fold over pot 47%; board over pot 8%; clipped "Venky checked"; clipped "You called $0.10"
+ISSUES online-krish-standard    android-small 360x640        table 140x219 (13% of screen) your card  50px board  42px smallest button 32px
+         Sumer's cards over your hand name 30%; your cards over Venky 13%; your cards over board 63%; Venky over board 15%; Venky over pot 40%; Fold over board 15%; Fold over pot 40%
+ISSUES online-krish-standard    iphone-safari 390x664        table 172x269 (18% of screen) your card  50px board  42px smallest button 32px
+         your cards over board 42%; Venky over pot 20%; Fold over pot 20%
+ISSUES online-krish-standard    iphone 390x844               table 287x449 (39% of screen) your card  60px board  50px smallest button 32px
+         your cards over board 11%
+ISSUES online-krish-standard    pixel 412x915                table 333x520 (46% of screen) your card  69px board  58px smallest button 32px
+         your cards over board 10%
+ISSUES online-krish-standard    iphone-max-safari 430x740    table 221x345 (24% of screen) your card  50px board  42px smallest button 32px
+         your cards over board 18%
+ISSUES online-krish-standard    iphone-max 430x932           table 344x537 (46% of screen) your card  71px board  60px smallest button 32px
+         your cards over board 10%
+ok     online-krish-standard    phone-land 844x390           table 540x314 (52% of screen) your card  60px board  51px smallest button 28px
+ISSUES online-krish-standard    phone-land-small 667x375     table 216x337 (29% of screen) your card  50px board  42px smallest button 28px
+         your cards over board 20%
+ok     online-krish-standard    phone-land-max 932x430       table 601x349 (52% of screen) your card  67px board  56px smallest button 28px
+ok     online-krish-standard    ipad-mini 768x1024           table 736x428 (40% of screen) your card  72px board  60px smallest button 32px
+ok     online-krish-standard    ipad-land 1024x768           table 707x411 (37% of screen) your card  69px board  58px smallest button 32px
+ISSUES online-krish-standard    ipad-air 820x1180            table 506x790 (41% of screen) your card 105px board  88px smallest button 32px
+         your cards over board 10%
+ok     online-krish-standard    ipad-air-land 1180x820       table 803x467 (39% of screen) your card  78px board  66px smallest button 32px
+ok     online-krish-standard    laptop-small 1024x640        table 487x283 (21% of screen) your card  50px board  42px smallest button 32px
+ok     online-krish-standard    laptop 1280x800              table 769x447 (34% of screen) your card  75px board  63px smallest button 32px
+ok     online-krish-standard    desktop 1440x900             table 941x547 (40% of screen) your card  92px board  77px smallest button 32px
+ok     online-krish-standard    desktop-wide 1920x1080       table 1250x727 (44% of screen) your card 118px board 100px smallest button 32px
+ISSUES online-krish-simple      phone-se-safari 375x553      table 128x200 (12% of screen) your card  52px board  42px smallest button 32px
+         Check's cards over your hand name 12%; your cards over Check 27%; your cards over board 81%; your cards over pot 10%; Check over board 24%; Check over pot 47%; Check's cards over open seat 3 38%; open seat 3 over Check's cards 38%; Check's cards over board 65%; board over pot 8%
+ISSUES online-krish-simple      phone-se 375x667             table 187x292 (22% of screen) your card  52px board  42px smallest button 32px
+         your cards over board 39%; Check over pot 10%; Check's cards over board 16%
+ISSUES online-krish-simple      phone-small 320x568          table 128x200 (14% of screen) your card  52px board  42px smallest button 32px
+         Check's cards over your hand name 12%; your cards over Check 27%; your cards over board 81%; your cards over pot 10%; Check over board 24%; Check over pot 47%; Check's cards over open seat 3 38%; open seat 3 over Check's cards 38%; Check's cards over board 65%; board over pot 8%; clipped "Rohit checked"; clipped "Nikhil checked"
+ISSUES online-krish-simple      android-small 360x640        table 170x265 (20% of screen) your card  52px board  42px smallest button 32px
+         your cards over board 52%; Check over pot 21%; Check's cards over board 31%
+ISSUES online-krish-simple      iphone-safari 390x664        table 191x298 (22% of screen) your card  52px board  42px smallest button 32px
+         your cards over board 37%; Check over pot 8%; Check's cards over board 12%
+ISSUES online-krish-simple      iphone 390x844               table 306x478 (44% of screen) your card  66px board  54px smallest button 32px
+         your cards over board 11%
+ISSUES online-krish-simple      pixel 412x915                table 351x549 (51% of screen) your card  76px board  61px smallest button 32px
+         your cards over board 10%
+ISSUES online-krish-simple      iphone-max-safari 430x740    table 239x374 (28% of screen) your card  52px board  42px smallest button 32px
+         your cards over board 11%
+ISSUES online-krish-simple      iphone-max 430x932           table 362x566 (51% of screen) your card  78px board  63px smallest button 32px
+         your cards over board 10%
+ok     online-krish-simple      phone-land 844x390           table 540x314 (52% of screen) your card  62px board  51px smallest button 28px
+ISSUES online-krish-simple      phone-land-small 667x375     table 216x337 (29% of screen) your card  52px board  42px smallest button 28px
+         your cards over board 22%
+ok     online-krish-simple      phone-land-max 932x430       table 601x349 (52% of screen) your card  69px board  56px smallest button 28px
+ok     online-krish-simple      ipad-mini 768x1024           table 736x428 (40% of screen) your card  74px board  60px smallest button 32px
+ok     online-krish-simple      ipad-land 1024x768           table 707x411 (37% of screen) your card  71px board  58px smallest button 32px
+ISSUES online-krish-simple      ipad-air 820x1180            table 506x790 (41% of screen) your card 109px board  88px smallest button 32px
+         your cards over board 10%
+ok     online-krish-simple      ipad-air-land 1180x820       table 803x467 (39% of screen) your card  81px board  66px smallest button 32px
+ok     online-krish-simple      laptop-small 1024x640        table 487x283 (21% of screen) your card  52px board  42px smallest button 32px
+ok     online-krish-simple      laptop 1280x800              table 769x447 (34% of screen) your card  78px board  63px smallest button 32px
+ok     online-krish-simple      desktop 1440x900             table 941x547 (40% of screen) your card  95px board  77px smallest button 32px
+ok     online-krish-simple      desktop-wide 1920x1080       table 1250x727 (44% of screen) your card 123px board 100px smallest button 32px
+ISSUES online-krish-twoboards   phone-se-safari 375x553      table 128x200 (12% of screen) your card  50px board  42px smallest button 32px
+         Check's cards over your hand name 35%; your cards over Check 32%; your cards over board 68%; your cards over pot 20%; Check over board 24%; Check over board 2 24%; Check over pot 47%; Check's cards over board 2 9%; board over pot 12%; board 2 over pot 39%
+ISSUES online-krish-twoboards   phone-se 375x667             table 168x263 (18% of screen) your card  50px board  42px smallest button 32px
+         your cards over board 45%; Check over pot 22%
+ISSUES online-krish-twoboards   phone-small 320x568          table 128x200 (14% of screen) your card  50px board  42px smallest button 32px
+         Check's cards over your hand name 35%; your cards over Check 32%; your cards over board 68%; your cards over pot 20%; Check over board 24%; Check over board 2 24%; Check over pot 47%; Check's cards over board 2 9%; board over pot 12%; board 2 over pot 39%; clipped "Nikhil checked"; clipped "Venky checked"
+ISSUES online-krish-twoboards   android-small 360x640        table 140x219 (13% of screen) your card  50px board  42px smallest button 32px
+         Check's cards over your hand name 30%; your cards over Check 13%; your cards over board 63%; Check over board 15%; Check over board 2 18%; Check over pot 40%; board 2 over pot 24%
+ISSUES online-krish-twoboards   iphone-safari 390x664        table 172x269 (18% of screen) your card  50px board  42px smallest button 32px
+         your cards over board 42%; Check over pot 20%
+ISSUES online-krish-twoboards   iphone 390x844               table 287x449 (39% of screen) your card  60px board  50px smallest button 32px
+         your cards over board 11%
+ISSUES online-krish-twoboards   pixel 412x915                table 333x520 (46% of screen) your card  69px board  58px smallest button 32px
+         your cards over board 10%
+ISSUES online-krish-twoboards   iphone-max-safari 430x740    table 221x345 (24% of screen) your card  50px board  42px smallest button 32px
+         your cards over board 18%
+ISSUES online-krish-twoboards   iphone-max 430x932           table 344x537 (46% of screen) your card  71px board  60px smallest button 32px
+         your cards over board 10%
+ok     online-krish-twoboards   phone-land 844x390           table 540x314 (52% of screen) your card  60px board  51px smallest button 28px
+ISSUES online-krish-twoboards   phone-land-small 667x375     table 216x337 (29% of screen) your card  50px board  42px smallest button 28px
+         your cards over board 20%
+ok     online-krish-twoboards   phone-land-max 932x430       table 601x349 (52% of screen) your card  67px board  56px smallest button 28px
+ok     online-krish-twoboards   ipad-mini 768x1024           table 736x428 (40% of screen) your card  72px board  60px smallest button 32px
+ok     online-krish-twoboards   ipad-land 1024x768           table 707x411 (37% of screen) your card  69px board  58px smallest button 32px
+ISSUES online-krish-twoboards   ipad-air 820x1180            table 506x790 (41% of screen) your card 105px board  88px smallest button 32px
+         your cards over board 10%
+ok     online-krish-twoboards   ipad-air-land 1180x820       table 803x467 (39% of screen) your card  78px board  66px smallest button 32px
+ok     online-krish-twoboards   laptop-small 1024x640        table 487x283 (21% of screen) your card  50px board  42px smallest button 32px
+ok     online-krish-twoboards   laptop 1280x800              table 769x447 (34% of screen) your card  75px board  63px smallest button 32px
+ok     online-krish-twoboards   desktop 1440x900             table 941x547 (40% of screen) your card  92px board  77px smallest button 32px
+ok     online-krish-twoboards   desktop-wide 1920x1080       table 1250x727 (44% of screen) your card 118px board 100px smallest button 32px
+160 cases measured, 66 with issues

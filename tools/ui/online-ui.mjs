@@ -65,7 +65,8 @@ const sideScroll = p => p.evaluate(() => {
 const seats = p => p.$$eval('.seat:not(.empty)', els => els.length);
 /** Click whatever the table asks of this player: game pick, split, rebuy, action. */
 async function play(p) {
-  if (await p.isVisible('#dealOv')) await p.locator('#dealOpts button').first().click().catch(() => {});
+  // dealer's choice: the usual split game, so people arrange and split their own cards
+  if (await p.isVisible('#dealOv')) await p.locator('#dealOpts button[data-k="std"], #dealOpts button').first().click().catch(() => {});
   if (await p.isVisible('#splitOv')) await p.click('#spLock').catch(() => {});
   if (await p.isVisible('#rebuyOv')) await p.click('#rebuyYes').catch(() => {});
   // the action bar sits under the players panel: a person closes the panel to act
@@ -154,6 +155,33 @@ for (const [hostSize, guestSize] of [['desktop', 'phone'], ['phone', 'desktop']]
     return c.noTimerWaits && (await handNo(H)) >= start + HANDS;
   }, 240_000);
   c.guestSeat = await G.textContent('.seat.hero .nm');
+  // you always sit at the bottom of your own screen, whichever seat you have at the table
+  c.atBottom = await G.evaluate(() => document.querySelector('.seat.hero')?.dataset.seat === '0');
+  // 3b. in a split game: arrange your cards (swap two), then others act; your order stays. And
+  //     the coach's hint works online, where other people's cards are hidden.
+  const mine = () => G.$$eval('.seat.hero .hole .card', els => els.map(e => e.querySelector('.cr').textContent + e.querySelector('.cs').textContent).join(' '));
+  c.keptOrder = null; c.hintOnline = null;
+  await playUntil([H, G2], async () => {
+    if (c.keptOrder === null && await G.isVisible('#act') && await G.isVisible('#arrBtn')) {
+      await G.click('#arrBtn');
+      await G.waitForSelector('#splitOv:not([hidden]) #spRows button[data-j="1"]');
+      await G.click('#spRows button[data-j="0"][data-i="0"]');
+      await G.click('#spRows button[data-j="1"][data-i="0"]');
+      await G.click('#spLock');
+      const arranged = await mine(), hand = await handNo(G);
+      // the hint, before acting
+      await G.click('#hintBtn');
+      c.hintOnline = await until(async () => !/thinking/.test(await G.textContent('#hint')), 20_000) && !/could not work/.test(await G.textContent('#hint')) && (await G.textContent('#hint')).length > 40;
+      await G.click('#bCall');
+      // wait for the next player's move (a new copy of the game from the server), same hand
+      const feed0 = await G.textContent('#feed');
+      await playUntil([H, G2], async () => (await G.textContent('#feed')) !== feed0 || (await handNo(G)) !== hand, 30_000);
+      c.keptOrder = (await handNo(G)) !== hand ? null : arranged === (await mine());
+      if (c.keptOrder === false) c.orders = [arranged, await mine()];
+    }
+    await play(G);
+    return c.keptOrder !== null;
+  }, 240_000);
   // 4. host: rename the computer inline; remove guest 2 (two taps)
   await press(G, '#tableBtn');
   await G.waitForSelector('#tableOv:not([hidden]) #tpRoster .rp');
@@ -212,7 +240,7 @@ for (const [hostSize, guestSize] of [['desktop', 'phone'], ['phone', 'desktop']]
   c.sideScroll = [...await sideScroll(H), ...await sideScroll(G)];
 
   const ok = c.axe.length === 0 && c.mePick === 'sumer' && c.codeShown && c.notDealt && c.hostControls && c.zeroComputers && c.timerOff && c.pickList && /^Join as Asha$/.test(c.joinLabel)
-    && c.guestNoControls && c.hostSeesThree && c.oneComputer && c.started && c.played && c.guestSeat === 'Asha' && c.guestCannotEdit && c.renameSaved && c.renamed && c.kicked
+    && c.guestNoControls && c.hostSeesThree && c.oneComputer && c.started && c.played && c.guestSeat === 'Asha' && c.atBottom && c.keptOrder === true && c.hintOnline && c.guestCannotEdit && c.renameSaved && c.renamed && c.kicked
     && c.settleFromDb && /Sumer/.test(c.settle) && c.resumed && /Asha|Fold|Check|Call|Raise|Bet|All-in/.test(c.resumedAs) && c.secondTab && c.backInLobby && c.paused && c.oldLink && !c.sideScroll.length;
   console.log(`${hostSize} host, ${guestSize} guests: ${ok ? 'ok' : 'FAIL'} | table ${code} | ${JSON.stringify(c)}`);
   if (!ok) failed = true;

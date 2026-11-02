@@ -618,3 +618,78 @@ random draws as before rosters existed, so the 272-hand golden replay is unchang
 that chips are conserved. `tools/ui/roster-ui.mjs` covers the start-screen editor on
 desktop and phone: pick, rename, a refused duplicate, remove, add to six, play, reload,
 reset, and axe.
+
+## 15. Every screen size, every seat (`src/ui/legacy.js` `layout`, `src/ui/styles.css`, `tools/ui/layout-audit.mjs`)
+
+**The problem.** On a phone, playing online from a side seat (Krish), your five cards covered
+the board. Single-player on a short phone was crowded too. Measured, not eyeballed:
+`tools/ui/layout-audit.mjs` plays the app and, at a decision after the flop, resizes the page
+through 20 sizes. The sizes are:
+- phones, including the heights Safari leaves with its bars showing;
+- phones held sideways;
+- iPads both ways;
+- laptops and desktops.
+
+At each size it measures which table elements cover which. It does this for all five game
+types in single-player and three online from Krish's seat, 160 cases. Before the fixes, 49
+cases had cards or seats covering the board, the pot or another seat. In 33 of them it was
+your own cards over the board. On an iPhone SE with Safari's bars, the table was 128 × 200 px:
+12% of the screen.
+
+**What causes it, and the fixes:**
+- **You sit at the bottom of your own screen.** Every poker client does this. Online, the
+  chairs are drawn turned so that yours is chair 0 on screen, with everyone in the same order
+  around it (`vseat`). The deal, bets, button and speech bubbles all use the turned position.
+  Your hand, the largest thing on the table, is only ever drawn at the bottom, where the layout
+  leaves room for it.
+- **Short screens get a wider table.** In portrait the table kept a tall oval (width 0.64 of
+  its height). Whenever the screen was short, the height limited the table and the oval
+  shrank to a sliver in the middle. Cards stop shrinking at a minimum size, so they then
+  covered everything. Now a short portrait screen gets an oval up to as wide as it is tall,
+  using the empty width. Sizes come from both width and height. Tall phones look as before.
+- **Tighter controls on short phones** (portrait, up to 780 px tall): smaller gaps and
+  30–46 px buttons. Only the latest line of the hand feed shows; the full log is in the hand
+  history. Below 600 px tall, the action buttons go to one line and the bet slider gives way
+  to the presets and − / +.
+- **Bug: open seats were twice the size of everyone else's.** A style for the empty hand
+  history list (`.empty`) also matched the table's open seats and fixed their text at 14 px,
+  so they never shrank with the table. It now only matches the list.
+- **Bug: online, a blank strip sat above your controls.** The waiting room code showed the
+  status line again on every server message, even during your turn.
+- Bets, the dealer button and the second board (two-board games) were moved so they no longer
+  sit on the board or on each other. A tip that covered the top of the table is shorter.
+
+After: 1 case of 160 has an overlap of that kind (a second board touching the pot by 13% on
+a 320 px phone). Your cards are never over the board or another seat. The SE-in-Safari table
+is 297 × 283 px, 41% of the screen. No text is clipped and nothing scrolls sideways.
+Numbers: METRICS.md, "Table layout at every screen size".
+
+**Your card order, online.** You can arrange your cards during a split-game hand. Online, the
+server's next copy of the game (after anyone's move) carried the order they were dealt in, so
+your arrangement snapped back. The page now keeps your arrangement for the rest of the hand
+and puts it back after each update, as long as the cards are the same. Your final split starts
+from it. `tools/ui/online-ui.mjs` arranges, lets the others act, and checks the order held.
+
+**Found by a code review of the online play** (each now has a test that failed before the
+fix, in `test/room.test.ts`, `test/server.test.ts` and `test/settle.test.ts`):
+- Someone removed from a table (out of chips, removed by the host, no seat left) could not
+  start or join another without reloading: the server still had them "in a room".
+- A table whose creator left with nobody else there could never be started again. The next
+  person to join now runs it.
+- Settling up during the showdown counted the pot twice: it added each person's pot
+  contributions after the pot had been paid into stacks. During a hand, chips at the table are
+  now the stack each person started the hand with. That is exact at every step and every side
+  pot, and closing mid-hand counts the hand as not played.
+- The last hand's private lines ("Dealt to Rohit […]") are matched by name, so someone who
+  took Rohit's character later could see Rohit's folded cards. They are dropped when seats
+  change.
+- Turning the timer on did not start the clock on a question already waiting, so an absent
+  person still held up the table.
+- A newcomer given a computer's seat at a full table who left before sitting down lost their
+  character from the list.
+- With nobody connected (everyone's phone asleep), the table played on against the computers
+  until it closed. It now waits.
+- An answer lost to a dropped connection was never asked again, which could stall a table with
+  no timer. A connection the server closed (the seat opened elsewhere, or too many messages)
+  never reconnected.
+- Someone who left and came back as the same player appeared twice in the settlement.

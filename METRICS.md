@@ -570,6 +570,44 @@ no timer, a question for the host (a game pick, a split, a rebuy) opens on top o
 panel and waits, and the test kept clicking the covered panel. The test now answers it first,
 as a person would, and prints what each page shows if a step fails.
 
+## Table layout at every screen size
+
+Date 2026-11-02, cloud sandbox, Chromium via Playwright, local build and game server as in CI.
+Command: `node tools/ui/layout-audit.mjs http://localhost:4177/ both`. It covers 20 viewports
+× 8 game situations: five game types in single-player (you at the bottom) and three online
+playing Krish's seat. Each is measured at a decision after the flop. Outputs:
+[before](tools/measure/results/2026-11-02-layout-audit-before.txt),
+[after](tools/measure/results/2026-11-02-layout-audit-after.txt).
+
+| Of 160 cases | Before | After |
+|---|---|---|
+| Cards or seats covering the board, the pot or another seat, or off screen | 49 | 1 (a second board touching the pot by 13%, 320 × 568) |
+| Your own cards over the board | 33 | 0 |
+| Your own cards over another seat | 24 | 0 |
+| Text clipped (hand feed) | 7 | 0 |
+| Page scrolls sideways | 0 | 0 |
+| Table on an iPhone SE with Safari's bars (375 × 553) | 128 × 200 px, 12% of the screen | 297 × 283 px, 41% |
+| Table on an iPhone in Safari (390 × 664), Standard game | 202 × 316 px, 25% | 358 × 397 px |
+
+The "after" run does not count a seat touching its own bet chip (chips now carry their seat).
+The "before" run counted those, so its total of 66 problem cases is not comparable with the
+after run's 4; the rows above are. Desktop and iPad sizes had no overlaps before or after.
+Lighthouse accessibility after the changes: 100 on both pages.
+
+## Fixes from the code review of online play
+
+Command: `TEST_DATABASE_URL=… npx vitest run`, 2026-11-02, local Postgres 16: 14 files,
+137 tests, all passing. 7 regression tests were added for the review's bugs. The 6 in
+`test/room.test.ts` each failed against the room code before the fixes (checked by running
+them with the fix stashed: 6 failed, 14 passed) and pass after.
+
+The online browser test now also checks three things: you are drawn at the bottom; your
+arranged card order survives the other players' moves; the coach's Hint works online. It
+passed 2 runs in a row with every check, desktop host with phone friends and the reverse:
+[output](tools/measure/results/2026-11-02-review-fixes-browser.txt). The single-player browser
+tests (smoke home and tournament, review, roster, offline, axe on 6 screens) and the
+sleeping-server test all pass.
+
 ## Not measured yet
 
 - Vercel Web Analytics visitor numbers (tracking is verified working; no real-visitor data yet).

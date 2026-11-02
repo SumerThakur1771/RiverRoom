@@ -63,4 +63,13 @@ describe('balances from the ledger', () => {
     expect(ts.every(t => t.to === 'Ana')).toBe(true);
     expect([...apply(bal, ts).values()].every(v => v === 0)).toBe(true);
   });
+  it('someone who left and came back as the same player is one line, never paying themselves', () => {
+    const b = balancesFrom([
+      { name: 'Ann', buyins: 1000, cashouts: 0, onTable: 0 },
+      { name: 'Ann', buyins: 1000, cashouts: 0, onTable: 2500 },
+      { name: 'Bo', buyins: 1000, cashouts: 500, onTable: 0 },
+    ]);
+    expect(b.filter(x => x.name === 'Ann')).toEqual([{ name: 'Ann', net: 500 }]);
+    expect(settle(b).some(t => t.from === t.to)).toBe(false);
+  });
 });

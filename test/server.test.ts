@@ -251,6 +251,8 @@ describe('multiplayer server', () => {
     expect(await emit(b.c, 'kick', { id })).toEqual({ ok: true });
     await until(() => removed === 'removed');
     await until(() => !room.g.players.some(p => p.name === 'Dee'), 30_000);
+    // removed, Dee is free to open a table of her own straight away (no "already in a room")
+    expect(await emit(d, 'create', { character: 'sumer', computers: 1 })).toMatchObject({ ok: true });
     d.sock.close();
   });
 

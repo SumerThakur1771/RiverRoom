@@ -34,6 +34,8 @@ coach explains each decision.
   - the server deals and sends each person only their own cards;
   - the person who started the table manages the players and settings; friends who join
     later sit down between hands;
+  - you always sit at the bottom of your own screen, as in any poker app, and the cards you
+    arrange stay in your order;
   - reloading or a dropped connection puts you back in your seat (each tab has its own);
   - **Settle up** shows who pays whom, in the fewest payments.
 - **Saved games (optional):** with `DATABASE_URL` set, the server stores rooms, players,

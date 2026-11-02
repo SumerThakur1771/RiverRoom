@@ -232,3 +232,87 @@ describe('the waiting room', () => {
     r.close();
   });
 });
+
+describe('bugs found in review (each test failed before its fix)', () => {
+  const until = async (cond: () => boolean, ms = 10_000): Promise<void> => { const t0 = Date.now(); while (!cond()) { if (Date.now() - t0 > ms) throw new Error('timed out'); await new Promise(r => setTimeout(r, 5)); } };
+  it('a table whose creator left with nobody else is run by the next person to join', () => {
+    const r = new Room('LLLLLL', DEFAULT_ROSTER, 'sumer', quiet(), FAST, 'rv-1', 'holdem', { computers: 1 });
+    r.leave(seat(r, 'sumer', true));
+    const j = r.seatHuman({ name: 'Asha', type: 'krish' });
+    if ('error' in j) throw new Error(j.error);
+    expect(r.isCreator(j.token)).toBe(true);
+    expect(r.start(j.token)).toEqual({ ok: true });
+    r.close();
+  });
+  it('chips on the table add up during a hand, including while the pot is being paid out', async () => {
+    let worst = 0, checks = 0;
+    const send = (_t: string, m: TableMsg): void => {
+      if (m.phase !== 'playing') return;
+      const total = [...r.onTable().values()].reduce((a, b) => a + b, 0);
+      checks++; worst = Math.max(worst, Math.abs(total - 2000));
+    };
+    const r: Room = new Room('MMMMMM', DEFAULT_ROSTER, 'sumer', quiet({ send }), FAST, 'rv-2', 'holdem', { computers: 0 });
+    const a = seat(r, 'sumer', true);
+    r.seatHuman({ name: 'Asha', type: 'krish' });
+    r.start(a);
+    await until(() => r.g.handNo >= 4);
+    r.close();
+    expect(checks).toBeGreaterThan(20);
+    expect(worst).toBe(0); // two people, no computers: their chips always add up to the two buy-ins
+  });
+  it('whoever takes a character later never sees its last hand\'s private lines', async () => {
+    const r = new Room('NNNNNN', DEFAULT_ROSTER, 'sumer', quiet(), FAST, 'rv-3', 'holdem', { computers: 0 });
+    const a = seat(r, 'sumer', true);
+    const b = r.seatHuman('rohit');
+    if ('error' in b) throw new Error(b.error);
+    r.start(a);
+    await until(() => r.g.hist.some(l => l.startsWith('Dealt to Rohit')));
+    r.leave(b.token); // the table drops below two players and goes back to waiting
+    await until(() => !r.started);
+    const c = r.seatHuman('rohit');
+    if ('error' in c) throw new Error(c.error);
+    expect(r.messageFor(c.token)!.game.hist.filter(l => /^Dealt to|splits?:/.test(l))).toEqual([]);
+    r.close();
+  });
+  it('turning the timer on starts the clock on a question already waiting', async () => {
+    let ask: TableMsg['ask'] = null;
+    const r: Room = new Room('OOOOOO', DEFAULT_ROSTER, 'sumer', quiet({ send: (_t, m) => { ask = m.ask; } }), FAST, 'rv-4', 'holdem', { computers: 1, timer: 0 });
+    const a = seat(r, 'sumer', true);
+    r.start(a);
+    await until(() => !!ask);
+    expect(ask).toMatchObject({ deadline: 0 });
+    r.configure(a, { timer: 15 });
+    const d = (ask as unknown as { deadline: number }).deadline;
+    expect(d).toBeGreaterThan(Date.now() + 10_000);
+    expect(d).toBeLessThanOrEqual(Date.now() + 15_000);
+    expect(r.messageFor(a)!.wait).toMatchObject({ deadline: d });
+    r.close();
+  });
+  it('a newcomer at a full table who leaves before sitting down puts their character back on the list', async () => {
+    const r = new Room('PPPPPP', DEFAULT_ROSTER, 'sumer', quiet(), FAST, 'rv-5', 'holdem', { computers: 5 });
+    const a = seat(r, 'sumer', true);
+    r.start(a);
+    await until(() => (r as unknown as { inHand: boolean }).inHand);
+    // six seats in use: a new player is given a computer's seat, then leaves before the hand ends
+    const j = r.seatHuman({ name: 'Zed', type: 'rohit' });
+    if ('error' in j) throw new Error(j.error);
+    expect(r.freeChars().map(c => c.name)).not.toContain('Zed');
+    r.leave(j.token);
+    expect(r.freeChars().map(c => c.name)).toContain('Zed');
+    r.close();
+  });
+  it('with nobody connected the table waits instead of playing on', async () => {
+    const r = new Room('QQQQQQ', DEFAULT_ROSTER, 'sumer', quiet(), FAST, 'rv-6', 'holdem', { computers: 2 });
+    const a = seat(r, 'sumer', true);
+    r.start(a);
+    await until(() => r.g.handNo >= 1);
+    r.setConnected(a, false);
+    await new Promise(res => setTimeout(res, 300));
+    const h = r.g.handNo;
+    await new Promise(res => setTimeout(res, 600));
+    expect(r.g.handNo).toBeLessThanOrEqual(h + 1);
+    r.setConnected(a, true);
+    await until(() => r.g.handNo >= h + 2);
+    r.close();
+  });
+});

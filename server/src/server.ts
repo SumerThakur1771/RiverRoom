@@ -40,6 +40,8 @@ export async function startServer(opts: ServerOptions): Promise<RunningServer> {
   const io = new Server(http, { cors: { origin: opts.origins }, maxHttpBufferSize: 4096, pingInterval: 10_000, pingTimeout: 8_000 });
   const rooms = new Map<string, Room>();
   const sockets = new Map<string, Socket>(); // session token -> socket
+  // session token -> forgets that socket's session (a person removed from a table can start or join another)
+  const forget = new Map<string, () => void>();
   const timing = opts.timing ?? LIVE_TIMING;
 
   // who started each open table, so one address cannot fill the server's memory with tables
@@ -58,7 +60,7 @@ export async function startServer(opts: ServerOptions): Promise<RunningServer> {
       send: (token, msg) => { opts.inspect?.(room, msg); sockets.get(token)?.emit('table', msg); },
       log: line => io.to(code).emit('log', line),
       record: e => { opts.record?.(e); void opts.store?.record(e); },
-      removed: (token, reason) => { sockets.get(token)?.emit('removed', { reason }); sockets.delete(token); },
+      removed: (token, reason) => { sockets.get(token)?.emit('removed', { reason }); sockets.delete(token); forget.get(token)?.(); forget.delete(token); },
     }, timing, opts.seed ? opts.seed + ':' + code : null, games, extra);
     rooms.set(code, room);
     startedBy.set(code, address);
@@ -95,6 +97,7 @@ export async function startServer(opts: ServerOptions): Promise<RunningServer> {
       const old = sockets.get(token);
       if (old && old !== socket) { old.emit('replaced'); old.disconnect(true); }
       sockets.set(token, socket);
+      forget.set(token, () => { if (session && session.token === token) { void socket.leave(session.code); session = null; } });
       void socket.join(room.code);
       room.setConnected(token, true);
       clearTimeout(idle.get(room.code));
@@ -203,7 +206,7 @@ export async function startServer(opts: ServerOptions): Promise<RunningServer> {
       const room = current();
       if (!room) return bad(ack, 'not in a room');
       try {
-        const s = opts.store ? await opts.store.settlement(room.code, room.onTable()) : room.settlement();
+        const s = opts.store ? await opts.store.settlement(room.code, () => room.onTable()) : room.settlement();
         // with storage: what the database holds for this room, and whether its ledger gives the
         // same balances as the room's own memory
         let extra = {};
