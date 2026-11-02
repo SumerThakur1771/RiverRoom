@@ -608,6 +608,12 @@ passed 2 runs in a row with every check, desktop host with phone friends and the
 tests (smoke home and tournament, review, roster, offline, axe on 6 screens) and the
 sleeping-server test all pass.
 
+On production after deploy ([run 41480476722](https://github.com/SumerThakur1771/RiverRoom/actions/runs/41480476722),
+commit `d003bb7`, Render answered 20 s after the first request): every check passed in both
+pairings. That includes you drawn at the bottom, your card order kept, Hint online, and settle
+up from Neon matching memory. Output:
+[`results/2026-11-02-review-fixes-live.txt`](tools/measure/results/2026-11-02-review-fixes-live.txt).
+
 ## Not measured yet
 
 - Vercel Web Analytics visitor numbers (tracking is verified working; no real-visitor data yet).
