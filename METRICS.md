@@ -516,6 +516,49 @@ passed even when its test failed (see DESIGN.md section 10). The previous multip
 was checked the same way on 2026-11-01
 ([output](tools/measure/results/2026-11-01-multiplayer-live.txt)).
 
+## Online waiting room (local, before deploy)
+
+Date 2026-11-02, cloud sandbox (same machine as above), Node v22.22.0, Chromium via Playwright,
+local Postgres 16.
+
+**Unit and integration tests.** Command:
+`TEST_DATABASE_URL=… npx vitest run test/room.test.ts test/server.test.ts test/store.test.ts test/wire.test.ts --reporter=verbose`.
+Output: [`results/2026-11-02-waiting-room-tests.txt`](tools/measure/results/2026-11-02-waiting-room-tests.txt).
+
+| Metric | Value |
+|---|---|
+| Tests in these 4 files | 27, all passing |
+| Full suite with Postgres (`npx vitest run`) | 14 files, 130 tests, all passing |
+| Server test: messages checked against the server's real state | 5,501, 0 leaks (people chose the game 17 times and split their own cards 32 times) |
+| Wire test | 931 steps, 3,724 copies, 0 leaks (seeded, unchanged) |
+| Storage test | 7 hands stored, 7 ledger entries, settlement from Postgres equals memory |
+
+**Browser test.** Command: `node tools/ui/online-ui.mjs http://localhost:4177/ --expect-stored`
+against a local server built as in CI, run twice in a row. Output:
+[`results/2026-11-02-waiting-room-browser.txt`](tools/measure/results/2026-11-02-waiting-room-browser.txt).
+
+| Check (desktop host with phone friends, then the reverse) | Result, both runs |
+|---|---|
+| Host lands in the waiting room with a 6-character code; nothing dealt | yes |
+| Computers set to none: one player, Start disabled; timer set to off | yes |
+| Friend 1 types the code (lower case, with a dash), creates "Asha"; friend 2 uses the invite link and picks Rohit | yes |
+| Friends see no settings controls and no Start; "Waiting for Sumer to start the game" | yes |
+| Host adds a computer (4 seats) and starts; dealer's choice played by clicking | yes, 3+ hands |
+| Timer off: a friend's turn is still open after 2.5 s without acting | yes |
+| Host renames a computer inline (no browser dialog) and removes friend 2, who is told | yes |
+| Settle up from Postgres, same as the server's memory | yes |
+| Reload gets the same seat back; a second tab in the same browser gets the join view with "Rejoin", not the seat | yes |
+| Leave, then computers to none: the table goes back to the waiting room ("Continue the game") | yes |
+| axe-core on the lobby, the join view, the waiting room and the table panel | 0 violations |
+| Page errors, browser dialogs, sideways scrolling | none |
+
+The first runs of this test found the phone layout bug and the lobby width bug listed in
+DESIGN.md section 10. The sleeping-server test (`tools/ui/online-wake.mjs`) still passes:
+the table opened 10.0 s after the click once the server came up. Lighthouse on the local
+production build after these changes: accessibility 100 on both pages.
+
+The production run comes after deploy (section "Online play on production").
+
 ## Not measured yet
 
 - Vercel Web Analytics visitor numbers (tracking is verified working; no real-visitor data yet).

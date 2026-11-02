@@ -48,9 +48,10 @@ export function renameCharacter(r: readonly Character[], id: string, raw: string
   return { ok: true, roster: r.map(c => (c.id === id ? { ...c, name } : c)) };
 }
 
-export function addCharacter(r: readonly Character[], raw: string, type: string): RosterResult {
+/** Add a character. `max` caps the list (the table's six seats; online tables also keep characters off the table). */
+export function addCharacter(r: readonly Character[], raw: string, type: string, max = ROSTER_MAX): RosterResult {
   const name = cleanName(raw);
-  if (r.length >= ROSTER_MAX) return { ok: false, error: `The table seats ${ROSTER_MAX}.` };
+  if (r.length >= max) return { ok: false, error: `The table seats ${ROSTER_MAX}.` };
   if (!name) return { ok: false, error: 'Type a name.' };
   if (nameTaken(r, name)) return { ok: false, error: `${name} is already at the table.` };
   if (!STYLES.includes(type)) return { ok: false, error: 'Pick a playing style.' };

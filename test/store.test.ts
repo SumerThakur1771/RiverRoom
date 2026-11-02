@@ -37,8 +37,8 @@ describe.skipIf(!URL_)('Postgres storage (rooms, hands, ledger, settlement)', ()
     sock.on('table', (m: TableMsg) => {
       c.views.push(m);
       const a = m.ask;
-      if (!a || answered.has(a.kind + a.deadline)) return;
-      answered.add(a.kind + a.deadline);
+      if (!a || answered.has(a.kind + a.id)) return;
+      answered.add(a.kind + a.id);
       if (a.kind === 'act') sock.emit('act', { type: a.options.toCall > 0 ? 'call' : 'check' }, () => {});
       else if (a.kind === 'rebuy') sock.emit('rebuy', { yes: true }, () => {});
       else if (a.kind === 'variant') sock.emit('variant', { variant: 'holdem' }, () => {});
@@ -63,6 +63,7 @@ describe.skipIf(!URL_)('Postgres storage (rooms, hands, ledger, settlement)', ()
       const j = await emit<{ ok: boolean; token: string }>(c, 'join', { code, character });
       c.token = j.token;
     }
+    expect(await emit(a, 'start', {})).toEqual({ ok: true });
     await until(() => (a.views[a.views.length - 1]?.game.handNo ?? 0) >= 6);
     const ben = clients[1]!;
     await emit(ben, 'leave', {});
@@ -91,7 +92,10 @@ describe.skipIf(!URL_)('Postgres storage (rooms, hands, ledger, settlement)', ()
     const dbRoom = await db.room.findFirstOrThrow({ where: { code } });
     const hands = await db.hand.findMany({ where: { roomId: dbRoom.id }, include: { results: true }, orderBy: { handNo: 'asc' } });
     expect(hands.length).toBeGreaterThanOrEqual(7);
-    expect(hands.every(h => h.results.length === 5)).toBe(true);
+    // five players, then four once Ben leaves (a person who leaves gives up their seat)
+    expect(hands.every(h => h.results.length === 5 || h.results.length === 4)).toBe(true);
+    expect(hands[0]!.results).toHaveLength(5);
+    expect(hands[hands.length - 1]!.results).toHaveLength(4);
     expect(hands.every(h => !h.log.includes('Dealt to'))).toBe(true); // private cards are not stored
     const ledger = await db.ledgerEntry.findMany({ where: { roomId: dbRoom.id }, include: { player: true } });
     expect(ledger.filter(l => l.kind === 'BUYIN').length).toBeGreaterThanOrEqual(3);

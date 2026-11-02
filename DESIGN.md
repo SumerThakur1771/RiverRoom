@@ -306,15 +306,42 @@ single-player:
 - the same animations.
 
 How a table works:
-- One person starts a table from the start screen ("Play online with friends"). Their home
-  game roster comes along: Sumer and the four friends, or however they have edited it.
-- The table gets a 6-character invite code (no 0/O/1/I) and a link, `/?join=ABC234`.
-- Everyone picks the character they play. A picked character is locked: nobody else can take
-  it.
-- The computer plays every character nobody picked, in that character's own style. When a
-  person leaves, the computer takes their character back.
-- Each person gets a session token, kept in the browser's local storage, so a reload or a
-  dropped connection puts them back in their seat.
+- One person opens a table from the start screen ("Play online with friends" > "Start a
+  table"). They pick which of their characters they play; their home game roster comes along
+  as the list of characters for the table. The lobby only reads that roster, so changes made
+  at the online table never touch the single-player one.
+- The table gets a 6-character code (no 0/O/1/I) and a link, `/?join=ABC234`.
+- **The waiting room.** The creator lands at the table straight away. Until they press Start
+  nothing is dealt, and the bottom of the screen shows:
+  - the code in large letters, with Copy code and Copy invite link;
+  - how friends join;
+  - for the creator only: the number of computer players (0 to 5, limited by the free seats),
+    the turn timer (off, 15, 30 or 60 s) and the games;
+  - who is at the table, and Start (disabled below two players).
+  Friends see the same settings as plain text and "Waiting for Sumer to start the game."
+- **Joining.** "Join with a code" has a code box (lower case, spaces and dashes are fine), or
+  a friend opens the link. The join view shows whose table it is, its games and timer, and
+  whether the game is on. The newcomer picks:
+  - a character the computer plays at the table (they take that seat);
+  - one off the table (a new seat), including any of the original five not on the
+    creator's list;
+  - or creates a new player with their own name.
+  A picked character is locked. Everyone sits down with a fresh buy-in; nobody inherits a
+  computer's chips or results. With six seats in use, a newcomer takes a computer player's
+  seat; with six people, the table is full. Joiners cannot change settings, add computers or
+  remove anyone.
+- **After Start**, people who join sit down when the current hand ends.
+- **Leaving.** A person who leaves (or runs out of chips and does not rebuy, or is removed by
+  the creator) gives up the seat; their character goes back on the list for someone else.
+  If fewer than two players are left, the table goes back to the waiting room and the
+  creator can press "Continue the game".
+- **No timer.** The table waits for each person. A person who disconnects while asked is
+  answered for after 20 s; someone connected who stops answering can be removed by the
+  creator (two taps).
+- Each browser tab keeps its own seat token (session storage), so a reload puts you back in
+  your seat and a second tab can join as someone else. The browser also remembers your last
+  seat, offered as "Rejoin". Opening the same seat somewhere else closes it in the first tab,
+  which says so.
 
 **One table screen for both modes.** The single-player screen is a dispatcher: one handler
 per engine step (an action, the dealer's choice, the split, a rebuy, and each animation).
@@ -350,6 +377,10 @@ Online, the steps come from the server instead of a local engine.
     your cards in the right group sizes;
   - your rebuy (30 s; no).
 - Every message is validated with zod, and each socket may send 20 messages a second.
+- One address may have 10 open tables at a time and the server 300 in all, so a script
+  cannot fill the free server's memory with tables.
+- With the turn timer off there is no deadline (sent as 0). The page never acts for you
+  online: when time is up the server answers and the open control closes.
 
 **The engine with several people.** In single-player only one person is at the table. Online
 there can be several. Every person now gets their own final-split step and their own
@@ -357,9 +388,12 @@ there can be several. Every person now gets their own final-split step and their
 passes.
 
 **The roster online.**
-- Only the person who started the table can rename, add or remove characters. A character
-  someone is playing cannot be removed.
-- Between hands a change applies at once; during a hand it waits for the hand to end.
+- Only the person who started the table can rename (inline, in the players list), add or
+  remove computer players, change the settings and remove people. A character someone is
+  playing cannot be removed as a computer.
+- Between hands a change applies at once; during a hand it waits for the hand to end. The
+  number of computers is a target the table moves to between hands: computer players come
+  from the characters off the table, then new names.
 - Removing a character re-numbers the seats and keeps the dealer button with the same
   player. The server looks people up by session token, never by a remembered seat number,
   so nobody's seat is lost.
@@ -380,14 +414,25 @@ passes.
   - reconnecting by token;
   - creator-only edits, including during a hand;
   - the creator role passing on.
-- `test/room.test.ts`: the seat and roster bookkeeping.
-- `tools/ui/online-ui.mjs`: two browsers, desktop and phone, both ways round:
-  - start screen to lobby, invite link, and a character picker with the taken one disabled;
-  - dealer's choice by clicking;
-  - creator-only edits;
+- `test/room.test.ts`: the seat and roster bookkeeping, and the waiting room: computers from
+  0 to 5, nothing dealt before Start, Start needing two players, picking a computer's
+  character or one off the table, a full table (a new character takes a computer's seat with
+  a fresh buy-in; six people is full), a 0-computer table dropping back to waiting, and no
+  deadline with the timer off.
+- `tools/ui/online-ui.mjs`: three browsers (a host and two friends), desktop and phone, both
+  ways round:
+  - the host opens a table and lands in the waiting room with the code; nothing is dealt;
+    computers set to none (Start disabled), timer off;
+  - one friend types the code and creates a new player; another opens the invite link and
+    picks a character; friends get no controls; the host adds a computer and starts;
+  - dealer's choice by clicking; with no timer a friend's turn waits for them;
+  - the host renames a computer inline and removes a friend, who is told;
   - settle up from Postgres;
-  - reload resume, then leaving;
-  - axe on the lobby, join view and table panel.
+  - reload resume; a second tab in the same browser gets the join view, not the first tab's
+    seat;
+  - leaving, then the table dropping below two players back to the waiting room;
+  - axe on the lobby, join view, waiting room and table panel; no page errors, no browser
+    dialogs, no sideways scrolling.
 
   It runs in CI and, after each deploy, against production.
 - `tools/ui/online-wake.mjs`: a sleeping server.
@@ -398,6 +443,17 @@ Bugs these tests found along the way:
 - A replacement computer player could copy a name already at the table.
 - The creator role passed by seat position, which is random. It now passes by time at the
   table.
+- Found while building the waiting room:
+  - With "no timer", the page would have folded for you after one second: it read the
+    missing deadline as one already passed. Online, the page now never acts for you.
+  - A friend who joined during a hand and left before sitting down was charged a buy-in with
+    no cash-out. The buy-in is now recorded when they sit down.
+  - Every tab of a browser shared one seat, so testing two players in one browser resumed
+    the first player. Seats are now per tab.
+  - On a phone the waiting room made the table area short and wide, which switched the table
+    to its landscape layout and pushed seats off the screen. Narrow screens now always use
+    the upright layout.
+  - The lobby dialog grew wider than a phone screen when it held the code box.
 
 **Tradeoffs.**
 - Game state lives in the server's memory (the engine generator cannot be serialized), so a

@@ -1,5 +1,6 @@
-// Room edge cases, without sockets: who plays a seat a person gives up, telling a person when
-// their seat is taken back, split validation, and roster edits keeping the table consistent.
+// Room edge cases, without sockets: the waiting room (computers 0-5, Start, joining by picking
+// or creating a character, a full table), seats people give up, telling a person when they lose
+// their seat, split validation, and roster edits keeping the table consistent.
 import { describe, expect, it } from 'vitest';
 import { replacementBot, Room, validSplit, type RoomHooks } from '../server/src/room';
 import { newGame } from '../src/engine/engine';
@@ -16,12 +17,17 @@ const seat = (r: Room, ch: string, creator = false): string => {
 };
 
 describe('a seat a person gives up', () => {
-  it('goes back to the computer playing that same character, in its own style', () => {
+  it('is removed; the character goes back on the list for someone else to pick', () => {
     const r = new Room('AAAAAA', DEFAULT_ROSTER, 'rohit', quiet(), FAST, 'rb-1');
     const t = seat(r, 'rohit', true);
     expect(r.g.players[0]).toMatchObject({ isHuman: true, name: 'Rohit', avatar: 'rohit' });
+    const friend = r.seatHuman('sumer');
+    if ('error' in friend) throw new Error(friend.error);
+    expect(r.g.players).toHaveLength(5);
     r.leave(t);
-    expect(r.g.players[0]).toMatchObject({ isHuman: false, name: 'Rohit', type: 'rohit' });
+    expect(r.g.players.map(p => p.name)).not.toContain('Rohit');
+    expect(r.g.players).toHaveLength(4);
+    expect(r.freeChars().map(c => c.name)).toContain('Rohit');
     r.close();
   });
   it('a table without a roster character for a seat never gets a duplicate name', () => {
@@ -33,7 +39,7 @@ describe('a seat a person gives up', () => {
 });
 
 describe('losing a seat without asking', () => {
-  it('a player out of chips who does not answer the rebuy question is told, and the computer takes the seat', async () => {
+  it('a player out of chips who does not answer the rebuy question is told, and gives up the seat', async () => {
     const removed: Array<{ token: string; reason: string }> = [];
     let busted = false;
     const send = (_t: string, m: TableMsg): void => { if (m.phase === 'handEnd' && !busted) { busted = true; r.g.players[0]!.stack = 0; } };
@@ -44,14 +50,14 @@ describe('losing a seat without asking', () => {
     while (!removed.length && Date.now() - t0 < 20_000) await new Promise(res => setTimeout(res, 20));
     r.close();
     expect(removed).toEqual([{ token, reason: 'out_of_chips' }]);
-    expect(r.seats[0]!.kind).toBe('bot');
-    expect(r.g.players[0]).toMatchObject({ name: 'Sumer', type: 'sumer' });
+    expect(r.g.players.map(p => p.name)).not.toContain('Sumer');
+    expect(r.seats.every(s => s.kind === 'bot')).toBe(true);
   });
   it('a player who leaves on purpose is not sent a "removed" notice', () => {
     const removed: string[] = [];
     const r = new Room('DDDDDD', DEFAULT_ROSTER, 'sumer', quiet({ removed: t => removed.push(t) }), FAST, 'rb-4');
     r.leave(seat(r, 'sumer', true));
-    expect(r.seats[0]!.kind).toBe('bot');
+    expect(r.g.players.map(p => p.name)).not.toContain('Sumer');
     expect(removed).toEqual([]);
     r.close();
   });
@@ -117,6 +123,112 @@ describe('roster edits between hands', () => {
     const t1 = Date.now();
     while (r.g.handNo === h && r.g.handActive && Date.now() - t1 < 5_000) await new Promise(res => setTimeout(res, 10));
     expect(Date.now() - t1).toBeLessThan(5_000);
+    r.close();
+  });
+});
+
+describe('the waiting room', () => {
+  const lobby = (computers: number, removed: Array<{ token: string; reason: string }> = []): { r: Room; creator: string } => {
+    const r = new Room('JJJJJJ', DEFAULT_ROSTER, 'sumer', quiet({ removed: (token, reason) => removed.push({ token, reason }) }), FAST, 'rb-w', 'holdem', { computers });
+    return { r, creator: seat(r, 'sumer', true) };
+  };
+  it('the creator picks how many computers play, from none to five', () => {
+    const { r, creator } = lobby(0);
+    expect(r.g.players.map(p => p.name)).toEqual(['Sumer']);
+    expect(r.maxComputers()).toBe(5);
+    expect(r.configure(creator, { computers: 5 })).toEqual({ ok: true, queued: false });
+    expect(r.g.players).toHaveLength(6);
+    // the four friends, then a new character once the list runs out
+    expect(r.g.players.filter(p => !p.isHuman).map(p => p.name).slice(0, 4).sort()).toEqual(['Krish', 'Nikhil', 'Rohit', 'Venky']);
+    expect(new Set(r.g.players.map(p => p.seat)).size).toBe(6);
+    expect(r.configure(creator, { computers: 2 }).ok).toBe(true);
+    expect(r.g.players).toHaveLength(3);
+    expect(r.configure(creator, { computers: 0 }).ok).toBe(true);
+    expect(r.g.players).toHaveLength(1);
+    r.close();
+  });
+  it('nothing is dealt until the creator presses Start, which needs two players', async () => {
+    const { r, creator } = lobby(0);
+    expect(r.start(creator)).toMatchObject({ ok: false });
+    const friend = r.seatHuman({ name: 'Asha', type: 'krish' });
+    if ('error' in friend) throw new Error(friend.error);
+    expect(r.start(friend.token)).toEqual({ ok: false, error: 'only the person who started the table can start the game' });
+    expect(r.configure(friend.token, { computers: 3 })).toMatchObject({ ok: false });
+    expect(r.kick(friend.token, 'sumer')).toMatchObject({ ok: false });
+    await new Promise(res => setTimeout(res, 50));
+    expect(r.g.handNo).toBe(0);
+    expect(r.start(creator)).toEqual({ ok: true });
+    const t0 = Date.now();
+    while (r.g.handNo < 2 && Date.now() - t0 < 10_000) await new Promise(res => setTimeout(res, 10));
+    expect(r.g.handNo).toBeGreaterThanOrEqual(2);
+    expect(r.g.players.every(p => p.isHuman)).toBe(true);
+    r.close();
+  });
+  it('a newcomer picks a computer-played character (taking its seat) or one off the table (a new seat)', () => {
+    const { r } = lobby(2);
+    const bots = r.g.players.filter(p => !p.isHuman).map(p => p.name);
+    const off = r.freeChars().find(c => !c.seated)!;
+    const a = r.seatHuman(r.freeChars().find(c => c.seated)!.id), b = r.seatHuman(off.id);
+    if ('error' in a || 'error' in b) throw new Error('could not join');
+    expect(r.g.players).toHaveLength(4); // 1 + 2 computers - 1 taken over + 1 new seat
+    expect(r.computers).toBe(1);
+    expect(r.g.players.filter(p => !p.isHuman)).toHaveLength(1);
+    expect(bots).toContain(r.g.players[a.seat]!.name);
+    expect(r.g.players[b.seat]!.name).toBe(off.name);
+    expect(r.seatHuman(off.id)).toEqual({ error: `${off.name} is already taken` });
+    r.close();
+  });
+  it('a full table: a new character takes a computer\'s seat with a fresh buy-in; six people means full', async () => {
+    const { r } = lobby(5);
+    void r.run();
+    const t0 = Date.now();
+    while (r.g.handNo < 3 && Date.now() - t0 < 10_000) await new Promise(res => setTimeout(res, 5));
+    r.close();
+    // between hands (the room is closed, so nothing is running): a computer has won or lost chips
+    const room = r as unknown as { inHand: boolean };
+    room.inHand = false;
+    r.closed = false;
+    const j = r.seatHuman({ name: 'Zed', type: 'rohit' });
+    if ('error' in j) throw new Error(j.error);
+    expect(r.g.players).toHaveLength(6);
+    expect(r.g.players[j.seat]).toMatchObject({ name: 'Zed', isHuman: true, stack: 1000, buyins: 1 });
+    for (const n of ['A1', 'A2', 'A3', 'A4']) expect('token' in r.seatHuman({ name: n, type: 'krish' })).toBe(true);
+    expect(r.g.players.every(p => p.isHuman)).toBe(true);
+    expect(r.full()).toBe(true);
+    expect(r.seatHuman({ name: 'A5', type: 'krish' })).toEqual({ error: 'The table is full: six people are playing.' });
+    r.close();
+  });
+  it('a 0-computer game that drops below two players goes back to the waiting room', async () => {
+    const removed: Array<{ token: string; reason: string }> = [];
+    const { r, creator } = lobby(0, removed);
+    const friend = r.seatHuman({ name: 'Asha', type: 'krish' });
+    if ('error' in friend) throw new Error(friend.error);
+    r.start(creator);
+    const t0 = Date.now();
+    while (r.g.handNo < 1 && Date.now() - t0 < 5_000) await new Promise(res => setTimeout(res, 5));
+    // the creator removes their friend mid-game: told at once, seat gone when the hand ends
+    expect(r.kick(creator, 'sumer')).toMatchObject({ ok: false });
+    expect(r.kick(creator, r.chars.find(c => c.name === 'Asha')!.id)).toEqual({ ok: true });
+    expect(removed).toEqual([{ token: friend.token, reason: 'removed' }]);
+    const t1 = Date.now();
+    while (r.started && Date.now() - t1 < 5_000) await new Promise(res => setTimeout(res, 5));
+    expect(r.started).toBe(false);
+    expect(r.g.players.map(p => p.name)).toEqual(['Sumer']);
+    expect(r.has(friend.token)).toBe(false);
+    r.close();
+  });
+  it('no turn timer: questions have no deadline', async () => {
+    const r = new Room('KKKKKK', DEFAULT_ROSTER, 'sumer', quiet(), FAST, 'rb-t', 'holdem', { computers: 1, timer: 0 });
+    const token = seat(r, 'sumer', true);
+    let ask: TableMsg['ask'] = null;
+    (r.hooks as { send: RoomHooks['send'] }).send = (_t, m) => { if (m.ask) ask = m.ask; };
+    r.start(token);
+    const t0 = Date.now();
+    while (!ask && Date.now() - t0 < 5_000) await new Promise(res => setTimeout(res, 5));
+    expect(ask).toMatchObject({ deadline: 0 });
+    // still waiting well past the 300 ms test timer
+    await new Promise(res => setTimeout(res, 600));
+    expect(r.answer(token, 'act', { type: 'fold' }) === null || r.answer(token, 'act', { type: 'check' }) === null).toBe(true);
     r.close();
   });
 });

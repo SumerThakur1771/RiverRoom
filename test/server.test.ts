@@ -3,7 +3,8 @@
 // Checks: nobody ever receives another player's hidden cards (every message, against the
 // server's real state); characters lock when picked; people choose the dealer's-choice game
 // and arrange their own splits; timers answer for people who stop; reconnecting by token;
-// only the creator edits the roster, between hands; the creator role passes on.
+// only the creator edits the roster, between hands; the creator role passes on; the waiting
+// room (nothing dealt before Start; creator-only settings; joining by code with a new character).
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { io as connect, type Socket } from 'socket.io-client';
 import { VARIANTS, type VariantKey } from '../src/engine/variants';
@@ -54,7 +55,7 @@ function client(name: string): Client {
     c.msgs.push(m);
     const a = m.ask;
     if (!a || c.quiet) return;
-    const key = `${a.kind}:${a.deadline}`;
+    const key = `${a.kind}:${a.id}`;
     if (c.answered.has(key)) return;
     c.answered.add(key);
     if (a.kind === 'act') {
@@ -132,6 +133,12 @@ describe('multiplayer server', () => {
       if (j.ok) { h.c.token = j.token; h.c.code = j.code; }
     }
     cc.c.badSplitOnce = true;
+    // a waiting room until the creator presses Start; only the creator can
+    await new Promise(res => setTimeout(res, 100));
+    expect(last(a.c)!).toMatchObject({ started: false, phase: 'waiting' });
+    expect(last(a.c)!.game.handNo).toBe(0);
+    expect(await emit(b.c, 'start', {})).toEqual({ ok: false, error: 'only the person who started the table can start the game' });
+    expect(await emit(a.c, 'start', {})).toEqual({ ok: true });
     await until(() => handNo(cc.c) >= 3);
     const m = last(a.c)!;
     expect(m.roster.filter(x => x.taken).map(x => x.name).sort()).toEqual(['Krish', 'Rohit', 'Sumer']);
@@ -206,16 +213,45 @@ describe('multiplayer server', () => {
     await until(() => handNo(b.c) >= h + 4);
   });
 
-  it('when the creator leaves, whoever has been at the table longest manages the roster; their character goes back to the computer', async () => {
+  it('when the creator leaves, whoever has been at the table longest manages it; the seat goes and the character is free to pick', async () => {
     expect((await emit(a.c, 'leave', {})).ok).toBe(true);
     await until(() => last(b.c)!.creator === true);
-    await until(() => last(b.c)!.roster.find(x => x.id === 'rohit')!.taken === false);
+    await until(() => !last(b.c)!.roster.some(x => x.id === 'rohit'));
     expect(last(cc.c)!.creator).toBe(false);
     const room = srv.rooms.get(a.c.code!)!;
     const h = handNo(b.c);
     await until(() => handNo(b.c) >= h + 2);
-    expect(room.g.players.find(p => p.name === 'Rohit')!.type).toBe('rohit');
+    expect(room.g.players.map(p => p.name)).not.toContain('Rohit');
+    const peek = await emit<PeekView>(b.c, 'peek', { code: a.c.code! });
+    expect(peek.free.find(c => c.id === 'rohit')).toMatchObject({ seated: false });
     a.c.sock.close();
+  });
+
+  it('a friend joins with the code as a new character mid-game, sits down between hands; the creator sets the timer and computers and can remove them', async () => {
+    const code = cc.c.code!, room = srv.rooms.get(code)!;
+    expect(await emit(cc.c, 'settings', { timer: 0 })).toEqual({ ok: false, error: 'only the person who started the table can change the settings' });
+    expect(await emit(b.c, 'settings', { timer: 15 })).toMatchObject({ ok: true });
+    await until(() => last(cc.c)!.timer === 15);
+    const d = client('Dee');
+    d.variantPick = b.c.variantPick;
+    const j = await emit(d, 'join', { code, create: { name: 'Dee', type: 'venky' } });
+    expect(j).toMatchObject({ ok: true });
+    await until(() => d.msgs.length > 0);
+    await until(() => last(d)!.you >= 0, 30_000);
+    // a fresh buy-in when they sit down (the first message where they have a seat)
+    const seated = d.msgs.find(m => m.you >= 0)!;
+    expect(seated.game.players[seated.you]).toMatchObject({ name: 'Dee', stack: 1000, buyins: 1 });
+    expect(last(b.c)!.roster.find(x => x.name === 'Dee')).toMatchObject({ taken: true });
+    // the creator: no computers at all, then removes Dee
+    expect(await emit(b.c, 'settings', { computers: 0 })).toMatchObject({ ok: true });
+    await until(() => room.g.players.every(p => p.isHuman), 30_000);
+    let removed = '';
+    d.sock.on('removed', (m: { reason: string }) => { removed = m.reason; });
+    const id = last(b.c)!.roster.find(x => x.name === 'Dee')!.id;
+    expect(await emit(b.c, 'kick', { id })).toEqual({ ok: true });
+    await until(() => removed === 'removed');
+    await until(() => !room.g.players.some(p => p.name === 'Dee'), 30_000);
+    d.sock.close();
   });
 
   it('never sent anyone a hidden card or hand detail', () => {

@@ -46,6 +46,17 @@
   <footer class="ctrl">
     <div class="ctrl-in">
       <div class="feed" id="feed" aria-live="polite"></div>
+      <section class="wroom" id="wroom" hidden aria-labelledby="wrTitle">
+        <div class="wr-top">
+          <div class="wr-codebox"><div class="eyebrow" id="wrTitle">Waiting room · table code</div><div class="wr-code" id="wrCode"></div></div>
+          <div class="wr-btns"><button type="button" class="rp-btn" id="wrCopyCode">Copy code</button><button type="button" class="rp-btn" id="wrCopyLink">Copy invite link</button></div>
+        </div>
+        <p class="wr-how">Friends: open River Room, tap <b>Play online with friends</b>, then <b>Join with a code</b> and type this code.</p>
+        <div class="tset" id="wrSettings"></div>
+        <p class="wr-status" id="wrStatus" role="status" aria-live="polite"></p>
+        <div class="wr-act"><button type="button" class="btn-main" id="wrStart" hidden>Start the game</button><button type="button" class="btn-ghost" id="wrLeave">Leave</button></div>
+        <p class="rp-err" id="wrErr" role="alert"></p>
+      </section>
       <div class="status" id="status">Pick your table settings to start.</div>
       <div class="controw" id="contRow" hidden><button class="btn-main cont" id="contBtn" type="button">Next hand</button><button class="btn-ghost cont2" id="contSkip" type="button">Skip review</button></div>
       <div class="pre" id="pre" hidden>
@@ -81,7 +92,7 @@
     <div class="eyebrow" id="startEyebrow">No-Limit Texas Hold'em · Sit &amp; Go</div>
     <h1>River Room</h1>
     <div class="field"><span>Game</span><div class="seg tall" id="modeSeg"></div></div>
-    <a class="online-btn" id="onlineBtn" href="/?online"><span class="ob-title">Play online with friends</span><span class="ob-sub">Create a table, share the invite link. Computer players fill the empty seats.</span></a>
+    <a class="online-btn" id="onlineBtn" href="/?online"><span class="ob-title">Play online with friends</span><span class="ob-sub">Open a table and share its code, or join a friend's with theirs. You choose how many computers play.</span></a>
     <div id="homeInfo" hidden>
       <p class="lede">Your home game with the boys: $10 buy-in, blinds 10¢/20¢ (the small blind adds 10¢ more to play), rebuys allowed. Chips: <b style="color:#6c9cf0">blue 10¢</b>, <b style="color:#e06a5e">red 20¢</b>, <b style="color:#5cc07f">green 50¢</b>, <b>black $1</b>. Like the real game, people just call before the flop (a raise is rare and small), and a $1 bet is a big deal.</p>
       <div class="who" id="homeRoster" style="margin:0 0 16px"></div>
@@ -108,18 +119,27 @@
   <div class="dlg">
     <div class="eyebrow">Home cash game · online</div>
     <h2 id="olTitle">Play online with friends</h2>
-    <p class="lede" id="olLede">Start a table and share the invite link. Everyone picks who they play; the computer plays the rest, each in their own style. The server deals and keeps everyone's cards private.</p>
+    <div class="seg ol-mode" id="olModeSeg" role="group" aria-label="Start a table or join one"></div>
+    <p class="lede" id="olLede"></p>
     <p class="ol-wake" id="olWake" role="status" hidden>Waking up the server, about a minute. The free hosting sleeps when nobody is playing.</p>
     <div id="olCreate">
-      <div id="olRosterHost"></div>
+      <fieldset class="roster-pick" id="olMe"></fieldset>
       <div class="field"><span>Games</span><div class="seg tall" id="olGamesSeg"></div></div>
-      <button class="btn-main" id="olCreateBtn">Start the table</button>
+      <p class="fine">Once your table is open you get its code to share, choose how many computers play (or none) and the turn timer, and start when everyone is in.</p>
+      <button class="btn-main" id="olCreateBtn">Open my table</button>
     </div>
     <div id="olJoin" hidden>
-      <fieldset class="roster-pick" id="olPick"></fieldset>
-      <button class="btn-main" id="olJoinBtn">Join the table</button>
-      <button type="button" class="rp-reset" id="olToCreate">Start your own table instead</button>
+      <form class="ol-code" id="olCodeForm" novalidate>
+        <label for="olCode">Table code</label>
+        <div class="ol-code-row"><input type="text" id="olCode" maxlength="9" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="K7M2QX" aria-describedby="olCodeHelp"><button type="submit" class="rp-btn" id="olFind">Find table</button></div>
+        <p class="fine" id="olCodeHelp">The 6-character code on your friend's table.</p>
+      </form>
+      <p class="ol-info" id="olInfo" role="status" aria-live="polite"></p>
+      <fieldset class="roster-pick" id="olPick" hidden></fieldset>
+      <div class="rp-add" id="olNew" hidden><input type="text" id="olNewName" maxlength="12" placeholder="Your name" aria-label="Your player's name" autocomplete="off"><select id="olNewStyle" aria-label="How the computer plays them if you leave"></select></div>
+      <button class="btn-main" id="olJoinBtn" hidden>Join the table</button>
     </div>
+    <button type="button" class="btn-ghost" id="olRejoin" hidden></button>
     <p class="rp-err" id="olErr" role="alert"></p>
     <button class="btn-ghost" id="olBack">Back to single player</button>
     <p class="fine" id="olConn" role="status" aria-live="polite"></p>
@@ -130,8 +150,10 @@
 <div class="ov" id="tableOv" hidden>
   <div class="dlg">
     <div class="eyebrow">Online table</div>
-    <h2>Table <span id="tpCode"></span></h2>
-    <p class="tp-invite">Invite friends: <a id="tpLink" href=""></a> <button type="button" class="rp-btn" id="tpCopy">Copy</button></p>
+    <h2>Table code <span class="tp-code" id="tpCode"></span></h2>
+    <p class="tp-invite"><button type="button" class="rp-btn" id="tpCopyCode">Copy code</button> or the invite link: <a id="tpLink" href=""></a> <button type="button" class="rp-btn" id="tpCopy">Copy link</button></p>
+    <h3 class="tp-h">Settings</h3>
+    <div class="tset" id="tpSettings"></div>
     <h3 class="tp-h">Players</h3>
     <p class="fine" id="tpWho"></p>
     <div id="tpRoster" class="tp-roster"></div>

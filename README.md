@@ -26,10 +26,15 @@ coach explains each decision.
 - **Play online with friends** (the start screen's "Play online with friends" button; also a
   shortcut on the installed app's icon). It is the same table, with dealer's choice, splits,
   the coach and hand history:
-  - share the invite link; each person picks a character, which then stays locked to them;
+  - open a table and you land in a **waiting room** with the table code to share; choose
+    how many computers play (none is fine) and the turn timer (off, 15, 30 or 60 s), and
+    press Start when everyone is in;
+  - friends tap **Join with a code** (or open the invite link) and pick a free player or
+    create their own; a picked player stays locked to them;
   - the server deals and sends each person only their own cards;
-  - the person who started the table manages the players;
-  - reloading or a dropped connection puts you back in your seat;
+  - the person who started the table manages the players and settings; friends who join
+    later sit down between hands;
+  - reloading or a dropped connection puts you back in your seat (each tab has its own);
   - **Settle up** shows who pays whom, in the fewest payments.
 - **Saved games (optional):** with `DATABASE_URL` set, the server stores rooms, players,
   hand histories and the buy-in ledger in Postgres (Prisma). Session tokens are stored only
@@ -121,7 +126,7 @@ CI runs on every push:
 - typecheck and lint;
 - the tests with coverage, including storage tests against a Postgres service container;
 - the build;
-- the browser smoke test and a two-browser multiplayer test;
+- the browser smoke test and a three-browser multiplayer test (waiting room, joining by code);
 - an offline-play test;
 - axe-core on the in-game screens;
 - Lighthouse, which fails the build below 95 accessibility.

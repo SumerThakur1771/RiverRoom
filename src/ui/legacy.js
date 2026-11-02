@@ -236,7 +236,8 @@ function buildSeats(){
 }
 function layout(){
   const r = stage.getBoundingClientRect(); const W = Math.max(200, r.width), H = Math.max(200, r.height);
-  const portrait = W / H < 1.05; L = portrait ? LAY.port : LAY.land;
+  // a narrow screen keeps the upright table even when it is short (e.g. above the online waiting room)
+  const portrait = W / H < 1.05 || W < 480; L = portrait ? LAY.port : LAY.land;
   let aw, ah;
   if (portrait){ ah = Math.min(H, W / L.ratio); aw = ah * L.ratio; } else { aw = Math.min(W, H * L.ratio); ah = aw / L.ratio; }
   arena.style.width = aw + 'px'; arena.style.height = ah + 'px';
@@ -901,7 +902,7 @@ async function runLoop(){
 
 function askRebuy(){
   const net = -heroP().buyins * HOME_BUY;
-  $('#rebuyTxt').textContent = `You have bought in ${heroP().buyins} time${heroP().buyins > 1 ? 's' : ''} (${fmt(-net)} total). Rebuy for another ${fmt(HOME_BUY)} or cash out and see how everyone did.`;
+  $('#rebuyTxt').textContent = `You have bought in ${heroP().buyins} time${heroP().buyins > 1 ? 's' : ''} (${fmt(-net)} total). Rebuy for another ${fmt(HOME_BUY)} or ` + (S.online ? 'leave the table (your buy-ins stay in the table\'s ledger for settling up).' : 'cash out and see how everyone did.');
   $('#rebuyOv').hidden = false;
   return new Promise(res => { rebuyWait = res; });
 }
@@ -1372,7 +1373,11 @@ function tick(){
   const p = S.players[S.toAct]; if (!p || !p.el) return;
   const left = Math.max(0, 1 - (performance.now() - S.turnStart) / S.turnLen);
   const bar = /** @type {HTMLElement | null} */ (p.el.querySelector('.timer i'));
-  if (bar){ bar.style.transform = `scaleX(${p.isHuman && settings.timer === 0 ? 1 : left})`; bar.classList.toggle('low', left < 0.3 && !(p.isHuman && settings.timer === 0)); }
+  // no timer: single-player with the timer off, or an online table with no turn timer (any person's turn)
+  const noTimer = S.online ? (p.isHuman || /** @type {any} */ (p).human) && !(ON && ON.msg && ON.msg.timer > 0) : p.isHuman && settings.timer === 0;
+  if (bar){ bar.style.transform = `scaleX(${noTimer ? 1 : left})`; bar.classList.toggle('low', left < 0.3 && !noTimer); }
+  // online, the server answers when time is up; here only the warning sound
+  if (S.online){ if (p.isHuman && pending && !noTimer && left < 0.3 && !S.warned){ S.warned = true; Snd.tick(); } return; }
   if (p.isHuman && pending && settings.timer > 0){
     if (left < 0.3 && !S.warned){ S.warned = true; Snd.tick(); }
     if (left <= 0){ lg(`${p.name} has timed out`); submit(pending.o.canCheck ? {type: 'check'} : {type: 'fold'}); }
@@ -1678,12 +1683,23 @@ if (window.claude && window.claude.hot && window.claude.hot.snapshot){
 // same animations as single-player, and answers what the server asks *you*: your action, your
 // dealer's choice, your split, your rebuy. Your answers go to the server, never to a local engine.
 const MP_SERVER = import.meta.env.VITE_MP_SERVER_URL || 'http://localhost:8080';
-const OKEY = 'river-room-online', WAKE_NOTICE_MS = 1500, WAKE_LIMIT_MS = 120000;
+// Each tab keeps its own seat (sessionStorage), so a second tab can join as another player and a
+// reload takes your seat back; the browser also remembers your last seat (localStorage), offered
+// as "Rejoin" from the lobby.
+const OKEY = 'river-room-online', TKEY = 'river-room-online-tab', WAKE_NOTICE_MS = 1500, WAKE_LIMIT_MS = 120000;
 /** @type {any} */
 let ON = null;
-let sockP = null, olMode = 'create', olGames = null, olPeek = null, olPick = null, everConnected = false, rosterHome = null;
+let sockP = null, olMode = 'create', olGames = null, olPeek = null, olPick = null, olMe = null, everConnected = false;
 
-function onlineSession(x){ if (x) saveLocal(OKEY, x); else { try { localStorage.removeItem(OKEY); } catch (e) {} } }
+function tabSession(){ try { const v = JSON.parse(sessionStorage.getItem(TKEY) || 'null'); return v && v.code && v.token ? v : null; } catch (e) { return null; } }
+function clearTab(){ try { sessionStorage.removeItem(TKEY); } catch (e) {} }
+function forgetLast(){ try { localStorage.removeItem(OKEY); } catch (e) {} }
+function onlineSession(x){
+  if (x) { saveLocal(OKEY, x); try { sessionStorage.setItem(TKEY, JSON.stringify(x)); } catch (e) {} return; }
+  const mine = tabSession(), last = loadLocal(OKEY, null);
+  if (!mine || (last && last.token === mine.token)) forgetLast();
+  clearTab();
+}
 function olStatus(t){ $('#olConn').textContent = t; }
 function olError(t){ $('#olErr').textContent = t || ''; }
 function waking(on){ $('#olWake').hidden = !on; if (on) olStatus('Waking up the server…'); }
@@ -1698,7 +1714,7 @@ function socket(){
     sock.on('connect', () => {
       everConnected = true; clearTimeout(wakeT); waking(false); olStatus('Connected');
       // after a dropped connection, take the seat back
-      if (ON && ON.token) sock.emit('resume', {code: ON.code, token: ON.token}, r => { if (!r || !r.ok) leaveOnline('That table has closed.', true); });
+      if (ON && ON.token) sock.emit('resume', {code: ON.code, token: ON.token}, r => { if (!r || !r.ok) leaveOnline(ENDED, true); });
     });
     sock.on('disconnect', () => { olStatus('Reconnecting…'); if (S && S.online) toast('Connection lost. Reconnecting…', 2400); });
     sock.on('connect_error', () => {
@@ -1706,7 +1722,10 @@ function socket(){
       waking(false); olStatus('Cannot reach the game server');
     });
     sock.on('table', m => { if (!ON) return; ON.queue.push(m); pump(); });
-    sock.on('removed', m => leaveOnline(m && m.reason === 'out_of_chips' ? 'You ran out of chips and did not rebuy, so the computer took your seat. Your buy-ins stay in the table\'s ledger.' : 'The computer took your seat.', true));
+    sock.on('removed', m => leaveOnline(m && m.reason === 'out_of_chips' ? 'You ran out of chips and did not rebuy, so you left the table. Your buy-ins stay in the table\'s ledger.'
+      : m && m.reason === 'full' ? 'The table filled up before you could sit down.' : 'The person running the table removed you from it. Your buy-ins stay in the table\'s ledger.', true));
+    // the same seat was opened in another tab or on another device
+    sock.on('replaced', () => leaveOnline('You opened this seat in another tab or on another device, so this tab left it.', true, true));
     return sock;
   });
   return sockP;
@@ -1721,97 +1740,156 @@ async function call(ev, msg){
   return new Promise(res => sock.timeout(10000).emit(ev, msg, (err, r) => res(err ? {ok: false, error: 'no answer from the server'} : r)));
 }
 
-/* ---- lobby ---- */
+/* ---- lobby: start a table, or join one with its code ---- */
+const CODE_RE = /^[A-Z2-9]{6}$/;
+const cleanCode = s => String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+const GAMES_LABEL = {dealer: "Dealer's choice", holdem: "Simple poker (Hold'em)"};
+const ENDED = 'That table has ended. Tables close after 15 minutes with nobody connected, and when the game server restarts.';
 function openLobby(mode, code){
   olMode = mode; olError('');
   $('#startOv').hidden = true;
   $('#onlineOv').hidden = false;
+  $('#olModeSeg').hidden = false;
+  segment($('#olModeSeg'), [['create', 'Start a table'], ['join', 'Join with a code']], () => olMode, v => { if (v !== olMode) setTimeout(() => openLobby(v)); }); // after the segment marks its button
   $('#olCreate').hidden = mode !== 'create';
   $('#olJoin').hidden = mode !== 'join';
-  $('#olTitle').textContent = mode === 'join' ? `Join table ${code}` : 'Play online with friends';
+  $('#olTitle').textContent = 'Play online with friends';
   $('#olLede').textContent = mode === 'join'
-    ? 'A friend invited you to their table. Pick who you play; the computer plays everyone nobody picks, in their own style.'
-    : 'Start a table and share the invite link. Everyone picks who they play; the computer plays the rest, each in their own style. The server deals and keeps everyone\'s cards private.';
+    ? 'Type the code your friend sees on their table, then pick who you play: one of the players at the table or a new one.'
+    : 'Open a table and share its code. Friends join with the code, you choose how many computers play, and you start the game when everyone is in. The server deals and keeps everyone\'s cards private.';
   if (mode === 'create') {
-    // the same roster editor as the home game, moved into the lobby while it is open
-    const r = $('#homeRoster');
-    if (!rosterHome) rosterHome = {parent: r.parentNode, next: r.nextSibling};
-    $('#olRosterHost').appendChild(r);
-    renderHomeRoster();
+    renderMePick();
     if (!olGames) olGames = settings.games === 'holdem' ? 'holdem' : 'dealer';
     segment($('#olGamesSeg'), [['dealer', "Dealer's choice", '3 Patti, two boards...'], ['holdem', 'Simple poker', "Just Hold'em"]], () => olGames, v => { olGames = v; });
-  } else void peekTable(code);
+  } else {
+    olPeek = null;
+    $('#olPick').hidden = true; $('#olNew').hidden = true; $('#olJoinBtn').hidden = true; $('#olInfo').textContent = '';
+    if (code) { /** @type {HTMLInputElement} */ ($('#olCode')).value = code; void peekTable(code); }
+    else setTimeout(() => $('#olCode').focus(), 50);
+  }
+  renderRejoin(mode === 'join' ? code : null);
   void socket();
-  history.replaceState(null, '', mode === 'join' ? `/?join=${code}` : '/?online');
+  history.replaceState(null, '', mode === 'join' && code ? `/?join=${code}` : '/?online');
 }
-function closeLobby(){
-  $('#onlineOv').hidden = true;
-  if (rosterHome) { rosterHome.parent.insertBefore($('#homeRoster'), rosterHome.next); rosterHome = null; renderHomeRoster(); }
+function closeLobby(){ $('#onlineOv').hidden = true; }
+/** Who you play at your own table: one of your characters (renaming and adding happen at the table, not here). */
+function renderMePick(){
+  const r = rosterNow();
+  if (!olMe || !r.some(c => c.id === olMe)) olMe = heroIdNow(r);
+  $('#olMe').innerHTML = '<legend>Who do you play as?</legend>' + r.map(c => `<div class="rp${c.id === olMe ? ' me' : ''}" data-id="${c.id}"><label class="rp-main"><input type="radio" name="olMe" value="${c.id}"${c.id === olMe ? ' checked' : ''}><span class="mini-av">${faceHTML(c)}</span><span class="rp-text"><span class="rp-line"><b>${esc(c.name)}</b></span><small>${c.id === olMe ? 'You' : 'The computer plays: ' + esc(styleLabel(c.type))}</small></span></label></div>`).join('');
 }
+$('#olMe').addEventListener('change', e => { olMe = /** @type {HTMLInputElement} */ (e.target).value; renderMePick(); });
+/** Your last online seat in this browser, offered as "Rejoin" (it may be open in another tab). */
+function renderRejoin(code){
+  const last = loadLocal(OKEY, null), b = $('#olRejoin');
+  const show = !!(last && last.code && last.token && (!code || code === last.code));
+  b.hidden = !show;
+  if (show) b.textContent = `Rejoin table ${last.code}${last.name ? ' as ' + last.name : ''}`;
+}
+$('#olRejoin').onclick = async () => {
+  const last = loadLocal(OKEY, null);
+  if (!last) return;
+  olError(''); $('#olRejoin').disabled = true;
+  const r = await call('resume', {code: last.code, token: last.token});
+  $('#olRejoin').disabled = false;
+  if (r && r.ok) { enterOnline(last.code, last.token); return; }
+  forgetLast(); renderRejoin(null);
+  olError(r && r.error === 'no answer from the server' ? 'Could not reach the game server. Try again in a moment.' : ENDED);
+};
+$('#olCodeForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const code = cleanCode(/** @type {HTMLInputElement} */ ($('#olCode')).value);
+  /** @type {HTMLInputElement} */ ($('#olCode')).value = code;
+  olError('');
+  if (!CODE_RE.test(code)) { olError('A table code is 6 letters and numbers, like K7M2QX.'); return; }
+  history.replaceState(null, '', `/?join=${code}`);
+  renderRejoin(code);
+  void peekTable(code);
+});
 async function peekTable(code){
-  $('#olPick').innerHTML = '<legend>Who do you play as?</legend><p class="fine">Looking up the table…</p>';
-  $('#olJoinBtn').disabled = true;
+  $('#olInfo').textContent = `Looking up table ${code}…`;
+  $('#olPick').hidden = true; $('#olNew').hidden = true; $('#olJoinBtn').hidden = true;
   const r = await call('peek', {code});
-  if (!r || !r.ok) { $('#olPick').innerHTML = ''; olError(r && r.error === 'no such room' ? 'No table with that code: it may have closed. Ask your friend for a new link, or start your own table.' : 'Could not reach the table: ' + (r ? r.error : 'no answer')); return; }
+  if (!r || !r.ok) { $('#olInfo').textContent = ''; olError(r && r.error === 'no such room' ? `No open table with code ${code}. Check the code with your friend. ${ENDED}` : 'Could not reach the game server: ' + (r ? r.error : 'no answer')); return; }
   olPeek = r;
-  const free = r.roster.filter(c => !c.taken);
-  if (!olPick || !free.some(c => c.id === olPick)) olPick = free[0] ? free[0].id : null;
-  $('#olPick').innerHTML = `<legend>Who do you play as?</legend>` + r.roster.map(c => `<div class="rp${c.taken ? ' taken' : ''}${c.id === olPick ? ' me' : ''}" data-id="${c.id}">`
-    + `<label class="rp-main"><input type="radio" name="olPick" value="${c.id}"${c.taken ? ' disabled' : ''}${c.id === olPick ? ' checked' : ''}><span class="mini-av">${faceHTML(c)}</span>`
-    + `<span class="rp-text"><span class="rp-line"><b>${esc(c.name)}</b>${c.taken ? '<em class="rp-taken">Taken</em>' : ''}</span><small>${c.taken ? 'Someone is playing this seat' : 'The computer plays: ' + esc(c.style)}</small></span></label></div>`).join('')
-    + (free.length ? '' : '<p class="fine">Everyone at this table is taken.</p>');
-  $('#olJoinBtn').disabled = !olPick;
-  $('#olJoinBtn').textContent = olPick ? `Join as ${r.roster.find(c => c.id === olPick).name}` : 'Join the table';
+  const people = r.roster.filter(c => c.taken).map(c => c.name);
+  $('#olInfo').innerHTML = `<b>${esc(r.creatorName ? r.creatorName + '\'s table' : 'Table ' + code)}</b> · ${esc(GAMES_LABEL[r.games])} · ${r.timer ? r.timer + ' s to act' : 'no turn timer'}<br>`
+    + (r.started ? 'The game is on: you sit down when the current hand ends.' : 'In the waiting room: the game starts when the host presses Start.')
+    + (people.length ? ` At the table: ${esc(people.join(', '))}.` : '');
+  if (r.full) { olError('The table is full: six people are playing.'); return; }
+  if (olPick !== '__new' && !r.free.some(c => c.id === olPick)) olPick = r.free[0] ? r.free[0].id : '__new';
+  renderPick();
 }
-$('#olPick').addEventListener('change', e => { olPick = /** @type {HTMLInputElement} */ (e.target).value; if (olPeek) { $$('#olPick .rp').forEach(el => el.classList.toggle('me', el.getAttribute('data-id') === olPick)); $('#olJoinBtn').textContent = `Join as ${olPeek.roster.find(c => c.id === olPick).name}`; } });
+function renderPick(){
+  const r = olPeek; if (!r) return;
+  const rows = r.free.map(c => `<div class="rp${c.id === olPick ? ' me' : ''}" data-id="${c.id}"><label class="rp-main"><input type="radio" name="olPick" value="${c.id}"${c.id === olPick ? ' checked' : ''}><span class="mini-av">${faceHTML(c)}</span>`
+    + `<span class="rp-text"><span class="rp-line"><b>${esc(c.name)}</b></span><small>${c.seated ? `At the table, played by the computer (${esc(c.style)}): you take this seat` : 'Not at the table yet: you take a free seat'}</small></span></label></div>`);
+  rows.push(`<div class="rp${olPick === '__new' ? ' me' : ''}" data-id="__new"><label class="rp-main"><input type="radio" name="olPick" value="__new"${olPick === '__new' ? ' checked' : ''}><span class="mini-av"><span class="ini" style="background:#5b6b63">+</span></span><span class="rp-text"><span class="rp-line"><b>Create a new player</b></span><small>Your own name, with a fresh buy-in</small></span></label></div>`);
+  $('#olPick').innerHTML = '<legend>Who do you play as?</legend>' + rows.join('');
+  $('#olPick').hidden = false;
+  const sel = /** @type {HTMLSelectElement} */ ($('#olNewStyle'));
+  if (!sel.options.length) sel.innerHTML = STYLES.map(t => `<option value="${t}">If you leave, plays like: ${esc(styleLabel(t))}</option>`).join('');
+  $('#olNew').hidden = olPick !== '__new';
+  joinLabel();
+  $('#olJoinBtn').hidden = false;
+}
+function joinLabel(){
+  const r = olPeek; if (!r) return;
+  const nm0 = olPick === '__new' ? /** @type {HTMLInputElement} */ ($('#olNewName')).value.trim() : (r.free.find(c => c.id === olPick) || {}).name;
+  $('#olJoinBtn').textContent = nm0 ? `Join as ${nm0}` : 'Type your name to join';
+  /** @type {HTMLButtonElement} */ ($('#olJoinBtn')).disabled = !nm0;
+}
+$('#olPick').addEventListener('change', e => { olPick = /** @type {HTMLInputElement} */ (e.target).value; renderPick(); if (olPick === '__new') $('#olNewName').focus(); });
+$('#olNewName').addEventListener('input', joinLabel);
+$('#olNewName').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('#olJoinBtn').click(); } });
 $('#olCreateBtn').onclick = async () => {
-  const r = rosterNow(), hero = heroIdNow(r), btn = $('#olCreateBtn');
+  const r = rosterNow(), btn = $('#olCreateBtn');
   btn.disabled = true; olError('');
-  const res = await call('create', {character: hero, games: olGames, roster: r.map(c => ({id: c.id, name: c.name, type: c.type, color: c.color}))});
+  const res = await call('create', {character: olMe || heroIdNow(r), games: olGames, roster: r.map(c => ({id: c.id, name: c.name, type: c.type, color: c.color}))});
   btn.disabled = false;
-  if (!res.ok) { olError('Could not start the table: ' + res.error); return; }
+  if (!res.ok) { olError('Could not open the table: ' + res.error); return; }
   enterOnline(res.code, res.token);
 };
 $('#olJoinBtn').onclick = async () => {
   const code = olPeek && olPeek.code, btn = $('#olJoinBtn');
   if (!code || !olPick) return;
   btn.disabled = true; olError('');
-  const res = await call('join', {code, character: olPick});
+  const msg = olPick === '__new' ? {code, create: {name: /** @type {HTMLInputElement} */ ($('#olNewName')).value, type: /** @type {HTMLSelectElement} */ ($('#olNewStyle')).value}} : {code, character: olPick};
+  const res = await call('join', msg);
   btn.disabled = false;
-  if (!res.ok) { olError(res.error === 'no such room' ? 'That table has closed.' : res.error); void peekTable(code); return; }
+  if (!res.ok) { olError(res.error === 'no such room' ? ENDED : res.error); if (res.error !== 'no such room') void peekTable(code); return; }
   enterOnline(res.code, res.token);
 };
-$('#olToCreate').onclick = () => openLobby('create');
 $('#olBack').onclick = () => { closeLobby(); history.replaceState(null, '', '/'); buildStart(!!resumeSnap); $('#startOv').hidden = false; };
 $('#onlineBtn').addEventListener('click', e => { e.preventDefault(); openLobby('create'); });
 
 /* ---- at the table ---- */
 function enterOnline(code, token){
-  ON = {code, token, queue: [], busy: false, lastSeq: 0, answering: null, done: new Set(), msg: null, saved: {revealAll: settings.revealAll}};
+  ON = {code, token, queue: [], busy: false, lastSeq: 0, answering: null, done: new Set(), msg: null, named: false, saved: {revealAll: settings.revealAll}};
   onlineSession({code, token});
   // stop any single-player game; the next message from the server builds the online table
   if (pending) submit(null);
   GID++; S = null;
   history.replaceState(null, '', `/?join=${code}`);
-  $('#olCreate').hidden = true; $('#olJoin').hidden = true;
+  $('#olModeSeg').hidden = true; $('#olCreate').hidden = true; $('#olJoin').hidden = true; $('#olRejoin').hidden = true;
   $('#olTitle').textContent = `Table ${code}`;
   $('#olLede').textContent = 'You are in. Taking your seat…';
 }
-/** Leave the online table (or lose it), back to the lobby or the start screen. */
-function leaveOnline(msg, lost){
+/** Leave the online table (or lose it), back to the lobby. `keepLast`: the seat lives on elsewhere (another tab). */
+function leaveOnline(msg, lost, keepLast){
   if (!ON) return;
-  const code = ON.code;
   if (!lost) void call('leave', {});
   cancelAnswer();
   settings.revealAll = ON.saved.revealAll;
-  ON = null; onlineSession(null);
+  ON = null;
+  if (keepLast) clearTab(); else onlineSession(null);
   GID++; S = null;
   $('#tableBtn').hidden = true; $('#pauseBtn').hidden = false; $('#tableOv').hidden = true; $('#act').hidden = true;
+  $('#wroom').hidden = true; $('#status').hidden = false; $('#feed').hidden = false;
   $$('#dealOv,#splitOv,#rebuyOv,#revOv').forEach(el => { el.hidden = true; });
   setupTable(null);
   openLobby('create');
   olError(msg || '');
-  void code;
 }
 async function pump(){
   if (!ON || ON.busy) return;
@@ -1820,12 +1898,13 @@ async function pump(){
     while (ON && ON.queue.length) {
       const m = ON.queue.shift();
       ON.msg = m;
+      if (!ON.named) { const me = m.roster.find(c => c.you); if (me) { ON.named = true; onlineSession({code: m.code, token: ON.token, name: me.name}); } }
       if (m.you < 0) { waitingForSeat(m); continue; }
       hydrate(m);
       const fresh = m.step && m.seq > ON.lastSeq;
       if (fresh) { ON.lastSeq = m.seq; await onlineStep(decodeStep(m.step, /** @type {any} */ (S.players)), m); }
       else { render(); renderInfo(); renderControls(); }
-      if (ON) { syncAsk(m); renderTablePanel(); }
+      if (ON) { syncAsk(m); renderWaitRoom(); renderTablePanel(); }
     }
   } catch (e) { if (!(e instanceof Abort)) console.error(e); }
   finally { if (ON) ON.busy = false; }
@@ -1834,9 +1913,9 @@ async function pump(){
 /** You joined during a hand: you sit down when it ends. */
 function waitingForSeat(m){
   const me = m.roster.find(c => c.you);
-  $('#onlineOv').hidden = false; $('#olCreate').hidden = true; $('#olJoin').hidden = true;
+  $('#onlineOv').hidden = false; $('#olModeSeg').hidden = true; $('#olCreate').hidden = true; $('#olJoin').hidden = true; $('#olRejoin').hidden = true;
   $('#olTitle').textContent = `Table ${m.code}`;
-  $('#olLede').textContent = `You are in${me ? ' as ' + me.name : ''}. You sit down when the current hand ends.`;
+  $('#olLede').textContent = `You are in${me ? ' as ' + me.name : ''}. A hand is being played: you sit down as soon as it ends, usually within a minute.`;
 }
 function hydrate(m){
   if (!S || !S.online) {
@@ -1852,7 +1931,7 @@ function hydrate(m){
     $('#startOv').hidden = true;
     $('#tableBtn').hidden = false; $('#pauseBtn').hidden = true;
     renderHistory(); renderFeed();
-    toast(`You are playing as ${m.roster.find(c => c.you).name}. Invite friends from the players button at the top.`, 4200);
+    if (m.started) toast(`You are playing as ${m.roster.find(c => c.you).name}.`, 3200);
   }
   const d = decodeGame(m.game, /** @type {any} */ (S.players));
   if (S.handNo !== d.handNo) { S.dec = []; S.decPending = []; S.decPre = null; S.splitDec = null; S.hintBest = null; S.heroEq = null; S.pre = null; }
@@ -1869,7 +1948,8 @@ function hydrate(m){
 async function onlineStep(s, m){
   const me = heroP();
   if (s.kind === 'act') {
-    S.turnStart = performance.now(); S.turnLen = m.wait && m.wait.deadline ? Math.max(1000, m.wait.deadline - Date.now()) : 30000; S.warned = false;
+    // a person's turn with no timer never runs down; computers show a slow bar while they think
+    S.turnStart = performance.now(); S.turnLen = m.wait && m.wait.deadline ? Math.max(1000, m.wait.deadline - Date.now()) : m.wait && m.wait.kind !== 'bot' ? 1e12 : 30000; S.warned = false;
     render(); renderControls(); return;
   }
   if (s.kind === 'plans') {
@@ -1882,7 +1962,7 @@ async function onlineStep(s, m){
 }
 /** Start answering what the server asks you, once per question; close it if the server moved on. */
 function syncAsk(m){
-  const a = m.ask, key = a ? a.kind + ':' + a.deadline : null;
+  const a = m.ask, key = a ? a.kind + ':' + a.id : null;
   if (ON.answering && ON.answering !== key) cancelAnswer();
   if (!a || ON.answering === key || ON.done.has(key)) return;
   ON.answering = key;
@@ -1895,7 +1975,7 @@ async function answerAsk(a, key){
     if (!me) return;
     if (a.kind === 'act') {
       const o = options(me), pot = potTotal();
-      S.turnStart = performance.now(); S.turnLen = Math.max(1000, a.deadline - Date.now()); S.warned = false;
+      S.turnStart = performance.now(); S.turnLen = a.deadline ? Math.max(1000, a.deadline - Date.now()) : 1e12; S.warned = false;
       S.decPre = {snap: toPlain(S), pi: me.i, label: S.rs.label(S.handNo, 'coach'), hint: null};
       const res = await humanAction(me, {need: o.toCall > 0 ? o.toCall / (pot + o.toCall) : 0, pos: posInfo(me), eq: null});
       if (res) { ev = 'act'; val = res; }
@@ -1927,28 +2007,119 @@ function cancelAnswer(){
   if (ON) ON.answering = null;
 }
 
-/* ---- the table panel: invite link, players (the creator edits them), settle up ---- */
+/* ---- the waiting room and table settings (the person running the table changes them) ---- */
 const inviteUrl = code => `${location.origin}/?join=${code}`;
+const botCount = m => m.roster.filter(c => !c.taken).length;
+/** Settings rows: controls for the person running the table, plain text for everyone else. */
+function settingsHTML(m){
+  const ed = m.creator, rows = [], bots = botCount(m);
+  const later = m.computers !== bots ? ' <small>(changes when this hand ends)</small>' : '';
+  rows.push(`<div class="ts-row"><span class="ts-l">Computer players</span>${ed
+    ? `<span class="stepper"><button type="button" data-set="comp-1" aria-label="One computer player fewer"${m.computers <= 0 ? ' disabled' : ''}>−</button><output aria-label="Computer players">${m.computers}</output><button type="button" data-set="comp+1" aria-label="One more computer player"${m.computers >= m.maxComputers ? ' disabled' : ''}>+</button></span>${later}`
+    : `<b>${m.computers ? m.computers : 'None'}</b>`}</div>`);
+  const tl = t => (t ? t + ' s' : 'Off');
+  rows.push(`<div class="ts-row"><span class="ts-l">Turn timer</span>${ed
+    ? `<div class="seg" role="group" aria-label="Turn timer">${[0, 15, 30, 60].map(t => `<button type="button" data-timer="${t}" aria-pressed="${String(m.timer === t)}">${tl(t)}</button>`).join('')}</div>`
+    : `<b>${m.timer ? m.timer + ' s to act' : 'No timer'}</b>`}</div>`);
+  const gamesOpen = ed && m.game.handNo === 0;
+  rows.push(`<div class="ts-row"><span class="ts-l">Games</span>${gamesOpen
+    ? `<div class="seg" role="group" aria-label="Games">${[['dealer', "Dealer's choice"], ['holdem', 'Simple poker']].map(([v, l]) => `<button type="button" data-games="${v}" aria-pressed="${String(m.games === v)}">${l}</button>`).join('')}</div>`
+    : `<b>${esc(GAMES_LABEL[m.games])}</b>`}</div>`);
+  if (ed && m.timer === 0) rows.push('<p class="fine" style="text-align:left;margin:0">With no timer, the table waits for each person. If someone stops answering, remove them from the players list.</p>');
+  return rows.join('');
+}
+async function changeSettings(e){
+  const b = /** @type {HTMLElement} */ (e.target).closest('button'); if (!b || !ON || !ON.msg) return;
+  const m = ON.msg, msg = {};
+  if (b.dataset.set) msg.computers = Math.max(0, Math.min(m.maxComputers, m.computers + (b.dataset.set === 'comp+1' ? 1 : -1)));
+  else if (b.dataset.timer) msg.timer = +b.dataset.timer;
+  else if (b.dataset.games) msg.games = b.dataset.games;
+  else return;
+  const r = await call('settings', msg);
+  if (!r.ok) { $('#wrErr').textContent = r.error; $('#tpErr').textContent = r.error; }
+}
+/** Draw the settings into a container, keeping keyboard focus on the same control. */
+function renderSettings(box, m){
+  const f = document.activeElement && box.contains(document.activeElement) ? /** @type {HTMLElement} */ (document.activeElement) : null;
+  const key = f ? ['set', 'timer', 'games'].find(k => f.dataset[k] !== undefined) : null, val = key ? f.dataset[key] : null;
+  box.innerHTML = settingsHTML(m);
+  if (key) {
+    const el = /** @type {HTMLButtonElement | null} */ (box.querySelector(`[data-${key}="${val}"]`));
+    if (el && !el.disabled) el.focus(); else /** @type {HTMLElement | null} */ (box.querySelector('button:not([disabled])'))?.focus();
+  }
+}
+$('#wrSettings').addEventListener('click', changeSettings);
+$('#tpSettings').addEventListener('click', changeSettings);
+/** Before the game starts (or after it drops below two players): the code to share, the settings, Start. */
+function renderWaitRoom(){
+  const m = ON && ON.msg, show = !!(m && m.you >= 0 && !m.started);
+  $('#wroom').hidden = !show; $('#status').hidden = show; $('#feed').hidden = show;
+  if (!show) return;
+  $('#dbtn').hidden = true; // no button until the game starts again
+  $('#wrCode').textContent = m.code;
+  renderSettings($('#wrSettings'), m);
+  const n = m.game.players.length, bots = botCount(m), people = m.roster.filter(c => c.taken);
+  const who = people.map(c => (c.you ? 'you' : c.name) + (c.waiting ? ' (sitting down)' : '')).concat(bots ? [`${bots} computer${bots > 1 ? 's' : ''}`] : []);
+  const paused = m.game.handNo > 0;
+  $('#wrTitle').textContent = paused ? 'Game paused · table code' : 'Waiting room · table code';
+  $('#wrStatus').textContent = (paused ? 'The game stopped because fewer than 2 players were left. ' : '')
+    + `At the table: ${who.join(', ')}.`
+    + (n < 2 ? ' A game needs at least 2 players: wait for a friend' + (m.creator ? ' or add a computer.' : '.') : '')
+    + (m.creator ? '' : ` Waiting for ${m.host || 'the host'} to start the game.`);
+  const st = /** @type {HTMLButtonElement} */ ($('#wrStart'));
+  st.hidden = !m.creator; st.disabled = n < 2;
+  st.textContent = paused ? 'Continue the game' : 'Start the game';
+}
+$('#wrStart').onclick = async () => {
+  $('#wrErr').textContent = '';
+  const r = await call('start', {});
+  if (!r.ok) $('#wrErr').textContent = r.error;
+};
+$('#wrLeave').onclick = () => leaveOnline('You left the table.');
+async function copyText(btn, text, label){
+  try { await navigator.clipboard.writeText(text); btn.textContent = 'Copied'; } catch (e) { btn.textContent = 'Select it to copy'; }
+  setTimeout(() => { btn.textContent = label; }, 2500);
+}
+$('#wrCopyCode').onclick = () => { if (ON) void copyText($('#wrCopyCode'), ON.code, 'Copy code'); };
+$('#wrCopyLink').onclick = () => { if (ON) void copyText($('#wrCopyLink'), inviteUrl(ON.code), 'Copy invite link'); };
+
+/* ---- the table panel: code and invite link, settings, players (the host edits them), settle up ---- */
+let tpEdit = null, tpKick = null, tpKickT = undefined;
+function rosterRowHTML(m, c){
+  const tag = c.you ? '<em class="rp-you">You</em>' : c.waiting ? '<em class="rp-wait">Sitting down</em>' : c.taken ? `<em class="rp-taken">${c.connected ? 'Playing' : 'Away'}</em>` : '';
+  const sub = c.you ? 'You play this seat' : c.waiting ? 'Sits down when this hand ends' : c.taken ? 'A person plays this seat' : 'The computer plays: ' + esc(c.style);
+  if (m.creator && tpEdit === c.id) {
+    return `<div class="rp" data-id="${c.id}"><span class="rp-main"><span class="mini-av">${faceHTML(c)}</span><input type="text" class="rp-name" id="tpRenameIn" maxlength="12" value="${esc(c.name)}" aria-label="New name for ${esc(c.name)}"></span>`
+      + `<span class="rp-tools"><button type="button" class="rp-btn" data-act="save">Save</button><button type="button" class="rp-btn" data-act="cancel">Cancel</button></span></div>`;
+  }
+  let tools = '';
+  if (m.creator) {
+    tools += c.waiting ? '' : `<button type="button" class="rp-btn" data-act="rename" aria-label="Rename ${esc(c.name)}">Rename</button>`;
+    if (!c.taken) tools += `<button type="button" class="rp-btn" data-act="remove" aria-label="Remove ${esc(c.name)}">Remove</button>`;
+    else if (!c.you) tools += `<button type="button" class="rp-btn" data-act="kick" aria-label="Remove ${esc(c.name)} from the table">${tpKick === c.id ? 'Tap again to remove' : 'Remove'}</button>`;
+  }
+  return `<div class="rp${c.you ? ' me' : ''}" data-id="${c.id}"><span class="rp-main"><span class="mini-av">${faceHTML(c)}</span><span class="rp-text"><span class="rp-line"><b>${esc(c.name)}</b>${tag}</span><small>${sub}</small></span></span>${tools ? `<span class="rp-tools">${tools}</span>` : ''}</div>`;
+}
 function renderTablePanel(){
   if (!ON || !ON.msg || $('#tableOv').hidden) return;
   const m = ON.msg, link = inviteUrl(m.code);
   $('#tpCode').textContent = m.code;
   const a = $('#tpLink');
   if (a.getAttribute('href') !== link) { a.setAttribute('href', link); a.textContent = link.replace(/^https?:\/\//, ''); }
-  $('#tpWho').textContent = m.creator ? `You started this table, so you manage the players.${m.pendingEdits ? ' Your changes apply when this hand ends.' : ' Changes made during a hand apply when it ends.'}` : 'The person who started the table manages the players.';
-  $('#tpRoster').innerHTML = m.roster.map(c => `<div class="rp${c.you ? ' me' : ''}" data-id="${c.id}"><span class="rp-main"><span class="mini-av">${faceHTML(c)}</span><span class="rp-text"><span class="rp-line"><b>${esc(c.name)}</b>${c.you ? '<em class="rp-you">You</em>' : c.taken ? `<em class="rp-taken">${c.connected ? 'Playing' : 'Away'}</em>` : ''}</span><small>${c.taken ? (c.you ? 'You play this seat' : 'A person plays this seat') : 'The computer plays: ' + esc(c.style)}</small></span></span>`
-    + (m.creator ? `<span class="rp-tools"><button type="button" class="rp-btn" data-act="rename" aria-label="Rename ${esc(c.name)}">Rename</button>${c.taken ? '' : `<button type="button" class="rp-btn" data-act="remove" aria-label="Remove ${esc(c.name)}"${m.roster.length <= ROSTER_MIN ? ' disabled' : ''}>Remove</button>`}</span>` : '')
-    + `</div>`).join('');
-  $('#tpAdd').hidden = !m.creator || m.roster.length >= ROSTER_MAX;
+  renderSettings($('#tpSettings'), m);
+  $('#tpWho').textContent = m.creator
+    ? `You run this table: you choose the players and settings.${m.pendingEdits ? ' Your changes apply when this hand ends.' : ''} Friends who join pick a free player or create their own.`
+    : `${m.host || 'The host'} runs this table and manages the players.`;
+  // keep the rename box as it is while you type in it
+  if (!(tpEdit && $('#tpRenameIn'))) $('#tpRoster').innerHTML = m.roster.map(c => rosterRowHTML(m, c)).join('');
+  $('#tpAdd').hidden = !m.creator || m.computers >= m.maxComputers;
   if (!$('#tpNewStyle').options.length) $('#tpNewStyle').innerHTML = STYLES.map(t => `<option value="${t}">Plays like: ${esc(styleLabel(t))}</option>`).join('');
 }
-$('#tableBtn').onclick = () => { $('#tableOv').hidden = false; renderTablePanel(); $('#tpSettleOut').hidden = true; setTimeout(() => $('#tpClose').focus(), 50); };
-$('#tpClose').onclick = () => { $('#tableOv').hidden = true; };
-$('#tpCopy').onclick = async () => {
-  if (!ON) return;
-  try { await navigator.clipboard.writeText(inviteUrl(ON.code)); $('#tpCopy').textContent = 'Copied'; } catch (e) { $('#tpCopy').textContent = 'Select the link to copy it'; }
-  setTimeout(() => { $('#tpCopy').textContent = 'Copy'; }, 2500);
-};
+function redrawRoster(){ if (ON && ON.msg) $('#tpRoster').innerHTML = ON.msg.roster.map(c => rosterRowHTML(ON.msg, c)).join(''); }
+$('#tableBtn').onclick = () => { $('#tableOv').hidden = false; tpEdit = null; tpKick = null; renderTablePanel(); $('#tpSettleOut').hidden = true; setTimeout(() => $('#tpClose').focus(), 50); };
+$('#tpClose').onclick = () => { tpEdit = null; $('#tableOv').hidden = true; };
+$('#tpCopy').onclick = () => { if (ON) void copyText($('#tpCopy'), inviteUrl(ON.code), 'Copy link'); };
+$('#tpCopyCode').onclick = () => { if (ON) void copyText($('#tpCopyCode'), ON.code, 'Copy code'); };
 $('#tpLeave').onclick = () => leaveOnline('You left the table.');
 async function rosterEdit(msg){
   $('#tpErr').textContent = '';
@@ -1957,13 +2128,33 @@ async function rosterEdit(msg){
   if (r.queued) toast('Done. It applies when this hand ends.', 2400);
   return true;
 }
+async function saveRename(){
+  const id = tpEdit, inp = /** @type {HTMLInputElement | null} */ ($('#tpRenameIn'));
+  if (!id || !inp || !ON) return;
+  const c = ON.msg.roster.find(x => x.id === id), name = inp.value.trim();
+  if (c && name && name !== c.name && !(await rosterEdit({op: 'rename', id, name}))) { inp.focus(); return; }
+  tpEdit = null; redrawRoster();
+}
 $('#tpRoster').addEventListener('click', async e => {
   const b = /** @type {HTMLElement} */ (e.target).closest('button'); if (!b || !ON) return;
-  const row = b.closest('.rp'), id = row.getAttribute('data-id'), c = ON.msg.roster.find(x => x.id === id);
-  if (b.getAttribute('data-act') === 'rename') {
-    const name = prompt(`New name for ${c.name}`, c.name);
-    if (name !== null && name.trim() !== c.name) await rosterEdit({op: 'rename', id, name});
-  } else if (b.getAttribute('data-act') === 'remove') await rosterEdit({op: 'remove', id});
+  const id = b.closest('.rp').getAttribute('data-id'), act = b.getAttribute('data-act');
+  if (act === 'rename') { tpEdit = id; redrawRoster(); const inp = /** @type {HTMLInputElement} */ ($('#tpRenameIn')); inp.focus(); inp.select(); }
+  else if (act === 'save') await saveRename();
+  else if (act === 'cancel') { tpEdit = null; redrawRoster(); }
+  else if (act === 'remove') await rosterEdit({op: 'remove', id});
+  else if (act === 'kick') {
+    clearTimeout(tpKickT);
+    if (tpKick !== id) { tpKick = id; redrawRoster(); tpKickT = setTimeout(() => { tpKick = null; redrawRoster(); }, 4000); return; }
+    tpKick = null; $('#tpErr').textContent = '';
+    const r = await call('kick', {id});
+    if (!r.ok) $('#tpErr').textContent = r.error;
+    redrawRoster();
+  }
+});
+$('#tpRoster').addEventListener('keydown', e => {
+  if (/** @type {HTMLElement} */ (e.target).id !== 'tpRenameIn') return;
+  if (e.key === 'Enter') { e.preventDefault(); void saveRename(); }
+  else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); tpEdit = null; redrawRoster(); }
 });
 $('#tpAddBtn').onclick = async () => { if (await rosterEdit({op: 'add', name: /** @type {HTMLInputElement} */ ($('#tpNewName')).value, type: /** @type {HTMLSelectElement} */ ($('#tpNewStyle')).value})) /** @type {HTMLInputElement} */ ($('#tpNewName')).value = ''; };
 $('#tpNewName').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('#tpAddBtn').click(); } });
@@ -1985,17 +2176,18 @@ $('#tpSettle').onclick = async () => {
 
 /** On load: back to an online table you were at, or the lobby an invite link points to. */
 async function startOnlineFromUrl(){
-  const q = new URLSearchParams(location.search), join = (q.get('join') || q.get('code') || '').trim().toUpperCase(), saved = loadLocal(OKEY, null);
-  if (saved && saved.code && saved.token && (!join || join === saved.code)) {
-    openLobby('join', saved.code);
-    $('#olJoin').hidden = true; $('#olLede').textContent = 'Taking your seat back…';
+  const q = new URLSearchParams(location.search), join = cleanCode(q.get('join') || q.get('code') || ''), saved = tabSession();
+  // a reload: this tab takes its seat back
+  if (saved && (!join || join === saved.code)) {
+    openLobby('join', null);
+    $('#olModeSeg').hidden = true; $('#olJoin').hidden = true; $('#olRejoin').hidden = true; $('#olLede').textContent = 'Taking your seat back…';
     const r = await call('resume', {code: saved.code, token: saved.token});
     if (r && r.ok) { enterOnline(saved.code, saved.token); return; }
     onlineSession(null);
-    if (!join) { openLobby('create'); olError('Your last online table has closed.'); return; }
+    if (!join) { openLobby('create'); olError(ENDED); return; }
   }
-  if (/^[A-Z2-9]{6}$/.test(join)) openLobby('join', join);
-  else if (q.has('online')) openLobby('create');
+  if (CODE_RE.test(join)) openLobby('join', join);
+  else if (q.has('online') || q.has('join')) openLobby(q.has('join') ? 'join' : 'create');
 }
 
 function start(data){

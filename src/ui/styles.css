@@ -517,3 +517,42 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
 .tp-pay{padding-left:18px;margin:8px 0}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 #tpClose{margin-top:12px}
+
+/* ---- online: start or join, the table code, the waiting room, table settings ---- */
+.ol-mode{margin:0 0 12px}
+.ol-code label{display:block;font:700 11px var(--f-body);letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.ol-code-row{display:flex;gap:6px}
+.ol-code-row input{flex:1;min-width:0;height:48px;border-radius:11px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:700 22px/1 var(--f-mono, ui-monospace, monospace);letter-spacing:.2em;text-transform:uppercase;text-align:center;padding:0 8px}
+.ol-code-row input:focus-visible{outline:3px solid var(--brass);outline-offset:2px}
+.ol-code-row .rp-btn{height:48px;padding:0 14px}
+.ol-code .fine{text-align:left;margin:6px 0 10px}
+.ol-info{font-size:13.5px;color:var(--ink);margin:0 0 10px;line-height:1.45}
+.ol-info:empty{display:none}
+#olNew{margin:-4px 0 12px}
+.wroom{background:var(--panel);border:1px solid rgba(211,168,84,.55);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow:auto}
+.wr-top{display:flex;align-items:center;justify-content:space-between;gap:8px 12px;flex-wrap:wrap}
+.wr-code{font:800 30px/1.1 var(--f-mono, ui-monospace, monospace);letter-spacing:.18em;color:var(--win)}
+.wr-btns{display:flex;gap:6px;flex-wrap:wrap}
+.wr-how{margin:0;font-size:13px;color:var(--muted);line-height:1.4}
+.wr-how b{color:var(--ink)}
+.wr-status{margin:0;font-size:13.5px;color:var(--ink);line-height:1.4}
+.wr-act{display:flex;gap:8px;align-items:center}
+.wr-act .btn-main{margin:0;flex:1;height:48px}
+.wr-act .btn-ghost{margin:0;width:auto;flex:none;height:48px;padding:0 16px}
+.wroom .rp-err:empty{display:none}
+.tset{display:flex;flex-direction:column;gap:8px}
+.ts-row{display:flex;align-items:center;justify-content:space-between;gap:6px 12px;flex-wrap:wrap;font-size:13.5px;color:var(--ink)}
+.ts-row .ts-l{color:var(--muted);font-size:13px}
+.ts-row .seg{flex:0 1 260px}
+.ts-row .seg button{height:32px}
+.stepper{display:inline-flex;align-items:center;gap:4px}
+.stepper button{width:36px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--panel-2);color:var(--ink);font:700 18px var(--f-body)}
+.stepper button:disabled{opacity:.4}
+.stepper button:focus-visible{outline:3px solid var(--brass);outline-offset:2px}
+.stepper output{min-width:2ch;text-align:center;font:700 16px var(--f-body)}
+.tp-code{font-family:var(--f-mono, ui-monospace, monospace);letter-spacing:.14em;color:var(--win)}
+.rp-wait{flex:none;font:800 10px var(--f-body);font-style:normal;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);border:1px dashed var(--line);border-radius:6px;padding:1px 6px}
+/* dialogs never grow wider than the screen, whatever their content */
+.ov{grid-template-columns:minmax(0,1fr)}
+.ol-code-row input{width:100%}
+#olNew select{width:100%;min-width:0}

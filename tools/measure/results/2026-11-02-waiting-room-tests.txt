@@ -1,0 +1,34 @@
+# 2026-11-02 waiting room: unit/integration tests (local Postgres 16, cloud sandbox, Node v22.22.0)
+# command: TEST_DATABASE_URL=postgresql://riverroom:***@localhost:5432/riverroom_test npx vitest run test/room.test.ts test/server.test.ts test/store.test.ts test/wire.test.ts --reporter=verbose
+ ✓ test/server.test.ts > multiplayer server > rejects bad input 46ms
+ ✓ test/server.test.ts > multiplayer server > people pick characters; a picked character is locked; the computer plays the rest in their styles 1619ms
+stored 7 hands, 7 ledger entries; settlement: Computer players -> Rohit $19.20; Krish -> Rohit $7.70; Sumer -> Rohit $6.40
+ ✓ test/store.test.ts > Postgres storage (rooms, hands, ledger, settlement) > records buy-ins, hands and a cash-out, and settles from the database exactly as from memory 2528ms
+ ✓ test/room.test.ts > a seat a person gives up > is removed; the character goes back on the list for someone else to pick 9ms
+ ✓ test/room.test.ts > a seat a person gives up > a table without a roster character for a seat never gets a duplicate name 1ms
+ ✓ test/room.test.ts > losing a seat without asking > a player out of chips who does not answer the rebuy question is told, and gives up the seat 508ms
+ ✓ test/room.test.ts > losing a seat without asking > a player who leaves on purpose is not sent a "removed" notice 1ms
+ ✓ test/room.test.ts > splits sent by a person > must use exactly their own cards, in the right group sizes 2ms
+ ✓ test/room.test.ts > roster edits between hands > removing a character re-numbers the seats and keeps the button with the same player 1ms
+ ✓ test/room.test.ts > roster edits between hands > adding a character gives them a free seat at the table, up to six 1ms
+ ✓ test/room.test.ts > roster edits between hands > leaving answers an open question at once (the table never waits on someone who is gone) 92ms
+ ✓ test/room.test.ts > the waiting room > the creator picks how many computers play, from none to five 2ms
+ ✓ test/room.test.ts > the waiting room > nothing is dealt until the creator presses Start, which needs two players 382ms
+ ✓ test/room.test.ts > the waiting room > a newcomer picks a computer-played character (taking its seat) or one off the table (a new seat) 2ms
+ ✓ test/room.test.ts > the waiting room > a full table: a new character takes a computer's seat with a fresh buy-in; six people means full 767ms
+wire: 931 steps, 3724 views checked, 0 leaks
+ ✓ test/wire.test.ts > online wire format > never shows anyone else's hidden cards, over many hands of every game type with three people 5176ms
+ ✓ test/wire.test.ts > online wire format > decodes back into players with working references, keeping the page's seat elements 3ms
+ ✓ test/room.test.ts > the waiting room > a 0-computer game that drops below two players goes back to the waiting room 327ms
+ ✓ test/room.test.ts > the waiting room > no turn timer: questions have no deadline 608ms
+ ✓ test/server.test.ts > multiplayer server > plays dealer's choice: people pick the game when they deal and arrange their own split; wrong splits are refused 4759ms
+ ✓ test/server.test.ts > multiplayer server > a person who stops answering is answered for when the timer runs out (act, game, split) 2234ms
+ ✓ test/server.test.ts > multiplayer server > a disconnected person keeps the seat and gets it back, with the same cards, by session token 723ms
+ ✓ test/server.test.ts > multiplayer server > a wrong token cannot take over a seat 9ms
+ ✓ test/server.test.ts > multiplayer server > only the creator edits the roster; changes made during a hand wait for it to end; picked characters cannot be removed 943ms
+ ✓ test/server.test.ts > multiplayer server > when the creator leaves, whoever has been at the table longest manages it; the seat goes and the character is free to pick 1102ms
+ ✓ test/server.test.ts > multiplayer server > a friend joins with the code as a new character mid-game, sits down between hands; the creator sets the timer and computers and can remove them 573ms
+checked 5501 messages: 0 leaks; human splits 32, games chosen by people 17
+ ✓ test/server.test.ts > multiplayer server > never sent anyone a hidden card or hand detail 2ms
+ Test Files  4 passed (4)
+      Tests  27 passed (27)

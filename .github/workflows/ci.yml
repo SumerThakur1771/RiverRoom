@@ -71,7 +71,7 @@ jobs:
           SERVER_PID=$!
           npx vite preview --outDir dist-mp --port 4177 --strictPort &
           for i in $(seq 30); do curl -sf http://localhost:4177/ > /dev/null && curl -sf http://localhost:8099/health > /dev/null && break; sleep 1; done
-          # start screen > lobby > invite link > pick a character > play dealer's choice > edit players > settle up > reload > leave
+          # open a table > waiting room (computers, timer, Start) > join by typed code and by invite link > play > rename, remove a player > settle up > reload, second tab > leave > back to waiting
           node tools/ui/online-ui.mjs http://localhost:4177/ --expect-stored
           # a sleeping server (free hosting): the lobby says it is waking up and holds the first click
           kill $SERVER_PID

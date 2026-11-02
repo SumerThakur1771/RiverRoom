@@ -3,8 +3,8 @@
 import { createServer, type Server as HttpServer } from 'node:http';
 import { Server, type Socket } from 'socket.io';
 import { DEFAULT_ROSTER, validRoster } from '../../src/engine/roster.js';
-import { ActMsg, CreateMsg, JoinMsg, PeekMsg, RebuyMsg, ResumeMsg, RosterMsg, SplitMsg, VariantMsg, type Ack, type TableMsg } from './protocol.js';
-import { LIVE_TIMING, newCode, Room, type RoomRecord, type Timing } from './room.js';
+import { ActMsg, CreateMsg, JoinMsg, KickMsg, PeekMsg, RebuyMsg, ResumeMsg, RosterMsg, SettingsMsg, SplitMsg, VariantMsg, type Ack, type TableMsg } from './protocol.js';
+import { LIVE_TIMING, newCode, Room, type RoomRecord, type TimerSec, type Timing } from './room.js';
 import type { Store } from './store.js';
 
 export interface ServerOptions {
@@ -21,6 +21,9 @@ export interface ServerOptions {
   inspect?: (room: Room, msg: TableMsg) => void;
   /** Close a room after this long with nobody connected. */
   idleMs?: number;
+  /** Open tables one address may have started (default 10), and open tables in all (default 300). */
+  roomsPerAddress?: number;
+  maxRooms?: number;
 }
 export interface RunningServer { http: HttpServer; io: Server; rooms: Map<string, Room>; port: number; close: () => Promise<void> }
 
@@ -39,7 +42,11 @@ export async function startServer(opts: ServerOptions): Promise<RunningServer> {
   const sockets = new Map<string, Socket>(); // session token -> socket
   const timing = opts.timing ?? LIVE_TIMING;
 
-  const makeRoom = (roster: Parameters<typeof validRoster>[0], character: string, games: 'dealer' | 'holdem'): Room | string => {
+  // who started each open table, so one address cannot fill the server's memory with tables
+  const startedBy = new Map<string, string>();
+  const makeRoom = (roster: Parameters<typeof validRoster>[0], character: string, games: 'dealer' | 'holdem', extra: { timer?: TimerSec; computers?: number }, address: string): Room | string => {
+    if (rooms.size >= (opts.maxRooms ?? 300)) return 'the server is full right now; try again in a few minutes';
+    if ([...startedBy.values()].filter(a => a === address).length >= (opts.roomsPerAddress ?? 10)) return 'you have started too many tables; close one or wait a few minutes';
     const r = validRoster(roster ?? DEFAULT_ROSTER);
     if (!r) return 'that list of players cannot be used';
     // the creator plays seat 0: put their character first
@@ -52,8 +59,9 @@ export async function startServer(opts: ServerOptions): Promise<RunningServer> {
       log: line => io.to(code).emit('log', line),
       record: e => { opts.record?.(e); void opts.store?.record(e); },
       removed: (token, reason) => { sockets.get(token)?.emit('removed', { reason }); sockets.delete(token); },
-    }, timing, opts.seed ? opts.seed + ':' + code : null, games);
+    }, timing, opts.seed ? opts.seed + ':' + code : null, games, extra);
     rooms.set(code, room);
+    startedBy.set(code, address);
     return room;
   };
   const idle = new Map<string, NodeJS.Timeout>();
@@ -64,6 +72,7 @@ export async function startServer(opts: ServerOptions): Promise<RunningServer> {
       if (room.humansConnected() > 0) return;
       room.finish();
       rooms.delete(room.code);
+      startedBy.delete(room.code);
     }, opts.idleMs ?? 15 * 60_000));
   };
 
@@ -82,7 +91,9 @@ export async function startServer(opts: ServerOptions): Promise<RunningServer> {
     const attach = (room: Room, token: string): void => {
       if (session) return;
       session = { code: room.code, token };
-      sockets.get(token)?.disconnect(true); // only one live connection per seat
+      // only one live connection per seat: an older one (another tab or device) is told and closed
+      const old = sockets.get(token);
+      if (old && old !== socket) { old.emit('replaced'); old.disconnect(true); }
       sockets.set(token, socket);
       void socket.join(room.code);
       room.setConnected(token, true);
@@ -97,13 +108,15 @@ export async function startServer(opts: ServerOptions): Promise<RunningServer> {
     socket.on('create', (msg: unknown, ack: unknown) => {
       const m = CreateMsg.safeParse(msg);
       if (!m.success || session) return bad(ack, m.success ? 'already in a room' : 'invalid request');
-      const room = makeRoom(m.data.roster, m.data.character, m.data.games);
+      const fwd = socket.handshake.headers['x-forwarded-for'];
+      const address = (typeof fwd === 'string' && fwd.split(',')[0]!.trim()) || socket.handshake.address;
+      const room = makeRoom(m.data.roster, m.data.character, m.data.games, { timer: m.data.timer, computers: m.data.computers }, address);
       if (typeof room === 'string') return bad(ack, room);
       const r = room.seatHuman(m.data.character, true);
       if ('error' in r) return bad(ack, r.error);
+      // the table is a waiting room until the creator presses Start
       reply(ack, { ok: true, code: room.code, token: r.token, seat: r.seat });
       attach(room, r.token);
-      void room.run();
     });
     socket.on('peek', (msg: unknown, ack: unknown) => {
       const m = PeekMsg.safeParse(msg);
@@ -117,19 +130,18 @@ export async function startServer(opts: ServerOptions): Promise<RunningServer> {
       if (!m.success || session) return bad(ack, m.success ? 'already in a room' : 'invalid code or player');
       const room = rooms.get(m.data.code);
       if (!room) return bad(ack, 'no such room');
-      const r = room.seatHuman(m.data.character);
+      const r = room.seatHuman('character' in m.data ? m.data.character : m.data.create);
       if ('error' in r) return bad(ack, r.error);
       reply(ack, { ok: true, code: room.code, token: r.token, seat: r.seat });
       attach(room, r.token);
-      void room.run();
+      if (room.started) void room.run(); // picks the game back up if it stopped with nobody at the table
     });
     socket.on('resume', (msg: unknown, ack: unknown) => {
       const m = ResumeMsg.safeParse(msg);
       if (!m.success || session) return bad(ack, 'invalid session');
       const room = rooms.get(m.data.code);
-      const seat = room ? room.seatOf(m.data.token) : -1;
-      if (!room || seat < 0) return bad(ack, 'session not found');
-      reply(ack, { ok: true, code: room.code, seat });
+      if (!room || !room.has(m.data.token)) return bad(ack, 'session not found');
+      reply(ack, { ok: true, code: room.code, seat: room.seatOf(m.data.token) });
       attach(room, m.data.token);
     });
     // answers to what the table asks this person
@@ -166,6 +178,26 @@ export async function startServer(opts: ServerOptions): Promise<RunningServer> {
       if (!room || !session) return bad(ack, 'not in a room');
       const r = room.editRoster(session.token, m.data);
       reply(ack, r.ok ? { ok: true, queued: r.queued } : r);
+    });
+    socket.on('settings', (msg: unknown, ack: unknown) => {
+      const m = SettingsMsg.safeParse(msg);
+      const room = current();
+      if (!m.success) return bad(ack, 'invalid settings');
+      if (!room || !session) return bad(ack, 'not in a room');
+      const r = room.configure(session.token, m.data);
+      reply(ack, r.ok ? { ok: true, queued: r.queued } : r);
+    });
+    socket.on('start', (_msg: unknown, ack: unknown) => {
+      const room = current();
+      if (!room || !session) return bad(ack, 'not in a room');
+      reply(ack, room.start(session.token));
+    });
+    socket.on('kick', (msg: unknown, ack: unknown) => {
+      const m = KickMsg.safeParse(msg);
+      const room = current();
+      if (!m.success) return bad(ack, 'invalid player');
+      if (!room || !session) return bad(ack, 'not in a room');
+      reply(ack, room.kick(session.token, m.data.id));
     });
     socket.on('settle', async (_msg: unknown, ack: unknown) => {
       const room = current();
