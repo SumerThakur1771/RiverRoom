@@ -22,7 +22,8 @@ function serviceWorker(): Plugin {
     enforce: 'post',
     generateBundle(_opts, bundle) {
       const built = Object.keys(bundle).map(f => '/' + f);
-      const pub = filesIn('public').filter(f => f !== '/sw.js');
+      // the link-preview image is only fetched by link crawlers, never by the app: not cached offline
+      const pub = filesIn('public').filter(f => f !== '/sw.js' && f !== '/og-image.png');
       const precache = [...new Set(['/', ...built, ...pub])].sort();
       // the version covers the content of every cached file, so any change (even to an HTML
       // page, whose name never changes) installs a fresh cache

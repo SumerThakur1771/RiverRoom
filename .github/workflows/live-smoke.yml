@@ -32,6 +32,18 @@ jobs:
           # 503 = no API key configured yet, 400 = key present and the empty body was rejected
           [ "$code" = 400 ] || [ "$code" = 503 ]
           grep -q '"fallback":true' body.json
+      - name: Link previews (LinkedIn, X) - Open Graph and Twitter tags, and the 1200x627 image they point to
+        run: |
+          curl -s https://sumer-riverroom.vercel.app/ -o page.html
+          for tag in 'property="og:title" content="River Room"' 'property="og:type" content="website"' 'property="og:url" content="https://sumer-riverroom.vercel.app/"' 'name="twitter:card" content="summary_large_image"' 'property="og:description" content="Real-time online poker for my home game, with an AI hand reviewer."'; do
+            grep -qF "$tag" page.html || { echo "::error title=Link preview::missing $tag"; exit 1; }
+          done
+          img=$(grep -oE 'property="og:image" content="[^"]+"' page.html | sed -E 's/.*content="([^"]+)"/\1/')
+          info=$(curl -s -o og.png -w '%{http_code} %{content_type} %{size_download}' "$img")
+          size=$(python3 -c "import struct; d=open('og.png','rb').read(24); print(*struct.unpack('>II', d[16:24]))")
+          echo "::notice title=Link preview::og:image $img -> $info, ${size/ /x} px"
+          case "$info" in "200 image/png "*) ;; *) echo "::error title=Link preview::image not served as PNG: $info"; exit 1;; esac
+          [ "$size" = "1200 627" ] || { echo "::error title=Link preview::image is $size, expected 1200 627"; exit 1; }
       - name: Desktop and phone, home game and tournament
         run: |
           node tools/ui/smoke.mjs https://sumer-riverroom.vercel.app/ 40 home
