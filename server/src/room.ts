@@ -110,6 +110,8 @@ export class Room {
   timer: TimerSec | null;
   /** How many computer players the creator wants at the table. */
   computers: number;
+  /** The A-2-3 rule from the next hand (house rule: lowest 3 Patti sequence). */
+  a23Next = false;
   /** The creator pressed Start (until the table drops below two players). */
   started = false;
   private creatorToken: string | null = null;
@@ -168,10 +170,11 @@ export class Room {
    * @param creatorChar the character the creator plays (seat 0)
    * @param opts.computers how many computers play at first (default: every other character on the roster)
    */
-  constructor(readonly code: string, roster: readonly Character[], creatorChar: string, readonly hooks: RoomHooks, readonly timing: Timing = LIVE_TIMING, seed: string | null = null, games: 'dealer' | 'holdem' = 'dealer', opts: { computers?: number; timer?: TimerSec | null } = {}) {
+  constructor(readonly code: string, roster: readonly Character[], creatorChar: string, readonly hooks: RoomHooks, readonly timing: Timing = LIVE_TIMING, seed: string | null = null, games: 'dealer' | 'holdem' = 'dealer', opts: { computers?: number; timer?: TimerSec | null; a23Low?: boolean } = {}) {
     this.games = games;
     this.timer = opts.timer ?? null;
-    this.g = newGame({ mode: 'home', seed, settings: { name: '', opp: roster.length - 1, stack: HOME_BUY, perLevel: 10, revealAll: false, games }, roster, heroId: creatorChar });
+    this.a23Next = !!opts.a23Low;
+    this.g = newGame({ mode: 'home', seed, settings: { name: '', opp: roster.length - 1, stack: HOME_BUY, perLevel: 10, revealAll: false, games, a23Low: !!opts.a23Low }, roster, heroId: creatorChar });
     // which character sits where (names are unique on a roster)
     this.chars = this.g.players.map(p => ({ ...roster.find(c => c.name === p.name)! }));
     const me = this.g.players[0]!, meChar = this.chars[0]!;
@@ -332,7 +335,7 @@ export class Room {
     return { ok: true, queued };
   }
   /** Table settings, creator only: the turn timer, how many computers play, and (before the first hand) the games. */
-  configure(token: string, s: { timer?: TimerSec; computers?: number; games?: 'dealer' | 'holdem' }): { ok: true; queued: boolean } | { ok: false; error: string } {
+  configure(token: string, s: { timer?: TimerSec; computers?: number; games?: 'dealer' | 'holdem'; a23Low?: boolean }): { ok: true; queued: boolean } | { ok: false; error: string } {
     if (!this.isCreator(token)) return { ok: false, error: 'only the person who started the table can change the settings' };
     if (s.games && s.games !== this.games) {
       if (this.g.handNo > 0) return { ok: false, error: 'The games can only be changed before the first hand.' };
@@ -355,8 +358,10 @@ export class Room {
       this.computers = Math.max(0, Math.min(s.computers, this.maxComputers()));
       if (!this.inHand) this.reconcile();
     }
+    // the A-2-3 rule never changes in the middle of a hand
+    if (s.a23Low !== undefined) { this.a23Next = s.a23Low; if (!this.inHand) this.g.settings.a23Low = s.a23Low; }
     this.broadcast();
-    return { ok: true, queued: this.inHand && s.computers !== undefined };
+    return { ok: true, queued: this.inHand && (s.computers !== undefined || s.a23Low !== undefined) };
   }
   /** The creator starts the game (needs two players: people or computers). */
   start(token: string): { ok: true } | { ok: false; error: string } {
@@ -555,6 +560,7 @@ export class Room {
     }
     this.applyPendingEdits();
     this.reconcile();
+    this.g.settings.a23Low = this.a23Next;
   }
 
   /* ---- answers from clients ---- */
@@ -610,7 +616,7 @@ export class Room {
     const a = this.ask && seat >= 0 && this.ask.seat === seat ? this.ask.view : null;
     return {
       code: this.code, you: seat, character: seat >= 0 ? this.chars[seat]!.id : this.pendingJoin[j]!.char.id, creator: this.isCreator(token), host: this.hostName(), games: this.games,
-      started: this.started, timer: this.timerSec(), computers: this.computers, maxComputers: this.maxComputers(),
+      started: this.started, timer: this.timerSec(), computers: this.computers, maxComputers: this.maxComputers(), a23Low: !!this.g.settings.a23Low, a23Next: this.a23Next,
       phase: this.phase, seq: this.seq, roster: this.rosterView(token), pendingEdits: this.pendingEdits.length,
       game: encodeGame(this.g, seat), step: this.step, ask: a, wait: this.waitingOn,
     };

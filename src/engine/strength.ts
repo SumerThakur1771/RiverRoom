@@ -72,15 +72,16 @@ export function sortedPct(tab: ArrayLike<number>, v: number): number {
   return (a + (lo - a) / 2) / tab.length;
 }
 
-/** All 22,100 3 Patti scores, sorted. Deterministic, so shared by every table. */
-let TP_TAB: Float64Array | null = null;
-export function tpTab(): Float64Array {
-  if (!TP_TAB) {
+/** All 22,100 3 Patti scores, sorted, for each A-2-3 rule. Deterministic, so shared by every table. */
+const TP_TABS: { std: Float64Array | null; low: Float64Array | null } = { std: null, low: null };
+export function tpTab(a23Low = false): Float64Array {
+  const k = a23Low ? 'low' : 'std';
+  if (!TP_TABS[k]) {
     const a: number[] = [];
-    for (let i = 0; i < 52; i++) for (let j = i + 1; j < 52; j++) for (let k = j + 1; k < 52; k++) a.push(tpScore([i, j, k]));
-    TP_TAB = Float64Array.from(a).sort();
+    for (let i = 0; i < 52; i++) for (let j = i + 1; j < 52; j++) for (let k2 = j + 1; k2 < 52; k2++) a.push(tpScore([i, j, k2], a23Low));
+    TP_TABS[k] = Float64Array.from(a).sort();
   }
-  return TP_TAB;
+  return TP_TABS[k]!;
 }
 
 export const kPow = (k: number): number => 1 + (Math.max(1, k) - 1) * 0.6;
@@ -104,12 +105,16 @@ export class Tables {
     return this.h5;
   }
 
-  tpPct(h: readonly Card[]): number { return sortedPct(tpTab(), tpScore(h)); }
+  tpPct(h: readonly Card[], a23Low = false): number { return sortedPct(tpTab(a23Low), tpScore(h, a23Low)); }
   h5Pct(h: readonly Card[]): number { return sortedPct(this.h5Tab(), evaluate(h)); }
 
-  /** How strong one part is on its own, from 0 (worst) to 1 (best). */
-  partStr(kind: PartKind, h: readonly Card[]): number {
-    return kind === 'hold' ? 1 - handPct(h[0]!, h[1]!) : kind === 'h5' ? this.h5Pct(h) : this.tpPct(h);
+  /**
+   * How strong one part is on its own, from 0 (worst) to 1 (best). The opponent-model tables
+   * built from this (shared between tables) use the standard A-2-3 rule; under the house rule
+   * only A-2-3 itself moves (64 of 22,100 3 Patti hands), so they stay a close model.
+   */
+  partStr(kind: PartKind, h: readonly Card[], a23Low = false): number {
+    return kind === 'hold' ? 1 - handPct(h[0]!, h[1]!) : kind === 'h5' ? this.h5Pct(h) : this.tpPct(h, a23Low);
   }
   memoStr(): (kind: PartKind, h: readonly Card[]) => number {
     const m = new Map<string, number>();

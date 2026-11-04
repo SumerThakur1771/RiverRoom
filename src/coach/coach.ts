@@ -9,7 +9,7 @@ import { knownStyle as engineKnownStyle, rangeModel as engineRangeModel } from '
 import type { Game, Persona, Player } from '../engine/state';
 import { handPct, PCT, rangeText } from '../engine/strength';
 import * as T from '../engine/table';
-import { tpScore } from '../engine/teenpatti';
+import { a23LowOf, tpScore } from '../engine/teenpatti';
 import { splitsOf, VAR_ORDER, VARIANTS, type PartKind, type Split, type VariantKey } from '../engine/variants';
 import { CATN, drawInfo, madeInfo, sampleFrom as eqSampleFrom, type DrawInfo, type MadeInfo, type RangeModel, type Threat } from '../ai/equity';
 import * as SP from '../ai/split';
@@ -144,7 +144,7 @@ function coachContext(p: Player): CoachCtx {
     const g = gameEquity(p, models, S.street === 0 ? 260 : 320, true); threat = lastThreat;
     eqHold = g.parts[0]!; xs = g.parts.slice(1); eq = g.eq;
     // the simulation plays your stronger 3 Patti 1st; line the numbers up with your planned hands
-    if (xs.length === 2 && tpScore(ex[0]!) < tpScore(ex[1]!)) xs = [xs[1]!, xs[0]!];
+    if (xs.length === 2 && tpScore(ex[0]!, a23LowOf(S)) < tpScore(ex[1]!, a23LowOf(S))) xs = [xs[1]!, xs[0]!];
   } else { eqHold = holdEquity(p, hold, models, S.street === 0 ? 500 : 700); threat = lastThreat; xs = []; eq = eqHold; }
   const main = (S.lastAggressor && S.lastAggressor !== p && !S.lastAggressor.folded) ? S.lastAggressor : opps.slice().sort((a, b) => (b.rg.agg + (b === S.pfAggressor ? 0.5 : 0)) - (a.rg.agg + (a === S.pfAggressor ? 0.5 : 0)))[0];
   const ag = S.lastAggressor;

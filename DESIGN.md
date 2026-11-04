@@ -107,6 +107,23 @@ exactly 7,462 distinct values (the known number of 5-card equivalence classes). 
 random 7-card hands, the result equals the brute-force maximum over all 21 five-card
 subsets. 3 Patti: all 22,100 three-card hands match the standard counts.
 
+**The A-2-3 house rule.** In standard 3 Patti, A-2-3 is the second-best sequence, below only
+A-K-Q. Many home games play it as the lowest sequence instead, below 2-3-4, and so does the
+group this app was built for. A setting chooses the rule: "A-2-3 in 3 Patti: second best /
+lowest". It is in table settings for single-player; online, the person running the table sets
+it, and it applies from the next hand, never in the middle of one.
+- The rule travels with each game (`settings.a23Low`), not as a global switch, because one
+  server runs many tables. It is passed to every place that ranks 3 Patti hands:
+  - showdown scoring (`partScore`);
+  - hand names;
+  - which 3 Patti hand is your stronger one (`normSplit`, the coach);
+  - the strength percentiles the bots and coach use (`tpTab`, one sorted table per rule).
+- Only the 64 A-2-3 hands change score under the house rule; the category counts stay the same
+  (tested exhaustively). A pure A-2-3 still beats any plain sequence.
+- The opponent-model tables, sampled once and shared between tables, keep the standard
+  ranking. Under the house rule they are off only for those 64 hands (0.3% of 3 Patti hands).
+- The default is the standard rule, so the 272-hand golden replay is unchanged.
+
 **Speed.** About 2.2 million 5-card and 1.6–1.9 million 7-card hands per second in Node.
 That is not the bottleneck (section 7), so a lookup-table evaluator was not worth building.
 

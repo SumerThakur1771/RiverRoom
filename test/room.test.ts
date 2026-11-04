@@ -316,3 +316,25 @@ describe('bugs found in review (each test failed before its fix)', () => {
     r.close();
   });
 });
+
+describe('the A-2-3 house rule at an online table', () => {
+  it('is set by the host only, and changes between hands, never during one', async () => {
+    const r = new Room('RRRRRR', DEFAULT_ROSTER, 'sumer', quiet(), FAST, 'a23-1', 'dealer', { computers: 2, a23Low: true });
+    const a = seat(r, 'sumer', true);
+    expect(r.g.settings.a23Low).toBe(true);
+    expect(r.messageFor(a)).toMatchObject({ a23Low: true, a23Next: true });
+    const b = r.seatHuman({ name: 'Asha', type: 'krish' });
+    if ('error' in b) throw new Error(b.error);
+    expect(r.configure(b.token, { a23Low: false })).toMatchObject({ ok: false });
+    r.start(a);
+    const t0 = Date.now();
+    while (!(r as unknown as { inHand: boolean }).inHand && Date.now() - t0 < 5_000) await new Promise(res => setTimeout(res, 2));
+    expect(r.configure(a, { a23Low: false })).toEqual({ ok: true, queued: true });
+    expect(r.g.settings.a23Low).toBe(true); // this hand keeps its rule
+    expect(r.messageFor(a)).toMatchObject({ a23Low: true, a23Next: false });
+    const h = r.g.handNo;
+    while (r.g.handNo === h && Date.now() - t0 < 15_000) await new Promise(res => setTimeout(res, 5));
+    expect(r.g.settings.a23Low).toBe(false);
+    r.close();
+  });
+});

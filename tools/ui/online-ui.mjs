@@ -115,6 +115,9 @@ for (const [hostSize, guestSize] of [['desktop', 'phone'], ['phone', 'desktop']]
   c.zeroComputers = (await seats(H)) === 1 && (await H.isDisabled('#wrStart'));
   await H.click('#wrSettings [data-timer="0"]');
   c.timerOff = await until(async () => (await H.getAttribute('#wrSettings [data-timer="0"]', 'aria-pressed')) === 'true', 10_000);
+  // the house rule: A-2-3 is the lowest 3 Patti sequence at this table
+  await H.click('#wrSettings [data-a23="1"]');
+  c.a23Set = await until(async () => (await H.getAttribute('#wrSettings [data-a23="1"]', 'aria-pressed')) === 'true', 10_000);
   c.axe.push(...await axe(H, '#wroom'));
   await H.screenshot({ path: `screenshots/online-waiting-${hostSize}.png` });
   // 2. guest 1: Join with a code > types it > creates a new player
@@ -134,6 +137,7 @@ for (const [hostSize, guestSize] of [['desktop', 'phone'], ['phone', 'desktop']]
   await G.click('#olJoinBtn');
   await G.waitForSelector('#wroom:not([hidden])', { timeout: WAIT });
   c.guestNoControls = !(await G.isVisible('#wrStart')) && !(await G.isVisible('#wrSettings .stepper')) && /Waiting for Sumer to start/.test(await G.textContent('#wrStatus'));
+  c.guestSeesRule = /A-2-3 in 3 Patti\s*Lowest sequence/.test((await G.textContent('#wrSettings')).replace(/\s+/g, ' ')) && !(await G.isVisible('#wrSettings [data-a23]'));
   // guest 2: the invite link > picks Rohit (not at the table yet)
   await G2.goto(SITE + '?join=' + code);
   await G2.waitForSelector('#olPick:not([hidden]) .rp', { timeout: WAIT });
@@ -240,7 +244,7 @@ for (const [hostSize, guestSize] of [['desktop', 'phone'], ['phone', 'desktop']]
   c.sideScroll = [...await sideScroll(H), ...await sideScroll(G)];
 
   const ok = c.axe.length === 0 && c.mePick === 'sumer' && c.codeShown && c.notDealt && c.hostControls && c.zeroComputers && c.timerOff && c.pickList && /^Join as Asha$/.test(c.joinLabel)
-    && c.guestNoControls && c.hostSeesThree && c.oneComputer && c.started && c.played && c.guestSeat === 'Asha' && c.atBottom && c.keptOrder === true && c.hintOnline && c.guestCannotEdit && c.renameSaved && c.renamed && c.kicked
+    && c.a23Set && c.guestSeesRule && c.guestNoControls && c.hostSeesThree && c.oneComputer && c.started && c.played && c.guestSeat === 'Asha' && c.atBottom && c.keptOrder === true && c.hintOnline && c.guestCannotEdit && c.renameSaved && c.renamed && c.kicked
     && c.settleFromDb && /Sumer/.test(c.settle) && c.resumed && /Asha|Fold|Check|Call|Raise|Bet|All-in/.test(c.resumedAs) && c.secondTab && c.backInLobby && c.paused && c.oldLink && !c.sideScroll.length;
   console.log(`${hostSize} host, ${guestSize} guests: ${ok ? 'ok' : 'FAIL'} | table ${code} | ${JSON.stringify(c)}`);
   if (!ok) failed = true;

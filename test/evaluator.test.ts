@@ -2,7 +2,10 @@
 import { describe, expect, it } from 'vitest';
 import { catOf, evaluate, type Card } from '../src/engine/cards';
 import { mulberry32 } from '../src/engine/rng';
-import { tpScore } from '../src/engine/teenpatti';
+import { tpName, tpScore } from '../src/engine/teenpatti';
+import { tpTab } from '../src/engine/strength';
+import { partScore } from '../src/ai/split';
+import type { Game } from '../src/engine/state';
 import { combos } from '../src/engine/variants';
 
 const card = (rank: number, suit: number): Card => (rank - 2) * 4 + suit;
@@ -62,6 +65,40 @@ describe('3 Patti scorer', () => {
     expect(akq).toBeGreaterThan(a23);
     expect(a23).toBeGreaterThan(kqj);
     expect(trail2).toBeGreaterThan(pureAkq);
+  });
+
+  it('house rule "A-2-3 is lowest": A-2-3 drops below 2-3-4 and nothing else moves', () => {
+    const a23 = [card(14, 0), card(2, 1), card(3, 2)], s234 = [card(2, 0), card(3, 1), card(4, 2)];
+    const pureA23 = [card(14, 3), card(2, 3), card(3, 3)], pure234 = [card(2, 1), card(3, 1), card(4, 1)];
+    const color = [card(14, 0), card(13, 0), card(11, 0)];
+    // standard: A-2-3 beats 2-3-4; house rule: the other way round
+    expect(tpScore(a23)).toBeGreaterThan(tpScore(s234));
+    expect(tpScore(a23, true)).toBeLessThan(tpScore(s234, true));
+    expect(tpScore(pureA23, true)).toBeLessThan(tpScore(pure234, true));
+    // still a sequence: a pure A-2-3 beats any plain sequence, a plain one beats any color
+    expect(tpScore(pureA23, true)).toBeGreaterThan(tpScore([card(14, 0), card(13, 1), card(12, 2)], true));
+    expect(tpScore(a23, true)).toBeGreaterThan(tpScore(color, true));
+    expect(tpName(a23, true)).toBe('Sequence A-2-3');
+    expect(tpName(pureA23, true)).toBe('Pure sequence A-2-3');
+    // every hand that is not A-2-3 scores the same under both rules; counts per category are unchanged
+    let moved = 0;
+    const counts = new Array(6).fill(0);
+    for (let i = 0; i < 50; i++) for (let j = i + 1; j < 51; j++) for (let k = j + 1; k < 52; k++) {
+      const h = [i, j, k];
+      if (tpScore(h) !== tpScore(h, true)) moved++;
+      counts[Math.floor(tpScore(h, true) / 1e6)]++;
+    }
+    expect(moved).toBe(64); // the 4 x 4 x 4 A-2-3 hands
+    expect(counts).toEqual([16440, 3744, 1096, 720, 48, 52]);
+    // the percentile table for the house rule ranks A-2-3 at the bottom of the sequences
+    expect(tpTab(true)).toHaveLength(22100);
+  });
+
+  it('the showdown scores 3 Patti parts with the table\'s rule', () => {
+    const g = (a23Low: boolean): Game => ({ settings: { a23Low }, board: [], board2: [] }) as unknown as Game;
+    const a23 = [card(14, 0), card(2, 1), card(3, 2)], s234 = [card(2, 0), card(3, 1), card(4, 2)];
+    expect(partScore(g(false), 'tp', a23)).toBeGreaterThan(partScore(g(false), 'tp', s234));
+    expect(partScore(g(true), 'tp', a23)).toBeLessThan(partScore(g(true), 'tp', s234));
   });
 });
 

@@ -264,7 +264,7 @@ export function botFinalSplit(g: Game, p: Player, k: number): Split {
   return g.rs.seg(g.rs.label(g.handNo, 'final'), () => {
     const V = VAR(g)!;
     let sp = planSplit(g, p, k);
-    if (V.parts.length === 3) { sp = normSplit(V, sp); if (g.rs.rand() > (STRONG_FIRST[p.type ?? ''] ?? 0.65)) sp = [sp[0]!, sp[2]!, sp[1]!]; }
+    if (V.parts.length === 3) { sp = normSplit(V, sp, !!g.settings.a23Low); if (g.rs.rand() > (STRONG_FIRST[p.type ?? ''] ?? 0.65)) sp = [sp[0]!, sp[2]!, sp[1]!]; }
     return sp;
   });
 }

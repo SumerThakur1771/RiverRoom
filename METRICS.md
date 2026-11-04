@@ -614,6 +614,20 @@ pairings. That includes you drawn at the bottom, your card order kept, Hint onli
 up from Neon matching memory. Output:
 [`results/2026-11-02-review-fixes-live.txt`](tools/measure/results/2026-11-02-review-fixes-live.txt).
 
+## The A-2-3 house rule (3 Patti)
+
+Command: `TEST_DATABASE_URL=… npx vitest run`, 2026-11-04, local Postgres 16: 14 files, 140
+tests, all passing. 3 tests are new: the scorer under both rules, the showdown path, and the
+host-only online setting that applies between hands. Under the house rule:
+- exactly 64 of the 22,100 hands change score (the A-2-3 hands);
+- the category counts are unchanged.
+
+The 272-hand golden replay is unchanged, because the standard rule is the default.
+
+The online browser test (`node tools/ui/online-ui.mjs http://localhost:4177/ --expect-stored`)
+now has the host choose "Lowest" in the waiting room and checks that a friend sees it, with no
+control of their own. It passed both pairings; the single-player browser tests also pass.
+
 ## Not measured yet
 
 - Vercel Web Analytics visitor numbers (tracking is verified working; no real-visitor data yet).

@@ -46,7 +46,7 @@ export async function startServer(opts: ServerOptions): Promise<RunningServer> {
 
   // who started each open table, so one address cannot fill the server's memory with tables
   const startedBy = new Map<string, string>();
-  const makeRoom = (roster: Parameters<typeof validRoster>[0], character: string, games: 'dealer' | 'holdem', extra: { timer?: TimerSec; computers?: number }, address: string): Room | string => {
+  const makeRoom = (roster: Parameters<typeof validRoster>[0], character: string, games: 'dealer' | 'holdem', extra: { timer?: TimerSec; computers?: number; a23Low?: boolean }, address: string): Room | string => {
     if (rooms.size >= (opts.maxRooms ?? 300)) return 'the server is full right now; try again in a few minutes';
     if ([...startedBy.values()].filter(a => a === address).length >= (opts.roomsPerAddress ?? 10)) return 'you have started too many tables; close one or wait a few minutes';
     const r = validRoster(roster ?? DEFAULT_ROSTER);
@@ -113,7 +113,7 @@ export async function startServer(opts: ServerOptions): Promise<RunningServer> {
       if (!m.success || session) return bad(ack, m.success ? 'already in a room' : 'invalid request');
       const fwd = socket.handshake.headers['x-forwarded-for'];
       const address = (typeof fwd === 'string' && fwd.split(',')[0]!.trim()) || socket.handshake.address;
-      const room = makeRoom(m.data.roster, m.data.character, m.data.games, { timer: m.data.timer, computers: m.data.computers }, address);
+      const room = makeRoom(m.data.roster, m.data.character, m.data.games, { timer: m.data.timer, computers: m.data.computers, a23Low: m.data.a23Low }, address);
       if (typeof room === 'string') return bad(ack, room);
       const r = room.seatHuman(m.data.character, true);
       if ('error' in r) return bad(ack, r.error);

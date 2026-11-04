@@ -14,7 +14,8 @@ coach explains each decision.
 - **Five games.** Hold'em, plus four split variants where each player divides their cards
   into parts (a poker hand plus one or two [3 Patti](https://en.wikipedia.org/wiki/Teen_patti)
   or 5-card hands) and each part wins its own share of the pot. In the 8-card game, winning
-  2 of 3 parts takes the whole pot.
+  2 of 3 parts takes the whole pot. A setting picks the 3 Patti A-2-3 rule: second-best
+  sequence (standard) or lowest (a common home-game house rule).
 - **Full no-limit rules in the engine:** blinds and antes, minimum raises, short all-ins
   (including the TDA rule for several short all-ins that add up to a full raise), side pots,
   split pots and odd chips.

@@ -4,7 +4,7 @@ import { catOf, describe, evaluate, holeName, kAt, randCards, type Card } from '
 import type { Game, Player } from '../engine/state';
 import { sortedPct, tpTab } from '../engine/strength';
 import { clamp, VAR } from '../engine/table';
-import { tpName, tpScore } from '../engine/teenpatti';
+import { a23LowOf, tpName, tpScore } from '../engine/teenpatti';
 import { splitsOf, type PartKind, type Split, type Variant } from '../engine/variants';
 import { CATN, drawInfo, equityVs, equityVsMulti, type RangeModel } from './equity';
 
@@ -43,7 +43,7 @@ export function quickSplitScores(g: Game, V: Variant, cards: readonly Card[], bo
       if (kind === 'hold') { raw = evaluate(h.concat(board)); x = Math.pow(handProxy(raw), hx); }
       else if (kind === 'b2') { raw = evaluate(h.concat(board2)); x = Math.pow(handProxy(raw), 3); }
       else if (kind === 'h5') { raw = evaluate(h); x = g.tables.oppCdf(key, 1, sortedPct(g.tables.h5Tab(), raw)); }
-      else { raw = tpScore(h); x = g.tables.oppCdf(key, 1, sortedPct(tpTab(), raw)); }
+      else { const lo = a23LowOf(g); raw = tpScore(h, lo); x = g.tables.oppCdf(key, 1, sortedPct(tpTab(lo), raw)); }
       e = [raw, Math.pow(x, k)];
       m.set(part.mask, e);
     }
@@ -270,7 +270,7 @@ export function vsOne(g: Game, j: number, kind: PartKind, h: readonly Card[], de
     if (v >= tab[tab.length - 1]! && catOf(v) >= 4) return 1;
     return Math.pow(sortedPct(tab, v), 4);
   }
-  return g.tables.oppCdf(g.variant!, j, g.tables.partStr(kind, h));
+  return g.tables.oppCdf(g.variant!, j, g.tables.partStr(kind, h, a23LowOf(g)));
 }
 
 /** Expected share of the pot from each part's win chance (2-of-3 rule for three parts). */
@@ -364,10 +364,10 @@ export function partName(g: Game, kind: PartKind, h: readonly Card[]): string {
   if (kind === 'hold') return g.boardVis >= 3 ? describe(evaluate(h.concat(g.board.slice(0, g.boardVis)))) : holeName(h[0]!, h[1]!);
   if (kind === 'b2') return describe(evaluate(h.concat(g.board2.slice(0, g.boardVis2))));
   if (kind === 'h5') return describe(evaluate(h));
-  return tpName(h);
+  return tpName(h, a23LowOf(g));
 }
 export function partScore(g: Game, kind: PartKind, h: readonly Card[]): number {
-  return kind === 'hold' ? evaluate(h.concat(g.board)) : kind === 'b2' ? evaluate(h.concat(g.board2)) : kind === 'h5' ? evaluate(h) : tpScore(h);
+  return kind === 'hold' ? evaluate(h.concat(g.board)) : kind === 'b2' ? evaluate(h.concat(g.board2)) : kind === 'h5' ? evaluate(h) : tpScore(h, a23LowOf(g));
 }
 /** useSplit: how a player is thinking of splitting (still private). applySplit: the final split. */
 export function useSplit(p: Player, s: Split): void {

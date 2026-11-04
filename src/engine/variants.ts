@@ -69,8 +69,8 @@ export function splitsOf<T>(V: Variant, cards: readonly T[], unordered?: boolean
   return res;
 }
 
-/** Strongest 3 Patti first. */
-export function normSplit(V: Variant, s: Split): Split {
-  if (V.parts.length === 3 && V.parts[1]!.k === 'tp' && tpScore(s[1]!) < tpScore(s[2]!)) return [s[0]!, s[2]!, s[1]!];
+/** Strongest 3 Patti first (under the table's A-2-3 rule). */
+export function normSplit(V: Variant, s: Split, a23Low = false): Split {
+  if (V.parts.length === 3 && V.parts[1]!.k === 'tp' && tpScore(s[1]!, a23Low) < tpScore(s[2]!, a23Low)) return [s[0]!, s[2]!, s[1]!];
   return s;
 }

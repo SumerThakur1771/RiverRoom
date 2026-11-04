@@ -1186,7 +1186,7 @@ async function askClaudeReview(){
 Opponent styles (for your understanding only; refer to them by behaviour the student could notice, and do not reveal the labels):
 ${playersBrief()}
 
-${r.game ? `This hand was a dealer's choice home game, not plain Hold'em. Game: ${r.game}. Rules: ${r.gameDesc} 3 Patti ranks: Trail (three of a kind) > Pure sequence (3 in a row, same suit) > Sequence > Color (same suit) > Pair > High card; A-K-Q is the top sequence, then A-2-3. The "split" decision is how the student divided their cards between the parts.\n\n` : ''}Hand history (the student is "${settings.name || 'You'}"):
+${r.game ? `This hand was a dealer's choice home game, not plain Hold'em. Game: ${r.game}. Rules: ${r.gameDesc} 3 Patti ranks: Trail (three of a kind) > Pure sequence (3 in a row, same suit) > Sequence > Color (same suit) > Pair > High card; ${a23Rule() ? 'A-K-Q is the top sequence and A-2-3 the lowest (this table\'s house rule)' : 'A-K-Q is the top sequence, then A-2-3'}. The "split" decision is how the student divided their cards between the parts.\n\n` : ''}Hand history (the student is "${settings.name || 'You'}"):
 ${r.text}
 
 The app's own analysis of each student decision (eq = estimated win chance against the opponents' likely hands, need = pot odds needed to call):
@@ -1370,7 +1370,7 @@ LEARN.home = () => `
     <h3>Who usually picks what</h3><ul><li><b>Rohit:</b> mostly Poker + 3 Patti, sometimes Two boards.</li><li><b>Krish:</b> mostly 8 cards (two 3 Patti), sometimes Poker + 3 Patti. He usually puts his stronger 3 Patti 2nd, but switches sometimes so he is hard to predict.</li><li><b>Nikhil:</b> 7 cards (hand poker) or Simple poker.</li><li><b>Venky:</b> mostly Poker + 3 Patti, sometimes Simple poker.</li><li><b>You:</b> you pick when you have the dealer chip.</li></ul>
     <h3>3 Patti hands, best to worst</h3>
     <div class="tp-ranks">${/** @type {Array<[string, string, number[]]>} */ ([['Trail', 'Three of a kind', [48, 49, 50]], ['Pure sequence', '3 in a row, same suit', [45, 41, 37]], ['Sequence', '3 in a row, any suits', [44, 41, 38]], ['Color', '3 of the same suit', [47, 31, 11]], ['Pair', 'Two of the same rank', [36, 37, 18]], ['High card', 'None of the above', [50, 33, 13]]]).map(([n, d, cards]) => `<div><b>${n}</b> <span>${d}</span></div><div class="mini">${cards.map(c => cardHTML(c)).join('')}</div>`).join('')}</div>
-    <p>A-K-Q is the best sequence, then A-2-3, then K-Q-J and down to 4-3-2. When two hands are the same type, the higher cards win.</p>
+    <p>${a23Rule() ? 'A-K-Q is the best sequence, then K-Q-J and down to 4-3-2; at this table A-2-3 is the lowest sequence (house rule).' : 'A-K-Q is the best sequence, then A-2-3, then K-Q-J and down to 4-3-2.'} When two hands are the same type, the higher cards win.</p>
     <h3>How to split well</h3><ul><li>3 Patti: a pair, a sequence or three of one suit wins most of the time. Three random high cards usually lose.</li><li>Poker: two high cards, a pair, or two cards of the same suit that are close together.</li><li>Do not put everything into one part: a decent hand in every part often beats one great part and one terrible part.</li><li>8 cards: you choose which 3 Patti plays 1st and which plays 2nd. Most players put the stronger one 1st; putting it 2nd can beat their weaker hand, but your weak one then meets their strong one.</li><li>The best split can change as table cards come out, so look again at the showdown.</li><li>Not sure? Tap Hint: it shows your arrangement next to the best all-round split, the strongest poker split and the strongest 3 Patti split, so you can pick.</li></ul>`;
 const LEARN_TABS = [['basics', 'Basics'], ['home', 'Home games'], ['ranks', 'Hand ranks'], ['betting', 'Betting'], ['positions', 'Positions'], ['hands', 'Starting hands'], ['strategy', 'Strategy'], ['players', 'Player types'], ['glossary', 'Glossary']];
 function openLearn(tab){
@@ -1505,6 +1505,9 @@ function buildSettings(){
   $('#optSound').checked = settings.sound; $('#optFour').checked = settings.fourColor; $('#optEq').checked = settings.showEq;
   $('#optHint').checked = settings.hints; $('#optHud').checked = settings.hud; $('#optReveal').checked = settings.revealAll; $('#optHold').checked = settings.holdResult;
   $('#gamesRow').hidden = !MONEY || !!(S && S.online);
+  // online, the person running the table sets the A-2-3 rule (in the players panel)
+  $('#a23Row').hidden = !MONEY || !!(S && S.online);
+  if (MONEY) segment($('#a23Seg'), [['std', 'Second best'], ['low', 'Lowest']], () => (settings.a23Low ? 'low' : 'std'), v => { settings.a23Low = v === 'low'; saveSettings(); toast(v === 'low' ? 'A-2-3 now counts as the lowest 3 Patti sequence' : 'A-2-3 now counts as the second-best 3 Patti sequence'); });
   if (MONEY) segment($('#gamesSeg2'), [['dealer', "Dealer's choice"], ['holdem', 'Simple only']], () => settings.games, v => { settings.games = v; saveSettings(); toast(v === 'holdem' ? 'From the next hand: simple poker only' : "From the next hand: dealer's choice"); });
   segment($('#paceSeg'), [['learn','Learning'],['normal','Normal'],['fast','Fast']], () => settings.pace, v => { settings.pace = v; saveSettings(); });
   segment($('#timerSeg'), [[0,'Off'],[30,'30s'],[60,'60s'],[120,'2 min']], () => settings.timer, v => { settings.timer = v; saveSettings(); if (pending && S.toAct >= 0){ S.turnStart = performance.now(); S.turnLen = v > 0 ? v * 1000 : 1e12; } });
@@ -1760,6 +1763,8 @@ async function call(ev, msg){
   return new Promise(res => sock.timeout(10000).emit(ev, msg, (err, r) => res(err ? {ok: false, error: 'no answer from the server'} : r)));
 }
 
+/** The A-2-3 rule of the game on screen (online: the table's; otherwise your setting). */
+function a23Rule(){ return S && S.settings ? !!S.settings.a23Low : !!settings.a23Low; }
 /** The same cards in any order give the same key. */
 const cardKey = cards => [...cards].sort((a, b) => a - b).join(',');
 /* ---- lobby: start a table, or join one with its code ---- */
@@ -1867,7 +1872,7 @@ $('#olNewName').addEventListener('keydown', e => { if (e.key === 'Enter') { e.pr
 $('#olCreateBtn').onclick = async () => {
   const r = rosterNow(), btn = $('#olCreateBtn');
   btn.disabled = true; olError('');
-  const res = await call('create', {character: olMe || heroIdNow(r), games: olGames, roster: r.map(c => ({id: c.id, name: c.name, type: c.type, color: c.color}))});
+  const res = await call('create', {character: olMe || heroIdNow(r), games: olGames, a23Low: !!settings.a23Low, roster: r.map(c => ({id: c.id, name: c.name, type: c.type, color: c.color}))});
   btn.disabled = false;
   if (!res.ok) { olError('Could not open the table: ' + res.error); return; }
   enterOnline(res.code, res.token);
@@ -1964,7 +1969,7 @@ function hydrate(m){
   // your own arrangement of your cards stays as you left it for the rest of the hand
   const me0 = heroP(), mp = ON && ON.myPlan;
   if (me0 && mp && mp.hand === S.handNo && !me0.splitDone && me0.all && cardKey(me0.all) === mp.cards) { me0.plan = mp.plan.map(x => x.slice()); useSplit(me0, me0.plan); }
-  S.settings = Object.assign({}, settings, {games: m.games, revealAll: false});
+  S.settings = Object.assign({}, settings, {games: m.games, revealAll: false, a23Low: !!m.a23Low});
   S.mode = 'home'; S.money = true;
   const key = S.players.map(p => [p.seat, p.name, p.avatar, p.color, p.isHuman].join(':')).join('|');
   // new seats are drawn at once (names, stacks), before any animation of this step runs
@@ -2053,6 +2058,9 @@ function settingsHTML(m){
   rows.push(`<div class="ts-row"><span class="ts-l">Games</span>${gamesOpen
     ? `<div class="seg" role="group" aria-label="Games">${[['dealer', "Dealer's choice"], ['holdem', 'Simple poker']].map(([v, l]) => `<button type="button" data-games="${v}" aria-pressed="${String(m.games === v)}">${l}</button>`).join('')}</div>`
     : `<b>${esc(GAMES_LABEL[m.games])}</b>`}</div>`);
+  rows.push(`<div class="ts-row"><span class="ts-l">A-2-3 in 3 Patti</span>${ed
+    ? `<div class="seg" role="group" aria-label="A-2-3 in 3 Patti">${[['0', 'Second best'], ['1', 'Lowest']].map(([v, l]) => `<button type="button" data-a23="${v}" aria-pressed="${String(!!m.a23Next === (v === '1'))}">${l}</button>`).join('')}</div>`
+    : `<b>${m.a23Low ? 'Lowest sequence' : 'Second-best sequence'}</b>`}${m.a23Low !== m.a23Next ? ' <small>(changes when this hand ends)</small>' : ''}</div>`);
   if (ed && m.timer === 0) rows.push('<p class="fine" style="text-align:left;margin:0">With no timer, the table waits for each person. If someone stops answering, remove them from the players list.</p>');
   return rows.join('');
 }
@@ -2062,6 +2070,7 @@ async function changeSettings(e){
   if (b.dataset.set) msg.computers = Math.max(0, Math.min(m.maxComputers, m.computers + (b.dataset.set === 'comp+1' ? 1 : -1)));
   else if (b.dataset.timer) msg.timer = +b.dataset.timer;
   else if (b.dataset.games) msg.games = b.dataset.games;
+  else if (b.dataset.a23) msg.a23Low = b.dataset.a23 === '1';
   else return;
   const r = await call('settings', msg);
   if (!r.ok) { $('#wrErr').textContent = r.error; $('#tpErr').textContent = r.error; }
@@ -2069,7 +2078,7 @@ async function changeSettings(e){
 /** Draw the settings into a container, keeping keyboard focus on the same control. */
 function renderSettings(box, m){
   const f = document.activeElement && box.contains(document.activeElement) ? /** @type {HTMLElement} */ (document.activeElement) : null;
-  const key = f ? ['set', 'timer', 'games'].find(k => f.dataset[k] !== undefined) : null, val = key ? f.dataset[key] : null;
+  const key = f ? ['set', 'timer', 'games', 'a23'].find(k => f.dataset[k] !== undefined) : null, val = key ? f.dataset[key] : null;
   box.innerHTML = settingsHTML(m);
   if (key) {
     const el = /** @type {HTMLButtonElement | null} */ (box.querySelector(`[data-${key}="${val}"]`));

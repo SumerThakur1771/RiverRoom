@@ -13,7 +13,7 @@ const RosterIn = z.array(z.object({ id: CharId, name: PlayerName, type: Style, c
 
 const Timer = z.union([z.literal(0), z.literal(15), z.literal(30), z.literal(60)]);
 const Computers = z.number().int().min(0).max(5);
-export const CreateMsg = z.object({ character: CharId, roster: RosterIn.optional(), games: z.enum(['dealer', 'holdem']).default('dealer'), timer: Timer.optional(), computers: Computers.optional() });
+export const CreateMsg = z.object({ character: CharId, roster: RosterIn.optional(), games: z.enum(['dealer', 'holdem']).default('dealer'), timer: Timer.optional(), computers: Computers.optional(), a23Low: z.boolean().optional() });
 export const PeekMsg = z.object({ code: Code });
 /** Join as a character from the table's list, or as a new character you name. */
 export const JoinMsg = z.union([
@@ -21,7 +21,7 @@ export const JoinMsg = z.union([
   z.object({ code: Code, create: z.object({ name: PlayerName, type: Style }) }),
 ]);
 /** Creator only: turn timer, number of computer players, games (before the first hand). */
-export const SettingsMsg = z.object({ timer: Timer.optional(), computers: Computers.optional(), games: z.enum(['dealer', 'holdem']).optional() });
+export const SettingsMsg = z.object({ timer: Timer.optional(), computers: Computers.optional(), games: z.enum(['dealer', 'holdem']).optional(), a23Low: z.boolean().optional() });
 export const KickMsg = z.object({ id: CharId });
 export const ResumeMsg = z.object({ code: Code, token: Token });
 export const ActMsg = z.object({ type: z.enum(['fold', 'check', 'call', 'raise']), to: z.number().int().min(0).max(1e9).optional() });
@@ -73,6 +73,9 @@ export interface TableMsg {
   started: boolean;
   /** Turn timer in seconds; 0 = no timer. */
   timer: number;
+  /** House rule: A-2-3 is the lowest 3 Patti sequence; `a23Next` is the rule from the next hand. */
+  a23Low: boolean;
+  a23Next: boolean;
   /** Computer players the creator asked for, and the most there is room for. */
   computers: number;
   maxComputers: number;

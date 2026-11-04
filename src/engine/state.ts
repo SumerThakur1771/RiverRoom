@@ -57,6 +57,8 @@ export interface Stats { hands: number; won: number; vpip: number; pfr: number; 
 
 export interface Settings {
   name: string; opp: number; stack: number; perLevel: number; revealAll: boolean; games: 'dealer' | 'holdem';
+  /** House rule: A-2-3 is the lowest 3 Patti sequence (standard: second highest). */
+  a23Low?: boolean;
 }
 
 export interface Game {
